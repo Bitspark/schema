@@ -131,10 +131,21 @@ type FunctionSchemaBuilder interface {
 	MetadataBuilder[FunctionSchemaBuilder]
 
 	Input(name string, schema Schema) FunctionSchemaBuilder
-	Output(schema Schema) FunctionSchemaBuilder
+	Output(name string, schema Schema) FunctionSchemaBuilder
 	Error(schema Schema) FunctionSchemaBuilder
-	Required(names ...string) FunctionSchemaBuilder
+	RequiredInputs(names ...string) FunctionSchemaBuilder
+	RequiredOutputs(names ...string) FunctionSchemaBuilder
 	Example(example map[string]any) FunctionSchemaBuilder
+}
+
+// ServiceSchemaBuilder defines the interface for building service schemas.
+type ServiceSchemaBuilder interface {
+	Builder[ServiceSchema]
+	MetadataBuilder[ServiceSchemaBuilder]
+
+	Method(name string, functionSchema FunctionSchema) ServiceSchemaBuilder
+	FromStruct(instance any) ServiceSchemaBuilder
+	Example(example map[string]any) ServiceSchemaBuilder
 }
 
 // UnionSchemaBuilder defines the interface for building union schemas.

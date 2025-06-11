@@ -284,6 +284,7 @@ func RunAllExamples() {
 	ExampleErrorHandling()
 	ExampleComplexValidation()
 	RunArrayExamples()
+	RunObjectExamples()
 
 	fmt.Println("✨ All examples completed successfully!")
 }

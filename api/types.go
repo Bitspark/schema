@@ -11,8 +11,10 @@ type Schema interface {
 	// JSON Schema generation
 	ToJSONSchema() map[string]any
 
-	// Metadata
+	// Type
 	Type() SchemaType
+
+	// Metadata
 	Metadata() SchemaMetadata
 
 	// Example generation
@@ -41,6 +43,7 @@ const (
 	TypeRef       SchemaType = "ref"
 	TypeParameter SchemaType = "parameter"
 	TypeFunction  SchemaType = "function"
+	TypeService   SchemaType = "service"
 )
 
 // ValidationResult represents the result of validating a value against a schema.

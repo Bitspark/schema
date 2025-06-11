@@ -38,6 +38,15 @@ func NewObject() api.ObjectSchemaBuilder {
 	return builders.NewObject()
 }
 
+// NewFunction creates a new function schema builder.
+func NewFunction() api.FunctionSchemaBuilder {
+	return builders.NewFunctionBuilder()
+}
+
+// NewService creates a new service schema builder.
+func NewService() api.ServiceSchemaBuilder {
+	return builders.NewServiceBuilder()
+}
+
 // TODO: Add other schema type factory functions as we implement them
 // func NewUnion() api.UnionSchemaBuilder { return builders.NewUnion() }
-// func NewFunction() api.FunctionSchemaBuilder { return builders.NewFunction() }
