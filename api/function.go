@@ -2,35 +2,26 @@ package api
 
 import "context"
 
-// FunctionHandler represents a local function that can be served as HTTP endpoint.
-type FunctionHandler func(ctx context.Context, params FunctionInput) (FunctionOutput, error)
-
-// TypedFunction interface represents a universal callable function concept with type safety.
-type TypedFunction interface {
-	Function
-	CallTyped(ctx context.Context, input any, output any) error
-}
-
-// Function interface defines the contract for callable functions.
-type Function interface {
-	Call(ctx context.Context, params FunctionInput) (FunctionOutput, error)
-	Schema() FunctionSchema
-	Name() string
-}
-
-// FunctionInput represents input parameters to a function.
-type FunctionInput interface {
+// FunctionData represents unified data for function inputs and outputs.
+// This provides symmetry with the schema system and simplifies the API.
+type FunctionData interface {
+	// Map-like operations for structured data access
 	ToMap() map[string]any
 	Get(name string) (any, bool)
 	Set(name string, value any)
 	Has(name string) bool
 	Keys() []string
-}
 
-// FunctionOutput represents the output/result of a function call.
-type FunctionOutput interface {
+	// Value operations for direct data access
 	Value() any
 	ToAny() any
+}
+
+// Function interface defines the contract for callable functions.
+type Function interface {
+	Call(ctx context.Context, params FunctionData) (FunctionData, error)
+	Schema() FunctionSchema
+	Name() string
 }
 
 // FunctionInputMap provides a concrete implementation interface for FunctionInput.
@@ -44,10 +35,4 @@ type FunctionOutputValue struct {
 // Consumer defines the interface for consuming/executing functions.
 type Consumer interface {
 	Consume(ctx context.Context, fn Function, input any) (any, error)
-}
-
-// Portal defines a generic interface for function execution portals.
-type Portal[D any] interface {
-	Execute(ctx context.Context, data D) error
-	Close() error
 }

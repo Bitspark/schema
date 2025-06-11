@@ -6,11 +6,11 @@ import "context"
 type Registry interface {
 	// Registration
 	Register(name string, fn Function) error
-	RegisterTyped(name string, fn TypedFunction) error
+	RegisterTyped(name string, fn Function) error
 
 	// Retrieval
 	Get(name string) (Function, bool)
-	GetTyped(name string) (TypedFunction, bool)
+	GetTyped(name string) (Function, bool)
 
 	// Listing
 	List() []string
@@ -24,7 +24,7 @@ type Registry interface {
 	Validate(name string, input any) ValidationResult
 
 	// Execution
-	Call(ctx context.Context, name string, params FunctionInput) (FunctionOutput, error)
+	Call(ctx context.Context, name string, params FunctionData) (FunctionData, error)
 	CallTyped(ctx context.Context, name string, input any, output any) error
 }
 
