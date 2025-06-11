@@ -6,28 +6,28 @@ import (
 
 func TestBaseVisitorMethods(t *testing.T) {
 	visitor := &BaseVisitor{}
-	
+
 	// Test all visitor methods return nil and don't panic
 	t.Run("VisitNumber", func(t *testing.T) {
-		err := visitor.VisitNumber(Number().Build().(*NumberSchema))
+		err := visitor.VisitNumber(NewNumber().Build().(*NumberSchema))
 		if err != nil {
 			t.Errorf("Expected nil error, got %v", err)
 		}
 	})
-	
+
 	t.Run("VisitBoolean", func(t *testing.T) {
-		err := visitor.VisitBoolean(Boolean().Build().(*BooleanSchema))
+		err := visitor.VisitBoolean(NewBoolean().Build().(*BooleanSchema))
 		if err != nil {
 			t.Errorf("Expected nil error, got %v", err)
 		}
 	})
-	
+
 	t.Run("VisitFunction", func(t *testing.T) {
 		functionSchema := NewFunctionSchema().
-			Input("test", String().Build()).
-			Output(String().Build()).
+			Input("test", NewString().Build()).
+			Output(NewString().Build()).
 			Build().(*FunctionSchema)
-		
+
 		err := visitor.VisitFunction(functionSchema)
 		if err != nil {
 			t.Errorf("Expected nil error, got %v", err)
@@ -38,9 +38,9 @@ func TestBaseVisitorMethods(t *testing.T) {
 func TestSchemaAcceptVisitor(t *testing.T) {
 	// Test that schemas can accept visitors
 	visitor := &BaseVisitor{}
-	
+
 	t.Run("StringSchema Accept", func(t *testing.T) {
-		stringSchema := String().Build().(*StringSchema)
+		stringSchema := NewString().Build().(*StringSchema)
 		err := stringSchema.Accept(visitor)
 		if err != nil {
 			t.Errorf("Expected nil error, got %v", err)
@@ -71,17 +71,17 @@ func (v *testVisitor) VisitBoolean(schema *BooleanSchema) error {
 
 func TestCustomVisitorPattern(t *testing.T) {
 	visitor := &testVisitor{}
-	
+
 	// Visit different schema types
-	String().Build().(*StringSchema).Accept(visitor)
-	Number().Build().(*NumberSchema).Accept(visitor)
-	Boolean().Build().(*BooleanSchema).Accept(visitor)
-	
+	NewString().Build().(*StringSchema).Accept(visitor)
+	NewNumber().Build().(*NumberSchema).Accept(visitor)
+	NewBoolean().Build().(*BooleanSchema).Accept(visitor)
+
 	expectedTypes := []SchemaType{TypeString, TypeNumber, TypeBoolean}
 	if len(visitor.visitedTypes) != len(expectedTypes) {
 		t.Errorf("Expected %d visited types, got %d", len(expectedTypes), len(visitor.visitedTypes))
 	}
-	
+
 	for i, expected := range expectedTypes {
 		if i >= len(visitor.visitedTypes) || visitor.visitedTypes[i] != expected {
 			t.Errorf("Expected type %s at index %d, got %s", expected, i, visitor.visitedTypes[i])
