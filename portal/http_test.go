@@ -228,6 +228,22 @@ func TestHTTPPortal_HTTPHandler(t *testing.T) {
 
 func TestHTTPPortal_HTTPErrorHandling(t *testing.T) {
 	portal := NewHTTPPortal(DefaultHTTPConfig())
+
+	// Register a test function for the invalid JSON and method not allowed tests
+	echoFunc := &HTTPTestFunction{
+		name:   "echo",
+		schema: nil, // Simple function without schema validation
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			return params, nil
+		},
+	}
+
+	ctx := context.Background()
+	_, err := portal.Apply(ctx, echoFunc)
+	if err != nil {
+		t.Fatalf("Failed to register echo function: %v", err)
+	}
+
 	server := httptest.NewServer(portal.HandleHTTP().(http.Handler))
 	defer server.Close()
 

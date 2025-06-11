@@ -114,9 +114,20 @@ func (b *ServiceBuilder) Build() core.ServiceSchema {
 		serviceSchema = serviceSchema.WithMethod(methodName, functionSchema)
 	}
 
+	// Prepare metadata with examples
+	metadata := b.metadata
+	if len(b.examples) > 0 {
+		// Convert examples to []any for metadata
+		metadataExamples := make([]any, len(b.examples))
+		for i, example := range b.examples {
+			metadataExamples[i] = example
+		}
+		metadata.Examples = metadataExamples
+	}
+
 	// Apply metadata
-	if b.metadata.Description != "" || len(b.metadata.Tags) > 0 || len(b.metadata.Examples) > 0 {
-		serviceSchema = serviceSchema.WithMetadata(b.metadata)
+	if metadata.Description != "" || len(metadata.Tags) > 0 || len(metadata.Examples) > 0 {
+		serviceSchema = serviceSchema.WithMetadata(metadata)
 	}
 
 	return serviceSchema

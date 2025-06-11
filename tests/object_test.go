@@ -205,7 +205,7 @@ func TestObjectSchemaAdditionalProperties(t *testing.T) {
 			"undefined property",
 			map[string]any{"name": "John", "extra": "value"},
 			false,
-			"Additional property 'extra' not allowed",
+			"Additional property 'extra' is not allowed",
 		},
 		{
 			"empty object",

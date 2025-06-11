@@ -186,13 +186,18 @@ func (o *ObjectSchema) DefaultValue() map[string]any {
 
 // Validate validates a value against the object schema.
 func (o *ObjectSchema) Validate(value any) core.ValidationResult {
+	return o.validateWithPath(value, "")
+}
+
+// validateWithPath validates a value against the object schema with a given path prefix.
+func (o *ObjectSchema) validateWithPath(value any, pathPrefix string) core.ValidationResult {
 	// Convert to object/map
 	objectValue, ok := o.convertToMap(value)
 	if !ok {
 		return core.ValidationResult{
 			Valid: false,
 			Errors: []core.ValidationError{{
-				Path:       "",
+				Path:       pathPrefix,
 				Message:    "Expected object or map",
 				Code:       "type_mismatch",
 				Value:      value,
@@ -209,7 +214,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 
 	if o.config.MinProperties != nil && propertyCount < *o.config.MinProperties {
 		errors = append(errors, core.ValidationError{
-			Path:       "",
+			Path:       pathPrefix,
 			Message:    fmt.Sprintf("Object has too few properties (minimum %d)", *o.config.MinProperties),
 			Code:       "min_properties",
 			Value:      propertyCount,
@@ -220,7 +225,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 
 	if o.config.MaxProperties != nil && propertyCount > *o.config.MaxProperties {
 		errors = append(errors, core.ValidationError{
-			Path:       "",
+			Path:       pathPrefix,
 			Message:    fmt.Sprintf("Object has too many properties (maximum %d)", *o.config.MaxProperties),
 			Code:       "max_properties",
 			Value:      propertyCount,
@@ -233,7 +238,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 	for _, reqProp := range o.config.Required {
 		if _, exists := objectValue[reqProp]; !exists {
 			errors = append(errors, core.ValidationError{
-				Path:       "",
+				Path:       o.buildPropertyPath(pathPrefix, reqProp),
 				Message:    fmt.Sprintf("Missing required property '%s'", reqProp),
 				Code:       "required_property",
 				Value:      objectValue,
@@ -251,7 +256,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 			if !propResult.Valid {
 				for _, propError := range propResult.Errors {
 					errors = append(errors, core.ValidationError{
-						Path:       o.buildPropertyPath(propName, propError.Path),
+						Path:       o.buildPropertyPath(pathPrefix, o.buildPropertyPath(propName, propError.Path)),
 						Message:    propError.Message,
 						Code:       propError.Code,
 						Value:      propError.Value,
@@ -273,7 +278,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 						if !propResult.Valid {
 							for _, propError := range propResult.Errors {
 								errors = append(errors, core.ValidationError{
-									Path:       o.buildPropertyPath(propName, propError.Path),
+									Path:       o.buildPropertyPath(pathPrefix, o.buildPropertyPath(propName, propError.Path)),
 									Message:    propError.Message,
 									Code:       propError.Code,
 									Value:      propError.Value,
@@ -291,7 +296,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 			// Check additional properties
 			if !matched && !o.config.AdditionalProperties {
 				errors = append(errors, core.ValidationError{
-					Path:       "",
+					Path:       o.buildPropertyPath(pathPrefix, propName),
 					Message:    fmt.Sprintf("Additional property '%s' is not allowed", propName),
 					Code:       "additional_property",
 					Value:      propValue,
@@ -308,7 +313,7 @@ func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 			for _, dep := range dependencies {
 				if _, depExists := objectValue[dep]; !depExists {
 					errors = append(errors, core.ValidationError{
-						Path:       "",
+						Path:       o.buildPropertyPath(pathPrefix, dep),
 						Message:    fmt.Sprintf("Property '%s' requires property '%s'", propName, dep),
 						Code:       "property_dependency",
 						Value:      objectValue,
@@ -385,11 +390,14 @@ func (o *ObjectSchema) convertToMap(value any) (map[string]any, bool) {
 }
 
 // buildPropertyPath constructs the error path for nested properties.
-func (o *ObjectSchema) buildPropertyPath(propName, subPath string) string {
-	if subPath == "" {
+func (o *ObjectSchema) buildPropertyPath(prefix, propName string) string {
+	if prefix == "" {
 		return propName
 	}
-	return propName + "." + subPath
+	if propName == "" {
+		return prefix
+	}
+	return prefix + "." + propName
 }
 
 // matchesPattern checks if a property name matches a pattern.

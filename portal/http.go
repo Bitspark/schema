@@ -469,15 +469,18 @@ func (h *HTTPPortal) handleFunctionCall(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPPortal) extractFunctionName(path string) string {
 	// Extract function name from paths like "/functions/myFunc" or "/services/myService/myMethod"
-	if len(path) > 11 && path[:11] == "/functions/" {
-		return path[11:]
+	if len(path) >= 11 && path[:11] == "/functions/" {
+		functionName := path[11:]
+		return functionName
 	}
-	if len(path) > 10 && path[:10] == "/services/" {
+	if len(path) >= 10 && path[:10] == "/services/" {
 		// For services, extract "serviceName.methodName"
 		parts := splitPath(path[10:])
 		if len(parts) >= 2 {
 			return parts[0] + "." + parts[1]
 		}
+		// If we don't have enough parts, return empty string
+		return ""
 	}
 	return path
 }

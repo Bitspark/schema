@@ -57,14 +57,16 @@ func (p *TestingPortalImpl) ResolveFunction(ctx context.Context, address api.Add
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 
-	if function, exists := p.mocks[address.String()]; exists {
+	addressStr := address.String()
+
+	if function, exists := p.mocks[addressStr]; exists {
 		return function, nil
 	}
-	if function, exists := p.functions[address.String()]; exists {
+	if function, exists := p.functions[addressStr]; exists {
 		return function, nil
 	}
 
-	return nil, fmt.Errorf("function not found: %s", address.String())
+	return nil, fmt.Errorf("function not found: %s", addressStr)
 }
 
 // ResolveService resolves address to service
@@ -106,7 +108,8 @@ func (p *TestingPortalImpl) Mock(function api.Function) api.Address {
 
 	wrappedFunction := p.wrapFunctionForRecording(function)
 	address := p.generateMockAddress(function.Name())
-	p.mocks[address.String()] = wrappedFunction
+	addressStr := address.String()
+	p.mocks[addressStr] = wrappedFunction
 
 	return address
 }
