@@ -40,6 +40,13 @@ type NumberSchemaBuilder interface {
 	Max(max float64) NumberSchemaBuilder
 	Range(min, max float64) NumberSchemaBuilder
 	Example(example float64) NumberSchemaBuilder
+	Default(value float64) NumberSchemaBuilder
+
+	// Common number helpers
+	Positive() NumberSchemaBuilder
+	NonNegative() NumberSchemaBuilder
+	Percentage() NumberSchemaBuilder
+	Ratio() NumberSchemaBuilder
 }
 
 // IntegerSchemaBuilder defines the interface for building integer schemas.
@@ -51,6 +58,15 @@ type IntegerSchemaBuilder interface {
 	Max(max int64) IntegerSchemaBuilder
 	Range(min, max int64) IntegerSchemaBuilder
 	Example(example int64) IntegerSchemaBuilder
+	Default(value int64) IntegerSchemaBuilder
+
+	// Common integer helpers
+	Positive() IntegerSchemaBuilder
+	NonNegative() IntegerSchemaBuilder
+	Port() IntegerSchemaBuilder
+	Age() IntegerSchemaBuilder
+	ID() IntegerSchemaBuilder
+	Count() IntegerSchemaBuilder
 }
 
 // BooleanSchemaBuilder defines the interface for building boolean schemas.
@@ -59,6 +75,16 @@ type BooleanSchemaBuilder interface {
 	MetadataBuilder[BooleanSchemaBuilder]
 
 	Example(example bool) BooleanSchemaBuilder
+	Default(value bool) BooleanSchemaBuilder
+	AllowStringConversion() BooleanSchemaBuilder
+	CaseInsensitive() BooleanSchemaBuilder
+
+	// Common boolean helpers
+	Required() BooleanSchemaBuilder
+	Flag() BooleanSchemaBuilder
+	Switch() BooleanSchemaBuilder
+	Enabled() BooleanSchemaBuilder
+	Active() BooleanSchemaBuilder
 }
 
 // ArraySchemaBuilder defines the interface for building array schemas.
@@ -71,6 +97,21 @@ type ArraySchemaBuilder interface {
 	MaxItems(max int) ArraySchemaBuilder
 	UniqueItems() ArraySchemaBuilder
 	Example(example []any) ArraySchemaBuilder
+	Default(value []any) ArraySchemaBuilder
+	Contains(schema Schema) ArraySchemaBuilder
+	Length(length int) ArraySchemaBuilder
+	Range(min, max int) ArraySchemaBuilder
+
+	// Common array helpers
+	NonEmpty() ArraySchemaBuilder
+	StringArray() ArraySchemaBuilder
+	NumberArray() ArraySchemaBuilder
+	IntegerArray() ArraySchemaBuilder
+	BooleanArray() ArraySchemaBuilder
+	List() ArraySchemaBuilder
+	Set() ArraySchemaBuilder
+	Tuple(length int) ArraySchemaBuilder
+	LimitedList(maxItems int) ArraySchemaBuilder
 }
 
 // ObjectSchemaBuilder defines the interface for building object schemas.

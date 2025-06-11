@@ -1,0 +1,592 @@
+# Schema Core Implementation TODO
+
+This document outlines the complete roadmap for implementing a clean, API-first schema validation system in the `schema/core` package.
+
+## 🎯 Project Overview
+
+**Goal**: Complete re-implementation of the schema system using `schema/api` interfaces, providing better organization, performance, and maintainability.
+
+**Status**: ✅ Core basic types + ArraySchema implementation complete  
+**Next Phase**: ObjectSchema → Enhanced Function/Service System (Critical for Legacy Parity)  
+**Strategic Priority**: Function/Service integration is critical for migration success
+
+---
+
+## 📋 Phase 1: Core Schema Types [COMPLETED ✅]
+
+### ✅ Completed
+- [x] **StringSchema** - Full implementation with validation, builders, tests
+- [x] **StringBuilder** - Fluent builder with immutable operations
+- [x] **NumberSchema** - Complete float64 validation with constraints ✅
+- [x] **NumberBuilder** - Fluent builder with helper methods ✅
+- [x] **IntegerSchema** - Complete int64 validation with overflow handling ✅
+- [x] **IntegerBuilder** - Fluent builder with domain-specific helpers ✅
+- [x] **BooleanSchema** - Complete boolean validation with string conversion ✅
+- [x] **BooleanBuilder** - Fluent builder with conversion options ✅
+- [x] **Core Package Entry Point** - Factory functions and API exports
+- [x] **Test Infrastructure** - Comprehensive test suite structure
+- [x] **Documentation** - Package docs and usage examples
+
+#### ✅ NumberSchema Implementation [COMPLETED]
+- [x] **`schemas/number.go`** - NumberSchema with float64 validation
+  - [x] Min/Max constraints
+  - [x] Special value handling (NaN, Infinity)
+  - [x] Multi-type numeric input support (int, float32, etc.)
+  - [x] Comprehensive error reporting
+  - [x] JSON Schema generation
+  - [x] Example generation
+- [x] **`builders/number.go`** - NumberBuilder with fluent API
+  - [x] Helper methods: Positive(), NonNegative(), Percentage(), Ratio()
+  - [x] Immutable builder pattern
+- [x] **Tests** - Comprehensive test coverage
+- [x] **API Integration** - Extended api.NumberSchemaBuilder interface
+
+#### ✅ IntegerSchema Implementation [COMPLETED]
+- [x] **`schemas/integer.go`** - IntegerSchema with int64 validation
+  - [x] Min/Max constraints with proper overflow handling
+  - [x] All integer types support (int8 through uint64)
+  - [x] Float-to-integer validation (whole numbers only)
+  - [x] Overflow/underflow protection
+  - [x] JSON Schema generation
+- [x] **`builders/integer.go`** - IntegerBuilder with fluent API
+  - [x] Helper methods: Port(), Age(), ID(), Count(), Positive(), NonNegative()
+  - [x] Domain-specific validation patterns
+- [x] **Tests** - Edge cases, overflow, underflow handling
+- [x] **API Integration** - Extended api.IntegerSchemaBuilder interface
+
+#### ✅ BooleanSchema Implementation [COMPLETED]
+- [x] **`schemas/boolean.go`** - BooleanSchema implementation
+  - [x] Simple true/false validation
+  - [x] String-to-bool conversion ("true", "false", "1", "0", "yes", "no", etc.)
+  - [x] Case-insensitive validation option
+  - [x] Flexible conversion with fallback to strconv.ParseBool
+- [x] **`builders/boolean.go`** - BooleanBuilder
+  - [x] Helper methods: Flag(), Switch(), Enabled(), Active(), Required()
+  - [x] String conversion configuration
+- [x] **Tests** - Type coercion and edge cases
+- [x] **API Integration** - Extended api.BooleanSchemaBuilder interface
+
+---
+
+## 📋 Phase 2: Complex Schema Types ⚠️ **IN PROGRESS**
+
+### ArraySchema Implementation ✅ **COMPLETED**
+- [x] **`schemas/array.go`** - ArraySchema with slice validation
+  - [x] Items schema validation (homogeneous arrays)
+  - [x] Min/Max items constraints
+  - [x] Unique items constraint
+  - [x] Contains schema validation
+  - [x] Additional items handling
+  - [x] Nested array support
+- [x] **`builders/array.go`** - ArrayBuilder with fluent API
+  - [x] `.Items(schema)` - Set item schema
+  - [x] `.MinItems(n)` - Minimum items
+  - [x] `.MaxItems(n)` - Maximum items
+  - [x] `.UniqueItems()` - Ensure uniqueness
+  - [x] `.Contains(schema)` - Must contain item matching schema
+  - [x] Additional helpers: `.Range()`, `.Length()`, `.NonEmpty()`, `.Set()`, `.Tuple()`, etc.
+- [x] **Tests** - Comprehensive tests including nested arrays and performance
+- [x] **Examples** - Complete array usage patterns and examples
+- [x] **API Integration** - Extended api.ArraySchemaBuilder interface with helper methods
+
+### ObjectSchema Implementation ✅ **NEXT**
+- [ ] **`schemas/object.go`** - ObjectSchema with struct/map validation
+  - [ ] Properties validation with nested schemas
+  - [ ] Required properties enforcement
+  - [ ] Additional properties handling
+  - [ ] Property dependencies
+  - [ ] Pattern properties
+  - [ ] Min/Max properties constraints
+- [ ] **`builders/object.go`** - ObjectBuilder with fluent API
+  - [ ] `.Property(name, schema)` - Add property
+  - [ ] `.Required(names...)` - Mark properties as required
+  - [ ] `.AdditionalProperties(bool/schema)` - Control additional properties
+  - [ ] `.Dependencies(map)` - Property dependencies
+  - [ ] `.PatternProperties(map)` - Pattern-based properties
+- [ ] **Tests** - Complex nested objects, performance
+- [ ] **Examples** - REST API schemas, configuration validation
+
+### UnionSchema Implementation
+- [ ] **`schemas/union.go`** - UnionSchema with multiple type validation
+  - [ ] One-of validation (exactly one schema matches)
+  - [ ] Any-of validation (at least one schema matches)  
+  - [ ] All-of validation (all schemas must match)
+  - [ ] Discriminator support for efficient matching
+  - [ ] Error aggregation from all attempted schemas
+- [ ] **`builders/union.go`** - UnionBuilder with fluent API
+  - [ ] `.OneOf(schemas...)` - Exactly one must match
+  - [ ] `.AnyOf(schemas...)` - At least one must match
+  - [ ] `.AllOf(schemas...)` - All must match
+  - [ ] `.Discriminator(property)` - Use property for efficient matching
+- [ ] **Tests** - Complex union scenarios, error reporting
+- [ ] **Examples** - API response schemas, polymorphic data
+
+---
+
+## 📋 Phase 3: Enhanced Function & Service System ⚠️ **CRITICAL FOR LEGACY PARITY**
+
+### Enhanced FunctionSchema Implementation ⚠️ **EXPANDED SCOPE**
+- [ ] **`schemas/function.go`** - Enhanced FunctionSchema with API-first design
+  - [ ] Full input/output parameter validation using core schema types
+  - [ ] Error schema support with structured error handling
+  - [ ] Function metadata with rich documentation support
+  - [ ] JSON Schema generation aligned with OpenAPI 3.1
+  - [ ] Example generation for function documentation
+  - [ ] Integration with existing function registry patterns
+- [ ] **`builders/function.go`** - FunctionBuilder with fluent API
+  - [ ] `.Input(name, schema)` - Add input parameter with schema
+  - [ ] `.Output(schema)` - Set output schema
+  - [ ] `.Error(schema)` - Set error schema
+  - [ ] `.Required(params...)` - Mark parameters as required
+  - [ ] `.Description()`, `.Name()`, `.Tags()` - Metadata builders
+  - [ ] `.Example(input, output)` - Add usage examples
+- [ ] **Tests** - Comprehensive function schema validation
+- [ ] **Examples** - Complete function definition patterns
+
+### ServiceSchema Implementation ⚠️ **NEW - CRITICAL MISSING FEATURE**
+- [ ] **`schemas/service.go`** - ServiceSchema for service contract validation
+  - [ ] Service method discovery and validation
+  - [ ] Method signature consistency checking
+  - [ ] Service-level metadata and documentation
+  - [ ] Service versioning support
+  - [ ] Integration with FunctionSchema for method validation
+- [ ] **`builders/service.go`** - ServiceBuilder with fluent API
+  - [ ] `.Method(name, functionSchema)` - Add service method
+  - [ ] `.FromStruct(instance)` - Generate from struct with reflection
+  - [ ] `.Version(version)` - Set service API version
+  - [ ] `.Description()`, `.Tags()` - Service-level metadata
+  - [ ] `.Endpoint(path, method)` - HTTP endpoint mapping
+- [ ] **Tests** - Service contract validation and reflection
+- [ ] **Examples** - Service definition and usage patterns
+
+### NullSchema Implementation
+- [ ] **`schemas/null.go`** - Null/nil value validation
+- [ ] **`builders/null.go`** - NullBuilder
+- [ ] **Tests** - Null value handling
+- [ ] **Examples** - Optional value patterns
+
+---
+
+## 📋 Phase 4: Function Registry & Portal System ⚠️ **NEW CRITICAL PHASE**
+
+### Function Registry System ⚠️ **MISSING FROM ORIGINAL ROADMAP**
+- [ ] **`registry/function_registry.go`** - Core function registry
+  - [ ] `api.FunctionRegistry` interface definition
+  - [ ] Named function storage with address-based access
+  - [ ] Function lifecycle management (register, execute, remove)
+  - [ ] Thread-safe concurrent access
+  - [ ] Function discovery and listing
+- [ ] **`registry/service_registry.go`** - Service registry system
+  - [ ] Service discovery and registration
+  - [ ] Method-level function registration
+  - [ ] Service instance lifecycle management
+  - [ ] Service metadata aggregation
+- [ ] **Tests** - Registry operations and concurrency
+- [ ] **Examples** - Function and service registration patterns
+
+### Portal System Integration ⚠️ **MISSING FROM ORIGINAL ROADMAP**
+- [ ] **`portals/base.go`** - Portal interface and base implementation
+  - [ ] `api.Portal[T]` interface aligned with API design
+  - [ ] Address generation strategy
+  - [ ] Function transformation and wrapping
+  - [ ] Error handling and result transformation
+- [ ] **`portals/local.go`** - Local in-process execution portal
+- [ ] **`portals/http.go`** - HTTP-based function execution portal
+- [ ] **`portals/websocket.go`** - WebSocket function execution portal
+- [ ] **`portals/testing.go`** - Testing portal for unit tests
+- [ ] **Tests** - Multi-transport portal execution
+- [ ] **Examples** - Portal setup and function execution
+
+---
+
+## 📋 Phase 5: Service Reflection & Analysis ⚠️ **NEW CRITICAL PHASE**
+
+### Service Introspection ⚠️ **MISSING FROM ORIGINAL ROADMAP**
+- [ ] **`reflection/service_reflector.go`** - API-first service reflection
+  - [ ] Struct method discovery with filtering
+  - [ ] Automatic function schema generation from methods
+  - [ ] Service contract validation
+  - [ ] Performance-optimized method binding
+- [ ] **`reflection/method_binding.go`** - Method-to-function conversion
+  - [ ] Type-safe method binding with proper receiver handling
+  - [ ] Context propagation for service calls
+  - [ ] Error handling and panic recovery
+  - [ ] Input/output transformation
+- [ ] **Tests** - Service reflection and method binding
+- [ ] **Examples** - Automatic service schema generation
+
+### Service Analysis ⚠️ **NEW FEATURE**
+- [ ] **`analysis/service_analyzer.go`** - Service contract analysis
+  - [ ] Service consistency validation
+  - [ ] Breaking change detection
+  - [ ] API compatibility checking
+  - [ ] Service dependency analysis
+- [ ] **Tests** - Service analysis and compatibility
+- [ ] **Examples** - Service evolution and versioning
+
+---
+
+## 📋 Phase 6: Advanced Function Features ⚠️ **NEW PHASE**
+
+### Function Composition
+- [ ] **`composition/pipeline.go`** - Function pipeline composition
+  - [ ] Type-safe function chaining
+  - [ ] Pipeline schema validation
+  - [ ] Error propagation handling
+  - [ ] Parallel execution support
+- [ ] **Tests** - Function composition and pipelines
+- [ ] **Examples** - Complex function workflows
+
+### Function Validation & Middleware
+- [ ] **`validation/function_validator.go`** - Function contract validation
+  - [ ] Input parameter validation using core schemas
+  - [ ] Output validation with type checking
+  - [ ] Function signature compatibility checking
+  - [ ] Runtime validation integration
+- [ ] **`middleware/function_middleware.go`** - Function execution middleware
+  - [ ] Authentication and authorization
+  - [ ] Logging and metrics collection
+  - [ ] Rate limiting and throttling
+  - [ ] Caching and memoization
+- [ ] **Tests** - Function validation and middleware
+- [ ] **Examples** - Function security and performance patterns
+
+---
+
+## 📋 Phase 6A: Builder System Enhancement ⚠️ **MOVED FROM ORIGINAL PHASE 4**
+
+### Factory Functions
+- [ ] **`builders/factory.go`** - Centralized factory functions
+  - [x] `NewString()` - ✅ Already implemented
+  - [x] `NewNumber()` - ✅ Number schema builder
+  - [x] `NewInteger()` - ✅ Integer schema builder  
+  - [x] `NewBoolean()` - ✅ Boolean schema builder
+  - [x] `NewArray()` - ✅ Array schema builder
+  - [ ] `NewObject()` - Object schema builder
+  - [ ] `NewUnion()` - Union schema builder
+  - [ ] `NewFunction()` - Function schema builder
+  - [ ] `NewService()` - Service schema builder
+  - [ ] `NewNull()` - Null schema builder
+
+### Builder Utilities
+- [ ] **Common Builder Methods** - Ensure all builders support:
+  - [ ] `.Description(string)` - Set description
+  - [ ] `.Name(string)` - Set name
+  - [ ] `.Tag(string)` - Add tag
+  - [ ] `.Example(any)` - Add example
+  - [ ] `.Default(any)` - Set default value
+  - [ ] `.Deprecated()` - Mark as deprecated
+- [ ] **Builder Validation** - Validate builder state before `.Build()`
+- [ ] **Builder Cloning** - Ensure proper immutability in all builders
+
+---
+
+## 📋 Phase 7: Visitor Pattern Implementation
+
+### Core Visitor Infrastructure
+- [ ] **`visitors/base.go`** - BaseVisitor with default implementations
+  - [ ] Default no-op implementations for all Visit methods
+  - [ ] Helper methods for common traversal patterns
+  - [ ] Error handling and aggregation
+- [ ] **`visitors/traversal.go`** - Deep traversal visitor
+  - [ ] Pre-order and post-order traversal
+  - [ ] Cycle detection for recursive schemas
+  - [ ] Path tracking during traversal
+  - [ ] Conditional traversal (skip subtrees)
+
+### Specialized Visitors
+- [ ] **`visitors/collector.go`** - Schema collection visitors
+  - [ ] `StringCollector` - Collect all string schemas
+  - [ ] `SchemaCollector` - Collect schemas by type
+  - [ ] `PropertyCollector` - Collect object properties
+  - [ ] `DependencyCollector` - Analyze schema dependencies
+- [ ] **`visitors/validator.go`** - Advanced validation visitors
+  - [ ] `SchemaValidator` - Validate schema definitions
+  - [ ] `ConsistencyChecker` - Check schema consistency
+  - [ ] `CompatibilityChecker` - Check schema compatibility
+- [ ] **`visitors/transformer.go`** - Schema transformation visitors
+  - [ ] `SchemaSimplifier` - Simplify complex schemas
+  - [ ] `SchemaNormalizer` - Normalize schema representations
+  - [ ] `SchemaOptimizer` - Optimize schema performance
+
+### Visitor Tests and Examples
+- [ ] **`tests/visitors_test.go`** - Comprehensive visitor tests
+- [ ] **`examples/visitors.go`** - Visitor pattern examples
+
+---
+
+## 📋 Phase 8: Generic Schema Patterns
+
+### Type-Safe Generic Schemas
+- [ ] **`generics/list.go`** - `List[T]` implementation
+  - [ ] Type-safe list validation
+  - [ ] Integration with reflection for struct types
+  - [ ] Generic constraints and validation
+- [ ] **`generics/optional.go`** - `Optional[T]` implementation
+  - [ ] Nullable type handling
+  - [ ] Default value support
+  - [ ] Chaining with other generic types
+- [ ] **`generics/result.go`** - `Result[T, E]` implementation
+  - [ ] Success/error type validation
+  - [ ] Union-based implementation
+  - [ ] Integration with function schemas
+- [ ] **`generics/map.go`** - `Map[K, V]` implementation
+  - [ ] Key and value type validation
+  - [ ] Map constraint validation
+  - [ ] Performance optimization for large maps
+- [ ] **`generics/union.go`** - `Union[T1, T2, ...]` implementations
+  - [ ] Generic union types with compile-time safety
+  - [ ] Variadic generic type support
+  - [ ] Discriminated union support
+
+### Generic Builder Integration
+- [ ] **Generic Builder Methods** - Extend builders with generic support
+- [ ] **Type Inference** - Automatic schema generation from Go types
+- [ ] **Struct Tag Support** - Generate schemas from struct tags
+
+### Generic Tests and Examples
+- [ ] **`tests/generics_test.go`** - Generic pattern tests
+- [ ] **`examples/generics.go`** - Generic usage examples
+
+---
+
+## 📋 Phase 8A: Advanced Schema Features ⚠️ **NEW PHASE FOR LEGACY PARITY**
+
+### Schema Registry Integration
+- [ ] **Registry Interface** - Clean interface for schema storage/retrieval
+- [ ] **Versioning Support** - Schema version management
+- [ ] **Dependency Resolution** - Resolve schema references
+- [ ] **Caching Layer** - Efficient schema caching
+
+### Serialization Support
+- [ ] **JSON Schema Export** - ✅ Basic implementation complete for StringSchema
+- [ ] **OpenAPI Integration** - Generate OpenAPI specifications
+- [ ] **Proto Schema Export** - Generate Protocol Buffer schemas
+- [ ] **Avro Schema Export** - Generate Apache Avro schemas
+
+### Plugin System
+- [ ] **Validator Plugins** - Extensible validation system
+- [ ] **Format Plugins** - Custom format validators
+- [ ] **Transform Plugins** - Schema transformation plugins
+- [ ] **Registry Plugins** - Custom schema storage backends
+
+---
+
+## 📋 Phase 9: Enhanced Validation System
+
+### Format Validation
+- [ ] **`validation/formats.go`** - Comprehensive format validators
+  - [ ] **String Formats**: email, uuid, url, uri, hostname, ipv4, ipv6, date, time, datetime
+  - [ ] **Number Formats**: currency, percentage, scientific notation
+  - [ ] **Custom Formats**: extensible format registration system
+  - [ ] **Performance**: Cached compiled regexes and optimized validators
+
+### Custom Validation Rules
+- [ ] **`validation/rules.go`** - Custom validation rule system
+  - [ ] Rule interface definition
+  - [ ] Rule composition and chaining
+  - [ ] Conditional validation rules
+  - [ ] Cross-field validation rules
+  - [ ] Async validation support
+
+### Validation Context
+- [ ] **`validation/context.go`** - Rich validation context
+  - [ ] Path tracking with detailed location information
+  - [ ] Validation state management
+  - [ ] Performance metrics collection
+  - [ ] Cancellation support for long-running validations
+
+### Enhanced Error Reporting
+- [ ] **`validation/errors.go`** - Advanced error system
+  - [ ] Structured error hierarchies
+  - [ ] Error localization support
+  - [ ] Suggested fixes and corrections
+  - [ ] Error aggregation and filtering
+  - [ ] JSON/YAML error serialization
+
+---
+
+## 📋 Phase 10: Performance and Optimization
+
+### Validation Performance
+- [ ] **Caching System** - Cache compiled validators and patterns
+- [ ] **Early Termination** - Stop validation on first error (configurable)
+- [ ] **Parallel Validation** - Validate independent schemas concurrently
+- [ ] **Memory Optimization** - Reduce allocations in hot paths
+- [ ] **Benchmarking** - Comprehensive performance benchmarks
+
+### Schema Compilation
+- [ ] **Schema Compilation** - Pre-compile schemas for faster validation
+- [ ] **Optimization Passes** - Optimize schema structure for performance
+- [ ] **Code Generation** - Generate specialized validators for common patterns
+
+### Memory Management
+- [ ] **Object Pooling** - Pool frequently allocated objects
+- [ ] **Copy-on-Write** - Efficient schema cloning
+- [ ] **Weak References** - Prevent memory leaks in complex schema graphs
+
+---
+
+## 📋 Phase 11: Testing and Quality Assurance
+
+### Comprehensive Test Suite
+- [ ] **Unit Tests** - 95%+ coverage for all components
+  - [x] ✅ String schema tests complete
+  - [x] ✅ Number schema tests complete
+  - [x] ✅ Integer schema tests complete  
+  - [x] ✅ Boolean schema tests complete
+  - [x] ✅ Array schema tests complete
+  - [ ] Object schema tests
+  - [ ] Union schema tests
+  - [ ] Function schema tests
+
+### Integration Tests
+- [ ] **`tests/integration_test.go`** - End-to-end integration tests
+  - [ ] Complex nested schema validation
+  - [ ] Performance tests with large datasets
+  - [ ] Memory usage profiling
+  - [ ] Concurrency safety tests
+
+### Property-Based Testing
+- [ ] **Property Tests** - Use property-based testing for validation logic
+  - [ ] Generate random valid/invalid data
+  - [ ] Test schema invariants
+  - [ ] Fuzzing for edge cases
+
+### Compatibility Tests
+- [ ] **Legacy Compatibility** - Ensure API compatibility with legacy schemas
+- [ ] **Cross-Version Tests** - Test schema evolution and migration
+- [ ] **JSON Schema Compatibility** - Validate against JSON Schema test suite
+
+---
+
+## 📋 Phase 12: Documentation and Examples
+
+### Comprehensive Documentation
+- [ ] **API Documentation** - Complete godoc documentation for all public APIs
+- [ ] **Usage Guides** - Step-by-step guides for common use cases
+- [ ] **Migration Guide** - Detailed migration from legacy schema package
+- [ ] **Performance Guide** - Best practices for high-performance validation
+
+### Examples and Tutorials
+- [ ] **`examples/advanced.go`** - Advanced schema composition patterns
+- [ ] **`examples/validation.go`** - Validation customization examples
+- [ ] **`examples/migration.go`** - Migration examples from legacy schemas
+- [ ] **Tutorial Series** - Multi-part tutorial covering all features
+
+### Reference Materials
+- [ ] **JSON Schema Mapping** - Complete mapping to JSON Schema specification
+- [ ] **API Reference** - Comprehensive API reference with examples
+- [ ] **Error Code Reference** - Complete list of validation error codes
+
+---
+
+## 📋 Phase 13: Production Readiness ⚠️ **RESTORED FROM ORIGINAL**
+
+### Monitoring and Observability
+- [ ] **Metrics Collection** - Validation performance metrics
+- [ ] **Logging Integration** - Structured logging for debugging
+- [ ] **Tracing Support** - Distributed tracing for complex validations
+- [ ] **Health Checks** - Schema system health monitoring
+
+### Configuration Management
+- [ ] **Configuration System** - Centralized configuration management
+- [ ] **Environment-Specific Settings** - Different settings per environment
+- [ ] **Runtime Configuration** - Dynamic configuration updates
+
+### Security Considerations
+- [ ] **Input Sanitization** - Prevent injection attacks through schemas
+- [ ] **Resource Limits** - Prevent DoS through complex schemas
+- [ ] **Access Control** - Schema access and modification controls
+
+---
+
+## 📋 Phase 14: Migration Tools and Strategy
+
+### Migration Utilities
+- [ ] **`migration/analyzer.go`** - Analyze existing schema usage
+  - [ ] Scan codebase for schema usage patterns
+  - [ ] Identify compatibility issues
+  - [ ] Generate migration recommendations
+
+### Automated Migration
+- [ ] **`migration/converter.go`** - Automated schema conversion
+  - [ ] Convert legacy schemas to core schemas
+  - [ ] Preserve behavior and validation rules
+  - [ ] Generate conversion reports
+
+### Compatibility Layer
+- [ ] **Adapter Pattern** - Wrap legacy schemas with API interfaces
+- [ ] **Bridge Implementation** - Allow interoperability between old and new
+- [ ] **Gradual Migration** - Support mixed usage during transition
+
+### Migration Testing
+- [ ] **Behavior Preservation Tests** - Ensure migrations preserve behavior
+- [ ] **Performance Comparison** - Compare old vs new performance
+- [ ] **Feature Parity Tests** - Ensure no features are lost
+
+---
+
+## 🎯 Success Metrics
+
+### Performance Targets
+- [ ] **20% faster** than legacy implementation
+- [ ] **50% lower memory** usage for common schemas
+- [ ] **Sub-millisecond** validation for simple schemas
+- [ ] **Linear scaling** with schema complexity
+
+### Quality Targets
+- [ ] **95% test coverage** across all components
+- [ ] **Zero breaking changes** during migration
+- [ ] **100% API compatibility** with schema/api interfaces
+- [ ] **Complete feature parity** with legacy implementation
+
+### Adoption Targets
+- [ ] **Migration path** for all legacy schemas
+- [ ] **Comprehensive documentation** for all features
+- [ ] **Developer-friendly** APIs and error messages
+- [ ] **Production-ready** stability and performance
+
+---
+
+## 🚦 Implementation Priority ⚠️ **UPDATED FOR FUNCTION/SERVICE INTEGRATION**
+
+### High Priority (Next Sprint) ⚠️ **CRITICAL PATH**
+1. **ObjectSchema** - Complete basic schema types foundation ✅ **NEXT**
+2. **Enhanced FunctionSchema** - Bring function schemas to feature parity with legacy
+3. **ServiceSchema Implementation** - Add missing service schema support (critical gap)
+
+### Medium Priority (Next Month) ⚠️ **LEGACY PARITY REQUIREMENTS**  
+1. **Function Registry System** - Core function registration and discovery
+2. **Portal System** - Multi-transport function execution (HTTP, WebSocket, Local)
+3. **Service Reflection** - Automatic service schema generation from structs
+4. **UnionSchema** - Multi-type validation (OneOf, AnyOf, AllOf)
+
+### Medium-High Priority (Following Month) ⚠️ **ADVANCED FEATURES**
+1. **Function Composition** - Pipeline and chaining support
+2. **Service Analysis** - Contract validation and compatibility checking
+3. **Function Middleware** - Authentication, logging, rate limiting
+4. **Basic Visitor Infrastructure** - Enable schema introspection and traversal
+
+### Low Priority (Future Releases)
+1. **Advanced Serialization** - OpenAPI, Proto, Avro schema export
+2. **Plugin System** - Extensible validation and transformation
+3. **Performance Optimization** - After functional parity is achieved
+4. **Generic Patterns** - Type-safe generic schemas
+
+---
+
+## 📝 Notes
+
+- **Maintain API Compatibility**: All implementations must use `schema/api` interfaces
+- **Preserve Immutability**: All operations should return new instances
+- **Comprehensive Testing**: Each component needs thorough test coverage
+- **Clear Documentation**: All public APIs need examples and documentation
+- **Performance Focus**: Keep performance in mind during implementation
+- **Migration First**: Ensure easy migration from legacy schemas
+
+---
+
+**Last Updated**: January 2025  
+**Status**: Core basic types + ArraySchema complete ✅ - Ready for ObjectSchema, then critical Function/Service integration  
+**Critical Gap**: Function/Service system integration required for legacy parity - see FNCSVC_INTEGRATION.md 
