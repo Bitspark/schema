@@ -1,9 +1,11 @@
-package schema
+package generator
 
 import (
 	"math/rand"
 	"strconv"
 	"time"
+
+	"defs.dev/schema"
 )
 
 // TypeWeights controls the probability distribution of generated schema types
@@ -241,13 +243,13 @@ func NewComplexSchemaGenerator() *SchemaGenerator {
 }
 
 // Generate creates a random schema following the generator's configuration
-func (sg *SchemaGenerator) Generate() Schema {
+func (sg *SchemaGenerator) Generate() schema.Schema {
 	return sg.generateWithDepth(0)
 }
 
 // GenerateMany creates multiple random schemas
-func (sg *SchemaGenerator) GenerateMany(count int) []Schema {
-	results := make([]Schema, count)
+func (sg *SchemaGenerator) GenerateMany(count int) []schema.Schema {
+	results := make([]schema.Schema, count)
 	for i := 0; i < count; i++ {
 		results[i] = sg.Generate()
 	}
@@ -255,7 +257,7 @@ func (sg *SchemaGenerator) GenerateMany(count int) []Schema {
 }
 
 // generateWithDepth is the internal method that tracks recursion depth
-func (sg *SchemaGenerator) generateWithDepth(depth int) Schema {
+func (sg *SchemaGenerator) generateWithDepth(depth int) schema.Schema {
 	// Prevent infinite recursion
 	if depth > sg.config.MaxDepth {
 		return sg.generatePrimitiveSchema()
@@ -266,7 +268,7 @@ func (sg *SchemaGenerator) generateWithDepth(depth int) Schema {
 }
 
 // selectSchemaType chooses a schema type based on weights and complexity bias
-func (sg *SchemaGenerator) selectSchemaType(depth int) SchemaType {
+func (sg *SchemaGenerator) selectSchemaType(depth int) schema.SchemaType {
 	weights := sg.config.TypeWeights
 
 	// Bias toward simpler types at greater depths
@@ -283,68 +285,68 @@ func (sg *SchemaGenerator) selectSchemaType(depth int) SchemaType {
 		weights.Object + weights.Array + weights.Union + weights.Optional + weights.Null + weights.Any
 
 	if totalWeight <= 0 {
-		return TypeString // Fallback
+		return schema.TypeString // Fallback
 	}
 
 	r := sg.rng.Float64() * totalWeight
 	current := 0.0
 
 	if current += weights.String; r < current {
-		return TypeString
+		return schema.TypeString
 	}
 	if current += weights.Number; r < current {
-		return TypeNumber
+		return schema.TypeNumber
 	}
 	if current += weights.Integer; r < current {
-		return TypeInteger
+		return schema.TypeInteger
 	}
 	if current += weights.Boolean; r < current {
-		return TypeBoolean
+		return schema.TypeBoolean
 	}
 	if current += weights.Object; r < current {
-		return TypeObject
+		return schema.TypeObject
 	}
 	if current += weights.Array; r < current {
-		return TypeArray
+		return schema.TypeArray
 	}
 	if current += weights.Union; r < current {
-		return TypeUnion
+		return schema.TypeUnion
 	}
 	if current += weights.Optional; r < current {
-		return TypeOptional
+		return schema.TypeOptional
 	}
 	if current += weights.Null; r < current {
-		return TypeNull
+		return schema.TypeNull
 	}
 	if current += weights.Any; r < current {
-		return TypeAny
+		return schema.TypeAny
 	}
 
-	return TypeString // Fallback
+	return schema.TypeString // Fallback
 }
 
 // generateSchemaOfType creates a schema of the specified type
-func (sg *SchemaGenerator) generateSchemaOfType(schemaType SchemaType, depth int) Schema {
+func (sg *SchemaGenerator) generateSchemaOfType(schemaType schema.SchemaType, depth int) schema.Schema {
 	switch schemaType {
-	case TypeString:
+	case schema.TypeString:
 		return sg.generateStringSchema()
-	case TypeNumber:
+	case schema.TypeNumber:
 		return sg.generateNumberSchema()
-	case TypeInteger:
+	case schema.TypeInteger:
 		return sg.generateIntegerSchema()
-	case TypeBoolean:
+	case schema.TypeBoolean:
 		return sg.generateBooleanSchema()
-	case TypeObject:
+	case schema.TypeObject:
 		return sg.generateObjectSchema(depth)
-	case TypeArray:
+	case schema.TypeArray:
 		return sg.generateArraySchema(depth)
-	case TypeUnion:
+	case schema.TypeUnion:
 		return sg.generateUnionSchema(depth)
-	case TypeOptional:
+	case schema.TypeOptional:
 		return sg.generateOptionalSchema(depth)
-	case TypeNull:
+	case schema.TypeNull:
 		return sg.generateNullSchema()
-	case TypeAny:
+	case schema.TypeAny:
 		return sg.generateAnySchema()
 	default:
 		return sg.generateStringSchema()
@@ -352,15 +354,15 @@ func (sg *SchemaGenerator) generateSchemaOfType(schemaType SchemaType, depth int
 }
 
 // generatePrimitiveSchema generates a simple primitive schema (used at max depth)
-func (sg *SchemaGenerator) generatePrimitiveSchema() Schema {
-	primitives := []SchemaType{TypeString, TypeNumber, TypeInteger, TypeBoolean}
+func (sg *SchemaGenerator) generatePrimitiveSchema() schema.Schema {
+	primitives := []schema.SchemaType{schema.TypeString, schema.TypeNumber, schema.TypeInteger, schema.TypeBoolean}
 	chosen := primitives[sg.rng.Intn(len(primitives))]
 	return sg.generateSchemaOfType(chosen, 0)
 }
 
 // generateStringSchema creates a random string schema
-func (sg *SchemaGenerator) generateStringSchema() Schema {
-	builder := String()
+func (sg *SchemaGenerator) generateStringSchema() schema.Schema {
+	builder := schema.NewString()
 
 	// Only add one type of constraint to avoid conflicts
 	constraintType := sg.rng.Intn(4)
@@ -403,8 +405,8 @@ func (sg *SchemaGenerator) generateStringSchema() Schema {
 }
 
 // generateNumberSchema creates a random number schema
-func (sg *SchemaGenerator) generateNumberSchema() Schema {
-	builder := Number()
+func (sg *SchemaGenerator) generateNumberSchema() schema.Schema {
+	builder := schema.NewNumber()
 
 	// Generate constraints
 	if sg.shouldGenerateConstraint() {
@@ -418,8 +420,8 @@ func (sg *SchemaGenerator) generateNumberSchema() Schema {
 }
 
 // generateIntegerSchema creates a random integer schema
-func (sg *SchemaGenerator) generateIntegerSchema() Schema {
-	builder := Integer()
+func (sg *SchemaGenerator) generateIntegerSchema() schema.Schema {
+	builder := schema.NewInteger()
 
 	// Generate constraints
 	if sg.shouldGenerateConstraint() {
@@ -433,8 +435,8 @@ func (sg *SchemaGenerator) generateIntegerSchema() Schema {
 }
 
 // generateBooleanSchema creates a random boolean schema
-func (sg *SchemaGenerator) generateBooleanSchema() Schema {
-	builder := Boolean()
+func (sg *SchemaGenerator) generateBooleanSchema() schema.Schema {
+	builder := schema.NewBoolean()
 
 	// Add metadata
 	sg.addMetadataToBooleanBuilder(builder)
@@ -443,8 +445,8 @@ func (sg *SchemaGenerator) generateBooleanSchema() Schema {
 }
 
 // generateObjectSchema creates a random object schema
-func (sg *SchemaGenerator) generateObjectSchema(depth int) Schema {
-	builder := Object()
+func (sg *SchemaGenerator) generateObjectSchema(depth int) schema.Schema {
+	builder := schema.NewObject()
 
 	// Generate properties
 	propCount := sg.config.MinProperties + sg.rng.Intn(sg.config.MaxProperties-sg.config.MinProperties+1)
@@ -484,9 +486,9 @@ func (sg *SchemaGenerator) generateObjectSchema(depth int) Schema {
 }
 
 // generateArraySchema creates a random array schema
-func (sg *SchemaGenerator) generateArraySchema(depth int) Schema {
+func (sg *SchemaGenerator) generateArraySchema(depth int) schema.Schema {
 	itemSchema := sg.generateWithDepth(depth + 1)
-	builder := Array().Items(itemSchema)
+	builder := schema.NewArray().Items(itemSchema)
 
 	// Generate constraints
 	if sg.shouldGenerateConstraint() {
@@ -505,14 +507,14 @@ func (sg *SchemaGenerator) generateArraySchema(depth int) Schema {
 }
 
 // generateUnionSchema creates a random union schema
-func (sg *SchemaGenerator) generateUnionSchema(depth int) Schema {
+func (sg *SchemaGenerator) generateUnionSchema(depth int) schema.Schema {
 	// Reduce union complexity to avoid validation issues
 	maxTypes := sg.config.UnionMaxTypes - 1
 	if maxTypes > 2 {
 		maxTypes = 2 // Limit to max 3 total types
 	}
 	typeCount := 2 + sg.rng.Intn(maxTypes)
-	subSchemas := make([]Schema, typeCount)
+	subSchemas := make([]schema.Schema, typeCount)
 
 	// Generate simpler schemas for unions to improve compatibility
 	for i := 0; i < typeCount; i++ {
@@ -529,18 +531,18 @@ func (sg *SchemaGenerator) generateUnionSchema(depth int) Schema {
 }
 
 // generateOptionalSchema creates a random optional schema
-func (sg *SchemaGenerator) generateOptionalSchema(depth int) Schema {
+func (sg *SchemaGenerator) generateOptionalSchema(depth int) schema.Schema {
 	innerSchema := sg.generateWithDepth(depth + 1)
 	return sg.createOptionalSchema(innerSchema)
 }
 
 // generateNullSchema creates a null schema
-func (sg *SchemaGenerator) generateNullSchema() Schema {
+func (sg *SchemaGenerator) generateNullSchema() schema.Schema {
 	return sg.createNullSchema()
 }
 
 // generateAnySchema creates an any schema
-func (sg *SchemaGenerator) generateAnySchema() Schema {
+func (sg *SchemaGenerator) generateAnySchema() schema.Schema {
 	return sg.createAnySchema()
 }
 
@@ -554,7 +556,7 @@ func (sg *SchemaGenerator) shouldGenerateConstraint() bool {
 // Helper methods for adding constraints and metadata to builders
 
 // addMetadataToStringBuilder adds metadata to a string builder
-func (sg *SchemaGenerator) addMetadataToStringBuilder(builder *StringBuilder) {
+func (sg *SchemaGenerator) addMetadataToStringBuilder(builder *schema.StringBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -572,7 +574,7 @@ func (sg *SchemaGenerator) addMetadataToStringBuilder(builder *StringBuilder) {
 }
 
 // addMetadataToNumberBuilder adds metadata to a number builder
-func (sg *SchemaGenerator) addMetadataToNumberBuilder(builder *NumberBuilder) {
+func (sg *SchemaGenerator) addMetadataToNumberBuilder(builder *schema.NumberBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -590,7 +592,7 @@ func (sg *SchemaGenerator) addMetadataToNumberBuilder(builder *NumberBuilder) {
 }
 
 // addMetadataToIntegerBuilder adds metadata to an integer builder
-func (sg *SchemaGenerator) addMetadataToIntegerBuilder(builder *IntegerBuilder) {
+func (sg *SchemaGenerator) addMetadataToIntegerBuilder(builder *schema.IntegerBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -608,7 +610,7 @@ func (sg *SchemaGenerator) addMetadataToIntegerBuilder(builder *IntegerBuilder) 
 }
 
 // addMetadataToBooleanBuilder adds metadata to a boolean builder
-func (sg *SchemaGenerator) addMetadataToBooleanBuilder(builder *BooleanBuilder) {
+func (sg *SchemaGenerator) addMetadataToBooleanBuilder(builder *schema.BooleanBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -626,7 +628,7 @@ func (sg *SchemaGenerator) addMetadataToBooleanBuilder(builder *BooleanBuilder) 
 }
 
 // addMetadataToObjectBuilder adds metadata to an object builder
-func (sg *SchemaGenerator) addMetadataToObjectBuilder(builder *ObjectBuilder) {
+func (sg *SchemaGenerator) addMetadataToObjectBuilder(builder *schema.ObjectBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -639,7 +641,7 @@ func (sg *SchemaGenerator) addMetadataToObjectBuilder(builder *ObjectBuilder) {
 }
 
 // addMetadataToArrayBuilder adds metadata to an array builder
-func (sg *SchemaGenerator) addMetadataToArrayBuilder(builder *ArrayBuilder) {
+func (sg *SchemaGenerator) addMetadataToArrayBuilder(builder *schema.ArrayBuilder) {
 	if sg.config.GenerateTitles && sg.rng.Float64() < 0.5 {
 		title := sg.titles[sg.rng.Intn(len(sg.titles))]
 		builder.Name(title)
@@ -652,7 +654,7 @@ func (sg *SchemaGenerator) addMetadataToArrayBuilder(builder *ArrayBuilder) {
 }
 
 // addStringConstraintsToBuilder adds min/max length constraints to string builders
-func (sg *SchemaGenerator) addStringConstraintsToBuilder(builder *StringBuilder) {
+func (sg *SchemaGenerator) addStringConstraintsToBuilder(builder *schema.StringBuilder) {
 	// Generate more reasonable length constraints
 	if sg.rng.Float64() < 0.5 {
 		minLen := 1 + sg.rng.Intn(5)            // 1-5 characters (very reasonable)
@@ -662,7 +664,7 @@ func (sg *SchemaGenerator) addStringConstraintsToBuilder(builder *StringBuilder)
 }
 
 // addNumberConstraintsToBuilder adds min/max constraints to number builders
-func (sg *SchemaGenerator) addNumberConstraintsToBuilder(builder *NumberBuilder) {
+func (sg *SchemaGenerator) addNumberConstraintsToBuilder(builder *schema.NumberBuilder) {
 	// Generate very lenient number constraints
 	if sg.rng.Float64() < 0.3 {
 		min := sg.rng.Float64() * 10            // 0-10 (very reasonable range)
@@ -672,7 +674,7 @@ func (sg *SchemaGenerator) addNumberConstraintsToBuilder(builder *NumberBuilder)
 }
 
 // addIntegerConstraintsToBuilder adds min/max constraints to integer builders
-func (sg *SchemaGenerator) addIntegerConstraintsToBuilder(builder *IntegerBuilder) {
+func (sg *SchemaGenerator) addIntegerConstraintsToBuilder(builder *schema.IntegerBuilder) {
 	// Generate very lenient integer constraints
 	if sg.rng.Float64() < 0.3 {
 		min := int64(sg.rng.Intn(10))            // 0-9 (very reasonable range)
@@ -682,7 +684,7 @@ func (sg *SchemaGenerator) addIntegerConstraintsToBuilder(builder *IntegerBuilde
 }
 
 // addArrayConstraintsToBuilder adds min/max items constraints to array builders
-func (sg *SchemaGenerator) addArrayConstraintsToBuilder(builder *ArrayBuilder) {
+func (sg *SchemaGenerator) addArrayConstraintsToBuilder(builder *schema.ArrayBuilder) {
 	// Generate reasonable array constraints
 	if sg.rng.Float64() < 0.5 {
 		minItems := sg.rng.Intn(3)                // 0-2 items (reasonable minimum)
@@ -692,7 +694,7 @@ func (sg *SchemaGenerator) addArrayConstraintsToBuilder(builder *ArrayBuilder) {
 }
 
 // addEnumValuesToBuilder adds enum constraints to string builders
-func (sg *SchemaGenerator) addEnumValuesToBuilder(builder *StringBuilder) {
+func (sg *SchemaGenerator) addEnumValuesToBuilder(builder *schema.StringBuilder) {
 	enumCount := 2 + sg.rng.Intn(4) // 2-5 enum values
 	values := make([]string, enumCount)
 
@@ -716,38 +718,31 @@ func (sg *SchemaGenerator) generateEnumValue() string {
 }
 
 // createUnionSchema creates a union schema from multiple schemas
-func (sg *SchemaGenerator) createUnionSchema(schemas []Schema) Schema {
+func (sg *SchemaGenerator) createUnionSchema(schemas []schema.Schema) schema.Schema {
 	// Create a simple union schema manually since we need variadic support
-	union := &UnionSchema{
-		metadata: SchemaMetadata{Name: "GeneratedUnion"},
-		schemas:  schemas,
-	}
-	return union
+	return schema.NewUnion().Name("GeneratedUnion").Schemas(schemas...).Build()
 }
 
 // createOptionalSchema creates an optional schema wrapper
-func (sg *SchemaGenerator) createOptionalSchema(innerSchema Schema) Schema {
+func (sg *SchemaGenerator) createOptionalSchema(innerSchema schema.Schema) schema.Schema {
 	// Use the generic Optional constructor
-	return &OptionalSchema[any]{
-		metadata:   SchemaMetadata{Name: "GeneratedOptional"},
-		itemSchema: innerSchema,
-	}
+	return schema.NewOptional().Name("GeneratedOptional").Schema(innerSchema).Build()
 }
 
 // createNullSchema creates a null schema
-func (sg *SchemaGenerator) createNullSchema() Schema {
+func (sg *SchemaGenerator) createNullSchema() schema.Schema {
 	// For now, return a simple object that represents null
 	// In practice, this might need a proper NullSchema implementation
-	return Object().
+	return schema.NewObject().
 		Name("Null").
 		Description("Represents a null value").
 		Build()
 }
 
 // createAnySchema creates an any schema
-func (sg *SchemaGenerator) createAnySchema() Schema {
+func (sg *SchemaGenerator) createAnySchema() schema.Schema {
 	// For now, return an object with additional properties to represent "any"
-	return Object().
+	return schema.NewObject().
 		AdditionalProperties(true).
 		Name("Any").
 		Description("Any value is allowed").
@@ -821,34 +816,34 @@ func (sg *SchemaGenerator) generateRandomPropertyName() string {
 // Convenience functions
 
 // GenerateSchema creates a schema using default configuration
-func GenerateSchema() Schema {
+func GenerateSchema() schema.Schema {
 	return NewSchemaGeneratorWithDefaults().Generate()
 }
 
 // GenerateSchemas creates multiple schemas using default configuration
-func GenerateSchemas(count int) []Schema {
+func GenerateSchemas(count int) []schema.Schema {
 	return NewSchemaGeneratorWithDefaults().GenerateMany(count)
 }
 
 // GenerateSchemaWithSeed creates a schema with a specific seed for reproducibility
-func GenerateSchemaWithSeed(seed int64) Schema {
+func GenerateSchemaWithSeed(seed int64) schema.Schema {
 	config := DefaultSchemaGeneratorConfig()
 	config.Seed = seed
 	return NewSchemaGenerator(config).Generate()
 }
 
 // GenerateSimpleSchema creates a simple schema biased toward primitive types
-func GenerateSimpleSchema() Schema {
+func GenerateSimpleSchema() schema.Schema {
 	return NewSimpleSchemaGenerator().Generate()
 }
 
 // GenerateComplexSchema creates a complex schema biased toward nested structures
-func GenerateComplexSchema() Schema {
+func GenerateComplexSchema() schema.Schema {
 	return NewComplexSchemaGenerator().Generate()
 }
 
 // GenerateRealisticSchema creates a schema with realistic property names and constraints
-func GenerateRealisticSchema() Schema {
+func GenerateRealisticSchema() schema.Schema {
 	config := DefaultSchemaGeneratorConfig()
 	config.PropertyNameStyle = "realistic"
 	config.UseCommonFormats = true

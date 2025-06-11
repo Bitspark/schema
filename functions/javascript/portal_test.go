@@ -41,11 +41,11 @@ func TestJavaScriptFunction_Execution(t *testing.T) {
 	_, registry, consumer := NewDefaultJavaScriptSystem()
 
 	// Define output schema
-	outputSchema := schema.Number().Build()
+	outputSchema := schema.NewNumber().Build()
 
 	functionSchema := schema.NewFunctionSchema().
-		Input("a", schema.Number().Build()).
-		Input("b", schema.Number().Build()).
+		Input("a", schema.NewNumber().Build()).
+		Input("b", schema.NewNumber().Build()).
 		Required("a", "b").
 		Output(outputSchema).
 		Build().(*schema.FunctionSchema)
@@ -102,8 +102,8 @@ func TestJavaScriptFunction_ValidationError(t *testing.T) {
 
 	// Define schema requiring specific parameters
 	functionSchema := schema.NewFunctionSchema().
-		Input("username", schema.String().MinLength(3).Build()).
-		Input("email", schema.String().Email().Build()).
+		Input("username", schema.NewString().MinLength(3).Build()).
+		Input("email", schema.NewString().Email().Build()).
 		Required("username", "email").
 		Build().(*schema.FunctionSchema)
 
@@ -161,9 +161,9 @@ func TestJavaScriptFunction_Timeout(t *testing.T) {
 
 	// Create function schema
 	functionSchema := schema.NewFunctionSchema().
-		Input("delay", schema.Number().Build()).
+		Input("delay", schema.NewNumber().Build()).
 		Required("delay").
-		Output(schema.String().Build()).
+		Output(schema.NewString().Build()).
 		Build().(*schema.FunctionSchema)
 
 	// Create JavaScript function that takes time
@@ -219,9 +219,9 @@ func TestJavaScriptFunction_SyntaxError(t *testing.T) {
 
 	// Create function schema
 	functionSchema := schema.NewFunctionSchema().
-		Input("test", schema.String().Build()).
+		Input("test", schema.NewString().Build()).
 		Required("test").
-		Output(schema.String().Build()).
+		Output(schema.NewString().Build()).
 		Build().(*schema.FunctionSchema)
 
 	// Create JavaScript function with syntax error

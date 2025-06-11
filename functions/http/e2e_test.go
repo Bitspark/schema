@@ -41,12 +41,12 @@ func TestHTTPPortal_EndToEnd_RealHTTP(t *testing.T) {
 	mathSchema := schema.NewFunctionSchema().
 		Name("mathOperation").
 		Description("Performs basic math operations").
-		Input("a", schema.Integer().Description("First number").Build()).
-		Input("b", schema.Integer().Description("Second number").Build()).
-		Input("operation", schema.String().Description("Operation: add, subtract, multiply").Build()).
-		Output(schema.Object().
-			Property("result", schema.Integer().Build()).
-			Property("input", schema.Object().Build()).
+		Input("a", schema.NewInteger().Description("First number").Build()).
+		Input("b", schema.NewInteger().Description("Second number").Build()).
+		Input("operation", schema.NewString().Description("Operation: add, subtract, multiply").Build()).
+		Output(schema.NewObject().
+			Property("result", schema.NewInteger().Build()).
+			Property("input", schema.NewObject().Build()).
 			Build()).
 		Build()
 
@@ -182,7 +182,7 @@ func TestHTTPPortal_EndToEnd_RealHTTP(t *testing.T) {
 
 		slowSchema := schema.NewFunctionSchema().
 			Name("slow").
-			Output(schema.Object().Build()).
+			Output(schema.NewObject().Build()).
 			Build()
 
 		// Use the same server portal to register the slow function
@@ -229,8 +229,8 @@ func TestHTTPPortal_EndToEnd_Authentication(t *testing.T) {
 
 	echoSchema := schema.NewFunctionSchema().
 		Name("echo").
-		Input("message", schema.String().Build()).
-		Output(schema.Object().Build()).
+		Input("message", schema.NewString().Build()).
+		Output(schema.NewObject().Build()).
 		Build()
 
 	// Create server
@@ -307,7 +307,7 @@ func TestHTTPPortal_EndToEnd_Middleware(t *testing.T) {
 
 	counterSchema := schema.NewFunctionSchema().
 		Name("counter").
-		Output(schema.Object().Build()).
+		Output(schema.NewObject().Build()).
 		Build()
 
 	// Create server with metrics middleware

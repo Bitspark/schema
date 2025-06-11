@@ -1,6 +1,7 @@
-package schema
+package generator
 
 import (
+	"defs.dev/schema"
 	"testing"
 )
 
@@ -140,10 +141,10 @@ func TestSchemaGeneratorIntegration(t *testing.T) {
 // IntegrationFailure captures details about a failed integration test
 type IntegrationFailure struct {
 	Iteration        int
-	SchemaType       SchemaType
+	SchemaType       schema.SchemaType
 	SchemaJSON       map[string]any
 	GeneratedValue   any
-	ValidationErrors []ValidationError
+	ValidationErrors []schema.ValidationError
 }
 
 // testSpecificSchemaType tests a specific type of schema generator
@@ -170,7 +171,7 @@ func analyzeFailures(t *testing.T, failures []IntegrationFailure) {
 	t.Log("Failure Analysis:")
 
 	// Count failures by schema type
-	typeFailures := make(map[SchemaType]int)
+	typeFailures := make(map[schema.SchemaType]int)
 	for _, failure := range failures {
 		typeFailures[failure.SchemaType]++
 	}
@@ -210,7 +211,7 @@ func analyzeFailures(t *testing.T, failures []IntegrationFailure) {
 }
 
 // getSchemaJSON safely converts a schema to JSON for logging
-func getSchemaJSON(schema Schema) map[string]any {
+func getSchemaJSON(schema schema.Schema) map[string]any {
 	defer func() {
 		if r := recover(); r != nil {
 			// If JSON conversion fails, return a simple representation
@@ -231,10 +232,10 @@ func TestSchemaGeneratorEdgeCases(t *testing.T) {
 		valueGen := NewGeneratorWithDefaults()
 
 		for i := 0; i < 10; i++ {
-			schema := gen.Generate()
-			if schema.Type() == TypeObject {
-				value := valueGen.Generate(schema)
-				if result := schema.Validate(value); !result.Valid {
+			s := gen.Generate()
+			if s.Type() == schema.TypeObject {
+				value := valueGen.Generate(s)
+				if result := s.Validate(value); !result.Valid {
 					t.Errorf("Empty object validation failed: %v", result.Errors)
 				}
 			}

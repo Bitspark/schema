@@ -2,8 +2,8 @@ package schema
 
 import "fmt"
 
-// String builder
-func String() *StringBuilder {
+// NewString builder
+func NewString() *StringBuilder {
 	return &StringBuilder{
 		schema: &StringSchema{
 			metadata: SchemaMetadata{},
@@ -77,6 +77,11 @@ func (b *StringBuilder) URL() *StringBuilder {
 	return b
 }
 
+func (b *StringBuilder) Format(format string) *StringBuilder {
+	b.schema.format = format
+	return b
+}
+
 func (b *StringBuilder) Example(example string) *StringBuilder {
 	b.schema.metadata.Examples = append(b.schema.metadata.Examples, example)
 	return b
@@ -91,8 +96,8 @@ func (b *StringBuilder) Build() Schema {
 	return b.schema
 }
 
-// Object builder
-func Object() *ObjectBuilder {
+// NewObject builder
+func NewObject() *ObjectBuilder {
 	return &ObjectBuilder{
 		schema: &ObjectSchema{
 			metadata:   SchemaMetadata{},
@@ -145,8 +150,8 @@ func (b *ObjectBuilder) Build() Schema {
 	return b.schema
 }
 
-// Number builder
-func Number() *NumberBuilder {
+// NewNumber builder
+func NewNumber() *NumberBuilder {
 	return &NumberBuilder{
 		schema: &NumberSchema{
 			metadata: SchemaMetadata{},
@@ -158,6 +163,15 @@ type NumberSchema struct {
 	metadata SchemaMetadata
 	minimum  *float64
 	maximum  *float64
+}
+
+// Getter methods for NumberSchema properties
+func (s *NumberSchema) Minimum() *float64 {
+	return s.minimum
+}
+
+func (s *NumberSchema) Maximum() *float64 {
+	return s.maximum
 }
 
 func (s *NumberSchema) Type() SchemaType {
@@ -318,8 +332,8 @@ func (b *NumberBuilder) Build() Schema {
 	return b.schema
 }
 
-// Integer builder
-func Integer() *IntegerBuilder {
+// NewInteger builder
+func NewInteger() *IntegerBuilder {
 	return &IntegerBuilder{
 		schema: &IntegerSchema{
 			metadata: SchemaMetadata{},
@@ -331,6 +345,15 @@ type IntegerSchema struct {
 	metadata SchemaMetadata
 	minimum  *int64
 	maximum  *int64
+}
+
+// Getter methods for IntegerSchema properties
+func (s *IntegerSchema) Minimum() *int64 {
+	return s.minimum
+}
+
+func (s *IntegerSchema) Maximum() *int64 {
+	return s.maximum
 }
 
 func (s *IntegerSchema) Type() SchemaType {
@@ -491,8 +514,8 @@ func (b *IntegerBuilder) Build() Schema {
 	return b.schema
 }
 
-// Boolean builder
-func Boolean() *BooleanBuilder {
+// NewBoolean builder
+func NewBoolean() *BooleanBuilder {
 	return &BooleanBuilder{
 		schema: &BooleanSchema{
 			metadata: SchemaMetadata{},
@@ -587,8 +610,8 @@ func (b *BooleanBuilder) Build() Schema {
 	return b.schema
 }
 
-// Array builder
-func Array() *ArrayBuilder {
+// NewArray builder
+func NewArray() *ArrayBuilder {
 	return &ArrayBuilder{
 		schema: &ArraySchema{
 			metadata: SchemaMetadata{},
@@ -823,5 +846,70 @@ func (b *ArrayBuilder) Example(example []any) *ArrayBuilder {
 }
 
 func (b *ArrayBuilder) Build() Schema {
+	return b.schema
+}
+
+func NewUnion() *UnionBuilder {
+	return &UnionBuilder{
+		schema: &UnionSchema{
+			metadata: SchemaMetadata{},
+		},
+	}
+}
+
+type UnionBuilder struct {
+	schema *UnionSchema
+}
+
+func (b *UnionBuilder) Description(desc string) *UnionBuilder {
+	b.schema.metadata.Description = desc
+	return b
+}
+
+func (b *UnionBuilder) Name(name string) *UnionBuilder {
+	b.schema.metadata.Name = name
+	return b
+}
+
+func (b *UnionBuilder) Schemas(schemas ...Schema) *UnionBuilder {
+	b.schema.schemas = schemas
+	return b
+}
+
+func (b *UnionBuilder) Tag(tag string) *UnionBuilder {
+	b.schema.metadata.Tags = append(b.schema.metadata.Tags, tag)
+	return b
+}
+
+func (b *UnionBuilder) Build() Schema {
+	return b.schema
+}
+
+func NewOptional() *OptionalBuilder2 {
+	return &OptionalBuilder2{}
+}
+
+type OptionalBuilder2 struct {
+	schema   Schema
+	metadata SchemaMetadata
+}
+
+func (b *OptionalBuilder2) Name(name string) *OptionalBuilder2 {
+	b.metadata.Name = name
+	return b
+}
+
+func (b *OptionalBuilder2) Description(desc string) *OptionalBuilder2 {
+	b.metadata.Description = desc
+	return b
+}
+
+func (b *OptionalBuilder2) Schema(schema Schema) *OptionalBuilder2 {
+	b.schema = schema
+	return b
+}
+
+func (b *OptionalBuilder2) Build() Schema {
+	b.schema.WithMetadata(b.metadata)
 	return b.schema
 }

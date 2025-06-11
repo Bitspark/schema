@@ -253,7 +253,7 @@ func (sr *ServiceReflector) ServiceSchema() *ObjectSchema {
 			sr.serviceSchema = objSchema
 		} else {
 			// Fallback - create empty object schema
-			sr.serviceSchema = Object().Name(structType.Name()).Build().(*ObjectSchema)
+			sr.serviceSchema = NewObject().Name(structType.Name()).Build().(*ObjectSchema)
 		}
 	}
 	return sr.serviceSchema

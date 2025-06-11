@@ -17,6 +17,37 @@ type StringSchema struct {
 	defaultVal *string
 }
 
+// Getter methods for StringSchema properties
+func (s *StringSchema) MinLength() *int {
+	return s.minLength
+}
+
+func (s *StringSchema) MaxLength() *int {
+	return s.maxLength
+}
+
+func (s *StringSchema) Pattern() string {
+	return s.pattern
+}
+
+func (s *StringSchema) Format() string {
+	return s.format
+}
+
+func (s *StringSchema) EnumValues() []string {
+	if s.enumValues == nil {
+		return nil
+	}
+	// Return a copy to prevent external modification
+	result := make([]string, len(s.enumValues))
+	copy(result, s.enumValues)
+	return result
+}
+
+func (s *StringSchema) DefaultValue() *string {
+	return s.defaultVal
+}
+
 func (s *StringSchema) Type() SchemaType {
 	return TypeString
 }

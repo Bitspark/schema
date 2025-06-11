@@ -349,17 +349,17 @@ func DiscountSchema() *schema.FunctionSchema {
 		"calculateDiscount",
 		"Calculates customer discount based on tier and purchase amount",
 		map[string]schema.Schema{
-			"customerTier":   schema.String().Description("Customer tier: bronze, silver, gold, platinum").Build(),
-			"purchaseAmount": schema.Number().Description("Purchase amount in dollars").Build(),
-			"promoCode":      schema.String().Description("Optional promo code").Build(),
+			"customerTier":   schema.NewString().Description("Customer tier: bronze, silver, gold, platinum").Build(),
+			"purchaseAmount": schema.NewNumber().Description("Purchase amount in dollars").Build(),
+			"promoCode":      schema.NewString().Description("Optional promo code").Build(),
 		},
-		schema.Object().
-			Property("originalAmount", schema.Number().Build()).
-			Property("discountPercent", schema.Integer().Build()).
-			Property("discountAmount", schema.Number().Build()).
-			Property("finalAmount", schema.Number().Build()).
-			Property("appliedTier", schema.String().Build()).
-			Property("appliedPromo", schema.String().Build()).
+		schema.NewObject().
+			Property("originalAmount", schema.NewNumber().Build()).
+			Property("discountPercent", schema.NewInteger().Build()).
+			Property("discountAmount", schema.NewNumber().Build()).
+			Property("finalAmount", schema.NewNumber().Build()).
+			Property("appliedTier", schema.NewString().Build()).
+			Property("appliedPromo", schema.NewString().Build()).
 			Build(),
 		[]string{"customerTier", "purchaseAmount"},
 	)
@@ -371,23 +371,23 @@ func OrderValidationSchema() *schema.FunctionSchema {
 		"validateOrder",
 		"Validates order data",
 		map[string]schema.Schema{
-			"orderId":    schema.String().Build(),
-			"customerId": schema.String().Build(),
-			"items": schema.Array().Items(
-				schema.Object().
-					Property("sku", schema.String().Build()).
-					Property("quantity", schema.Integer().Build()).
-					Property("price", schema.Number().Build()).
+			"orderId":    schema.NewString().Build(),
+			"customerId": schema.NewString().Build(),
+			"items": schema.NewArray().Items(
+				schema.NewObject().
+					Property("sku", schema.NewString().Build()).
+					Property("quantity", schema.NewInteger().Build()).
+					Property("price", schema.NewNumber().Build()).
 					Build(),
 			).Build(),
 		},
-		schema.Object().
-			Property("valid", schema.Boolean().Build()).
-			Property("errors", schema.Array().Items(schema.String().Build()).Build()).
-			Property("orderId", schema.String().Build()).
-			Property("customerId", schema.String().Build()).
-			Property("totalAmount", schema.Number().Build()).
-			Property("itemCount", schema.Integer().Build()).
+		schema.NewObject().
+			Property("valid", schema.NewBoolean().Build()).
+			Property("errors", schema.NewArray().Items(schema.NewString().Build()).Build()).
+			Property("orderId", schema.NewString().Build()).
+			Property("customerId", schema.NewString().Build()).
+			Property("totalAmount", schema.NewNumber().Build()).
+			Property("itemCount", schema.NewInteger().Build()).
 			Build(),
 		[]string{"orderId", "customerId", "items"},
 	)

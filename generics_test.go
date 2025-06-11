@@ -319,7 +319,7 @@ func TestMap_JSONSchema(t *testing.T) {
 }
 
 func TestUnion_Basic(t *testing.T) {
-	schema := Union[string, int]().Build()
+	schema := Union2[string, int]().Build()
 
 	if schema.Type() != TypeUnion {
 		t.Fatalf("Expected TypeUnion, got %s", schema.Type())
@@ -345,7 +345,7 @@ func TestUnion_Basic(t *testing.T) {
 }
 
 func TestUnion_Validation(t *testing.T) {
-	schema := Union[string, int]().Build()
+	schema := Union2[string, int]().Build()
 
 	// Test string value (should match first schema)
 	result := schema.Validate("hello")
@@ -367,7 +367,7 @@ func TestUnion_Validation(t *testing.T) {
 }
 
 func TestUnion_JSONSchema(t *testing.T) {
-	schema := Union[string, int]().Description("String or integer").Build()
+	schema := Union2[string, int]().Description("String or integer").Build()
 
 	jsonSchema := schema.ToJSONSchema()
 

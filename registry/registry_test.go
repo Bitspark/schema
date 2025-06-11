@@ -10,9 +10,9 @@ func TestRegistry_BasicOperations(t *testing.T) {
 	reg := New()
 
 	// Test Define and Get
-	userSchema := schema.Object().
-		Property("id", schema.Integer().Build()).
-		Property("name", schema.String().MinLength(1).Build()).
+	userSchema := schema.NewObject().
+		Property("id", schema.NewInteger().Build()).
+		Property("name", schema.NewString().MinLength(1).Build()).
 		Required("id", "name").
 		Build()
 
@@ -51,7 +51,7 @@ func TestRegistry_ParameterizedSchemas(t *testing.T) {
 	reg := New()
 
 	// Define a parameterized list schema
-	listSchema := schema.Array().Items(Param("T")).Build()
+	listSchema := schema.NewArray().Items(Param("T")).Build()
 	err := reg.Define("List", listSchema, "T")
 	if err != nil {
 		t.Fatalf("Failed to define parameterized schema: %v", err)
@@ -64,8 +64,8 @@ func TestRegistry_ParameterizedSchemas(t *testing.T) {
 	}
 
 	// Define User schema for parameter
-	userSchema := schema.Object().
-		Property("name", schema.String().Build()).
+	userSchema := schema.NewObject().
+		Property("name", schema.NewString().Build()).
 		Required("name").
 		Build()
 	reg.Define("User", userSchema)
@@ -97,8 +97,8 @@ func TestRegistry_SchemaRef(t *testing.T) {
 	reg := New()
 
 	// Define schemas
-	userSchema := schema.Object().
-		Property("name", schema.String().Build()).
+	userSchema := schema.NewObject().
+		Property("name", schema.NewString().Build()).
 		Required("name").
 		Build()
 	reg.Define("User", userSchema)
@@ -149,7 +149,7 @@ func TestRegistry_ErrorHandling(t *testing.T) {
 	}
 
 	// Test invalid parameters
-	listSchema := schema.Array().Items(Param("T")).Build()
+	listSchema := schema.NewArray().Items(Param("T")).Build()
 	reg.Define("List", listSchema, "T")
 
 	// Missing parameter
@@ -159,10 +159,10 @@ func TestRegistry_ErrorHandling(t *testing.T) {
 	}
 
 	// Extra parameter
-	userSchema := schema.Object().Property("name", schema.String().Build()).Build()
+	userSchema := schema.NewObject().Property("name", schema.NewString().Build()).Build()
 	_, err = reg.Apply("List", map[string]schema.Schema{
 		"T":     userSchema,
-		"Extra": schema.String().Build(),
+		"Extra": schema.NewString().Build(),
 	})
 	if err == nil {
 		t.Error("Expected error for extra parameter")
@@ -172,8 +172,8 @@ func TestRegistry_ErrorHandling(t *testing.T) {
 func TestRegistry_Clone(t *testing.T) {
 	reg := New()
 
-	userSchema := schema.Object().
-		Property("name", schema.String().Build()).
+	userSchema := schema.NewObject().
+		Property("name", schema.NewString().Build()).
 		Build()
 	reg.Define("User", userSchema)
 
@@ -186,7 +186,7 @@ func TestRegistry_Clone(t *testing.T) {
 	}
 
 	// Verify independence
-	cloned.Define("Product", schema.Object().Build())
+	cloned.Define("Product", schema.NewObject().Build())
 
 	if reg.Exists("Product") {
 		t.Error("Original registry should not have Product schema")
@@ -202,8 +202,8 @@ func TestRegistry_Merge(t *testing.T) {
 	reg2 := New()
 
 	// Define schemas in different registries
-	reg1.Define("User", schema.Object().Property("name", schema.String().Build()).Build())
-	reg2.Define("Product", schema.Object().Property("price", schema.Number().Build()).Build())
+	reg1.Define("User", schema.NewObject().Property("name", schema.NewString().Build()).Build())
+	reg2.Define("Product", schema.NewObject().Property("price", schema.NewNumber().Build()).Build())
 
 	// Merge reg2 into reg1
 	err := reg1.Merge(reg2)

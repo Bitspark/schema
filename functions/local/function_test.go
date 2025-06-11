@@ -9,16 +9,16 @@ import (
 
 func TestLocalFunction(t *testing.T) {
 	// Test creating a local function (with actual implementation)
-	userSchema := schema.Object().
-		Property("id", schema.String().Build()).
-		Property("name", schema.String().Build()).
+	userSchema := schema.NewObject().
+		Property("id", schema.NewString().Build()).
+		Property("name", schema.NewString().Build()).
 		Required("id", "name").
 		Build()
 
 	getUserFunction := NewLocalFunction("getUser").
 		Description("Retrieve user by ID").
-		Parameters(schema.Object().
-			Property("id", schema.String().Build()).
+		Parameters(schema.NewObject().
+			Property("id", schema.NewString().Build()).
 			Required("id").
 			Build()).
 		Returns(userSchema).

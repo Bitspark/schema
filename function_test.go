@@ -7,17 +7,17 @@ import (
 func TestFunctionSchema(t *testing.T) {
 	// Test creating a function schema (pure interface description)
 	paymentSchema := NewFunctionSchema().
-		Input("amount", Number().Min(0).Build()).
-		Input("method", String().Enum("card", "bank").Build()).
-		Input("currency", String().Pattern("^[A-Z]{3}$").Build()).
-		Output(Object().
-			Property("id", String().Build()).
-			Property("status", String().Build()).
+		Input("amount", NewNumber().Min(0).Build()).
+		Input("method", NewString().Enum("card", "bank").Build()).
+		Input("currency", NewString().Pattern("^[A-Z]{3}$").Build()).
+		Output(NewObject().
+			Property("id", NewString().Build()).
+			Property("status", NewString().Build()).
 			Required("id", "status").
 			Build()).
-		Error(Object().
-			Property("code", String().Build()).
-			Property("message", String().Build()).
+		Error(NewObject().
+			Property("code", NewString().Build()).
+			Property("message", NewString().Build()).
 			Build()).
 		Description("Process a payment with validation").
 		Build()
@@ -43,14 +43,14 @@ func TestFunctionSchema(t *testing.T) {
 func TestFunctionSchemaInObjects(t *testing.T) {
 	// Test using function schemas as object properties
 	paymentFunctionSchema := NewFunctionSchema().
-		Input("amount", Number().Min(0).Build()).
-		Input("method", String().Build()).
-		Output(Object().Property("receipt", String().Build()).Build()).
+		Input("amount", NewNumber().Min(0).Build()).
+		Input("method", NewString().Build()).
+		Output(NewObject().Property("receipt", NewString().Build()).Build()).
 		Build()
 
 	// Objects with method schemas = records with function-valued fields
-	bankAccountSchema := Object().
-		Property("balance", Number().Build()).
+	bankAccountSchema := NewObject().
+		Property("balance", NewNumber().Build()).
 		Property("deposit", paymentFunctionSchema).
 		Property("withdraw", paymentFunctionSchema).
 		Build()

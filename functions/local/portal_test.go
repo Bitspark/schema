@@ -13,10 +13,10 @@ func TestPortalSystem(t *testing.T) {
 	userSchema := schema.NewFunctionSchema().
 		Name("getUser").
 		Description("Retrieve user by ID").
-		Input("id", schema.String().Build()).
-		Output(schema.Object().
-			Property("id", schema.String().Build()).
-			Property("name", schema.String().Build()).
+		Input("id", schema.NewString().Build()).
+		Output(schema.NewObject().
+			Property("id", schema.NewString().Build()).
+			Property("name", schema.NewString().Build()).
 			Required("id", "name").
 			Build()).
 		Build().(*schema.FunctionSchema)
@@ -77,10 +77,10 @@ func TestConsumerSystem(t *testing.T) {
 	addSchema := schema.NewFunctionSchema().
 		Name("add").
 		Description("Add two numbers").
-		Input("a", schema.Number().Build()).
-		Input("b", schema.Number().Build()).
-		Output(schema.Object().
-			Property("result", schema.Number().Build()).
+		Input("a", schema.NewNumber().Build()).
+		Input("b", schema.NewNumber().Build()).
+		Output(schema.NewObject().
+			Property("result", schema.NewNumber().Build()).
 			Required("result").
 			Build()).
 		Build().(*schema.FunctionSchema)
@@ -137,7 +137,7 @@ func TestRegistryOperations(t *testing.T) {
 	testSchema := schema.NewFunctionSchema().
 		Name("test").
 		Description("Test function").
-		Output(schema.String().Build()).
+		Output(schema.NewString().Build()).
 		Build().(*schema.FunctionSchema)
 
 	var testHandler schema.FunctionHandler = func(ctx context.Context, params schema.FunctionInput) (schema.FunctionOutput, error) {

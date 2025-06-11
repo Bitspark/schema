@@ -38,11 +38,11 @@ func main() {
 	userValidationSchema := schema.NewFunctionSchema().
 		Name("validateUser").
 		Description("Validates user registration data").
-		Input("username", schema.String().MinLength(1).Description("Username to validate").Build()).
-		Input("email", schema.String().Description("Email address to validate").Build()).
-		Output(schema.Object().
-			Property("valid", schema.Boolean().Description("Whether the user data is valid").Build()).
-			Property("errors", schema.Array().Items(schema.String().Build()).Description("Validation errors").Build()).
+		Input("username", schema.NewString().MinLength(1).Description("Username to validate").Build()).
+		Input("email", schema.NewString().Description("Email address to validate").Build()).
+		Output(schema.NewObject().
+			Property("valid", schema.NewBoolean().Description("Whether the user data is valid").Build()).
+			Property("errors", schema.NewArray().Items(schema.NewString().Build()).Description("Validation errors").Build()).
 			Build()).
 		Build()
 

@@ -13,22 +13,22 @@ func ExampleRegistry_usage() {
 	reg := registry.New()
 
 	// Define some basic schemas
-	reg.Define("User", schema.Object().
-		Property("id", schema.Integer().Min(1).Build()).
-		Property("name", schema.String().MinLength(1).Build()).
-		Property("email", schema.String().Email().Build()).
+	reg.Define("User", schema.NewObject().
+		Property("id", schema.NewInteger().Min(1).Build()).
+		Property("name", schema.NewString().MinLength(1).Build()).
+		Property("email", schema.NewString().Email().Build()).
 		Required("id", "name", "email").
 		Build())
 
-	reg.Define("Product", schema.Object().
-		Property("id", schema.Integer().Min(1).Build()).
-		Property("name", schema.String().MinLength(1).Build()).
-		Property("price", schema.Number().Min(0).Build()).
+	reg.Define("Product", schema.NewObject().
+		Property("id", schema.NewInteger().Min(1).Build()).
+		Property("name", schema.NewString().MinLength(1).Build()).
+		Property("price", schema.NewNumber().Min(0).Build()).
 		Required("id", "name", "price").
 		Build())
 
 	// Define parameterized schemas
-	reg.Define("List", schema.Array().
+	reg.Define("List", schema.NewArray().
 		Items(registry.Param("T")).
 		Build(), "T")
 
@@ -36,16 +36,16 @@ func ExampleRegistry_usage() {
 	nullSchema := &schema.StringSchema{} // Placeholder - we'll create a proper null schema
 	nullSchema = nullSchema.WithMetadata(schema.SchemaMetadata{Name: "null"}).(*schema.StringSchema)
 
-	reg.Define("Optional", schema.Object().
+	reg.Define("Optional", schema.NewObject().
 		Property("value", registry.Param("T")).
-		Property("hasValue", schema.Boolean().Build()).
+		Property("hasValue", schema.NewBoolean().Build()).
 		Required("hasValue").
 		Build(), "T")
 
-	reg.Define("ApiResponse", schema.Object().
-		Property("success", schema.Boolean().Build()).
+	reg.Define("ApiResponse", schema.NewObject().
+		Property("success", schema.NewBoolean().Build()).
 		Property("data", registry.Param("T")).
-		Property("message", schema.String().Build()).
+		Property("message", schema.NewString().Build()).
 		Required("success").
 		Build(), "T")
 
@@ -98,32 +98,32 @@ func ExampleRegistry_realWorldUsage() {
 	reg := registry.New()
 
 	// Define parameterized schemas first
-	reg.Define("List", schema.Array().
+	reg.Define("List", schema.NewArray().
 		Items(registry.Param("T")).
 		Build(), "T")
 
 	// Define business domain schemas
-	reg.Define("Address", schema.Object().
-		Property("street", schema.String().MinLength(1).Build()).
-		Property("city", schema.String().MinLength(1).Build()).
-		Property("zipCode", schema.String().Pattern("^[0-9]{5}$").Build()).
+	reg.Define("Address", schema.NewObject().
+		Property("street", schema.NewString().MinLength(1).Build()).
+		Property("city", schema.NewString().MinLength(1).Build()).
+		Property("zipCode", schema.NewString().Pattern("^[0-9]{5}$").Build()).
 		Required("street", "city", "zipCode").
 		Build())
 
-	reg.Define("Customer", schema.Object().
-		Property("id", schema.Integer().Min(1).Build()).
-		Property("name", schema.String().MinLength(1).Build()).
-		Property("email", schema.String().Email().Build()).
+	reg.Define("Customer", schema.NewObject().
+		Property("id", schema.NewInteger().Min(1).Build()).
+		Property("name", schema.NewString().MinLength(1).Build()).
+		Property("email", schema.NewString().Email().Build()).
 		Property("address", reg.Ref("Address")).
 		Required("id", "name", "email").
 		Build())
 
 	// Define generic utility schemas
-	reg.Define("Page", schema.Object().
+	reg.Define("Page", schema.NewObject().
 		Property("items", registry.Param("T")).
-		Property("totalCount", schema.Integer().Min(0).Build()).
-		Property("pageSize", schema.Integer().Min(1).Build()).
-		Property("currentPage", schema.Integer().Min(1).Build()).
+		Property("totalCount", schema.NewInteger().Min(0).Build()).
+		Property("pageSize", schema.NewInteger().Min(1).Build()).
+		Property("currentPage", schema.NewInteger().Min(1).Build()).
 		Required("items", "totalCount", "pageSize", "currentPage").
 		Build(), "T")
 

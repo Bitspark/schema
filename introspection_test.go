@@ -7,10 +7,10 @@ import (
 func TestSchemaIntrospection(t *testing.T) {
 	t.Run("ObjectSchema introspection", func(t *testing.T) {
 		// Create an object schema
-		userSchema := Object().
-			Property("name", String().MinLength(1).Build()).
-			Property("age", Integer().Min(0).Build()).
-			Property("email", String().Email().Build()).
+		userSchema := NewObject().
+			Property("name", NewString().MinLength(1).Build()).
+			Property("age", NewInteger().Min(0).Build()).
+			Property("email", NewString().Email().Build()).
 			Required("name", "email").
 			AdditionalProperties(true).
 			Build()
@@ -58,7 +58,7 @@ func TestSchemaIntrospection(t *testing.T) {
 		}
 
 		// Verify mutation safety - modifying returned copy shouldn't affect original
-		properties["hacker"] = String().Build()
+		properties["hacker"] = NewString().Build()
 		if len(obj.Properties()) != 3 {
 			t.Error("Original schema was mutated by external modification")
 		}
@@ -66,8 +66,8 @@ func TestSchemaIntrospection(t *testing.T) {
 
 	t.Run("ArraySchema introspection", func(t *testing.T) {
 		// Create an array schema
-		listSchema := Array().
-			Items(String().MinLength(1).Build()).
+		listSchema := NewArray().
+			Items(NewString().MinLength(1).Build()).
 			MinItems(1).
 			MaxItems(10).
 			UniqueItems().
@@ -107,9 +107,9 @@ func TestSchemaIntrospection(t *testing.T) {
 		calcSchema := NewFunctionSchema().
 			Name("calculate").
 			Description("Performs calculation").
-			Input("x", Number().Build()).
-			Input("y", Number().Build()).
-			Output(Number().Build()).
+			Input("x", NewNumber().Build()).
+			Input("y", NewNumber().Build()).
+			Output(NewNumber().Build()).
 			Required("x", "y").
 			Build()
 
@@ -152,7 +152,7 @@ func TestSchemaIntrospection(t *testing.T) {
 		}
 
 		// Verify mutation safety
-		inputs["z"] = Boolean().Build()
+		inputs["z"] = NewBoolean().Build()
 		if len(fn.Inputs()) != 2 {
 			t.Error("Original function schema was mutated by external modification")
 		}
@@ -160,7 +160,7 @@ func TestSchemaIntrospection(t *testing.T) {
 
 	t.Run("UnionSchema introspection", func(t *testing.T) {
 		// Create a union schema
-		unionSchema := Union[string, int]().
+		unionSchema := Union2[string, int]().
 			Name("StringOrInt").
 			Description("Either a string or integer").
 			Build()
@@ -188,7 +188,7 @@ func TestSchemaIntrospection(t *testing.T) {
 		}
 
 		// Verify mutation safety
-		schemas[0] = Boolean().Build()
+		schemas[0] = NewBoolean().Build()
 		if len(union.Schemas()) != 2 {
 			t.Error("Original union schema was mutated by external modification")
 		}

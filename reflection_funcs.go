@@ -86,13 +86,13 @@ func processOutputs(fnType reflect.Type, schema *FunctionSchema) {
 	}
 
 	// Handle the common Go pattern: (result, error)
-	if numOut == 2 && fnType.Out(1).Implements(errorInterface) {
+	if numOut == 2 && fnType.Out(1).Implements(ErrorInterface) {
 		// First return value is the result
 		resultType := fnType.Out(0)
 		schema.outputs = generateSchemaFromType(resultType)
 
 		// Second return value is error
-		schema.errors = String().
+		schema.errors = NewString().
 			Description("Error message if the function fails").
 			Build()
 		return
@@ -103,8 +103,8 @@ func processOutputs(fnType reflect.Type, schema *FunctionSchema) {
 		returnType := fnType.Out(0)
 
 		// If it's just an error, set only errors
-		if returnType.Implements(errorInterface) {
-			schema.errors = String().
+		if returnType.Implements(ErrorInterface) {
+			schema.errors = NewString().
 				Description("Error message if the function fails").
 				Build()
 			return
@@ -117,7 +117,7 @@ func processOutputs(fnType reflect.Type, schema *FunctionSchema) {
 
 	// Handle multiple return values (not following error convention)
 	// Create an object schema with numbered fields
-	builder := Object().Name("MultipleReturns")
+	builder := NewObject().Name("MultipleReturns")
 	for i := 0; i < numOut; i++ {
 		returnType := fnType.Out(i)
 		fieldName := fmt.Sprintf("result%d", i)
@@ -148,8 +148,7 @@ func isOptionalType(t reflect.Type) bool {
 	}
 }
 
-// Error interface for checking return types
-var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
+// Note: ErrorInterface moved to constants.go for better organization
 
 // FunctionReflector wraps a function with its schema for easier use
 type FunctionReflector struct {
@@ -248,7 +247,7 @@ func (fr *FunctionReflector) callWithMap(ctx context.Context, params map[string]
 		return nil, nil
 	case 1:
 		result := results[0]
-		if result.Type().Implements(errorInterface) {
+		if result.Type().Implements(ErrorInterface) {
 			if result.IsNil() {
 				return nil, nil
 			}

@@ -1,16 +1,17 @@
-package schema
+package generator
 
 import (
+	schema2 "defs.dev/schema"
 	"testing"
 )
 
 func TestConvenienceDefaultFunctions(t *testing.T) {
 	// Define a test schema
-	schema := Object().
-		Property("name", String().MinLength(3).Build()).
-		Property("age", Integer().Range(1, 100).Build()).
-		Property("active", Boolean().Build()).
-		Property("tags", Array().Items(String().Build()).MinItems(0).Build()).
+	schema := schema2.NewObject().
+		Property("name", schema2.NewString().MinLength(3).Build()).
+		Property("age", schema2.NewInteger().Range(1, 100).Build()).
+		Property("active", schema2.NewBoolean().Build()).
+		Property("tags", schema2.NewArray().Items(schema2.NewString().Build()).MinItems(0).Build()).
 		Required("name").
 		Build()
 
@@ -79,7 +80,7 @@ func TestConvenienceDefaultFunctions(t *testing.T) {
 
 func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 	t.Run("StringDefaults", func(t *testing.T) {
-		schema := String().MinLength(5).Build()
+		schema := schema2.NewString().MinLength(5).Build()
 
 		// Default generation
 		result := GenerateDefaults(schema)
@@ -95,7 +96,7 @@ func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 	})
 
 	t.Run("NumberDefaults", func(t *testing.T) {
-		schema := Number().Range(10.0, 100.0).Build()
+		schema := schema2.NewNumber().Range(10.0, 100.0).Build()
 
 		// Default generation (should use minimum when default is below range)
 		result := GenerateDefaults(schema)
@@ -111,7 +112,7 @@ func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 	})
 
 	t.Run("IntegerDefaults", func(t *testing.T) {
-		schema := Integer().Range(5, 20).Build()
+		schema := schema2.NewInteger().Range(5, 20).Build()
 
 		// Default generation (should use minimum when default is below range)
 		result := GenerateDefaults(schema)
@@ -127,7 +128,7 @@ func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 	})
 
 	t.Run("BooleanDefaults", func(t *testing.T) {
-		schema := Boolean().Build()
+		schema := schema2.NewBoolean().Build()
 
 		// Default generation
 		result := GenerateDefaults(schema)
@@ -143,7 +144,7 @@ func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 	})
 
 	t.Run("ArrayDefaults", func(t *testing.T) {
-		schema := Array().Items(String().Build()).MinItems(0).Build()
+		schema := schema2.NewArray().Items(schema2.NewString().Build()).MinItems(0).Build()
 
 		// Default generation (should be empty array)
 		result := GenerateDefaults(schema)
@@ -162,10 +163,10 @@ func TestConvenienceDefaultsWithDifferentTypes(t *testing.T) {
 }
 
 func TestDefaultsVsRandomComparison(t *testing.T) {
-	schema := Object().
-		Property("id", Integer().Range(1, 1000).Build()).
-		Property("name", String().MinLength(3).MaxLength(20).Build()).
-		Property("score", Number().Range(0.0, 100.0).Build()).
+	schema := schema2.NewObject().
+		Property("id", schema2.NewInteger().Range(1, 1000).Build()).
+		Property("name", schema2.NewString().MinLength(3).MaxLength(20).Build()).
+		Property("score", schema2.NewNumber().Range(0.0, 100.0).Build()).
 		Required("id", "name", "score").
 		Build()
 

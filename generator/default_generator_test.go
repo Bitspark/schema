@@ -1,6 +1,7 @@
-package schema
+package generator
 
 import (
+	schema2 "defs.dev/schema"
 	"testing"
 )
 
@@ -8,7 +9,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	generator := NewDefaultValueGenerator()
 
 	t.Run("DefaultString", func(t *testing.T) {
-		schema := String().Build()
+		schema := schema2.NewString().Build()
 		result := generator.Generate(schema)
 
 		if result != "" {
@@ -17,7 +18,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultStringWithMinLength", func(t *testing.T) {
-		schema := String().MinLength(5).Build()
+		schema := schema2.NewString().MinLength(5).Build()
 		result := generator.Generate(schema)
 		resultStr := result.(string)
 
@@ -30,7 +31,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultStringEnum", func(t *testing.T) {
-		schema := String().Enum("option1", "option2", "option3").Build()
+		schema := schema2.NewString().Enum("option1", "option2", "option3").Build()
 		result := generator.Generate(schema)
 
 		if result != "option1" {
@@ -39,7 +40,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultNumber", func(t *testing.T) {
-		schema := Number().Build()
+		schema := schema2.NewNumber().Build()
 		result := generator.Generate(schema)
 
 		if result != 0.0 {
@@ -48,7 +49,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultNumberWithMinimum", func(t *testing.T) {
-		schema := Number().Range(10.0, 100.0).Build()
+		schema := schema2.NewNumber().Range(10.0, 100.0).Build()
 		result := generator.Generate(schema)
 
 		if result != 10.0 {
@@ -57,7 +58,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultInteger", func(t *testing.T) {
-		schema := Integer().Build()
+		schema := schema2.NewInteger().Build()
 		result := generator.Generate(schema)
 
 		if result != int64(0) {
@@ -66,7 +67,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultIntegerWithMinimum", func(t *testing.T) {
-		schema := Integer().Range(5, 20).Build()
+		schema := schema2.NewInteger().Range(5, 20).Build()
 		result := generator.Generate(schema)
 
 		if result != int64(5) {
@@ -75,7 +76,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultBoolean", func(t *testing.T) {
-		schema := Boolean().Build()
+		schema := schema2.NewBoolean().Build()
 		result := generator.Generate(schema)
 
 		if result != false {
@@ -84,7 +85,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultArray", func(t *testing.T) {
-		schema := Array().Items(String().Build()).Build()
+		schema := schema2.NewArray().Items(schema2.NewString().Build()).Build()
 		result := generator.Generate(schema)
 		resultArray := result.([]any)
 
@@ -94,7 +95,7 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultArrayWithMinItems", func(t *testing.T) {
-		schema := Array().Items(String().Build()).MinItems(2).Build()
+		schema := schema2.NewArray().Items(schema2.NewString().Build()).MinItems(2).Build()
 		result := generator.Generate(schema)
 		resultArray := result.([]any)
 
@@ -111,9 +112,9 @@ func TestDefaultValueGeneration(t *testing.T) {
 	})
 
 	t.Run("DefaultObject", func(t *testing.T) {
-		schema := Object().
-			Property("name", String().Build()).
-			Property("age", Integer().Build()).
+		schema := schema2.NewObject().
+			Property("name", schema2.NewString().Build()).
+			Property("age", schema2.NewInteger().Build()).
 			Required("name").
 			Build()
 
@@ -141,11 +142,11 @@ func TestMinimalGeneration(t *testing.T) {
 	generator := NewMinimalGenerator()
 
 	t.Run("MinimalObject", func(t *testing.T) {
-		schema := Object().
-			Property("required1", String().Build()).
-			Property("required2", Integer().Build()).
-			Property("optional1", String().Build()).
-			Property("optional2", Boolean().Build()).
+		schema := schema2.NewObject().
+			Property("required1", schema2.NewString().Build()).
+			Property("required2", schema2.NewInteger().Build()).
+			Property("optional1", schema2.NewString().Build()).
+			Property("optional2", schema2.NewBoolean().Build()).
 			Required("required1", "required2").
 			Build()
 
@@ -175,7 +176,7 @@ func TestMinimalGeneration(t *testing.T) {
 	})
 
 	t.Run("MinimalArray", func(t *testing.T) {
-		schema := Array().Items(String().Build()).MinItems(0).MaxItems(10).Build()
+		schema := schema2.NewArray().Items(schema2.NewString().Build()).MinItems(0).MaxItems(10).Build()
 		result := generator.Generate(schema)
 		resultArray := result.([]any)
 
@@ -186,7 +187,7 @@ func TestMinimalGeneration(t *testing.T) {
 	})
 
 	t.Run("MinimalArrayWithRequiredItems", func(t *testing.T) {
-		schema := Array().Items(String().Build()).MinItems(3).MaxItems(10).Build()
+		schema := schema2.NewArray().Items(schema2.NewString().Build()).MinItems(3).MaxItems(10).Build()
 		result := generator.Generate(schema)
 		resultArray := result.([]any)
 
@@ -208,7 +209,7 @@ func TestCustomDefaultValues(t *testing.T) {
 	generator := NewGenerator(config)
 
 	t.Run("CustomStringDefault", func(t *testing.T) {
-		schema := String().Build()
+		schema := schema2.NewString().Build()
 		result := generator.Generate(schema)
 
 		if result != "custom" {
@@ -217,7 +218,7 @@ func TestCustomDefaultValues(t *testing.T) {
 	})
 
 	t.Run("CustomNumberDefault", func(t *testing.T) {
-		schema := Number().Build()
+		schema := schema2.NewNumber().Build()
 		result := generator.Generate(schema)
 
 		if result != 42.0 {
@@ -226,7 +227,7 @@ func TestCustomDefaultValues(t *testing.T) {
 	})
 
 	t.Run("CustomIntegerDefault", func(t *testing.T) {
-		schema := Integer().Build()
+		schema := schema2.NewInteger().Build()
 		result := generator.Generate(schema)
 
 		if result != int64(123) {
@@ -235,7 +236,7 @@ func TestCustomDefaultValues(t *testing.T) {
 	})
 
 	t.Run("CustomBooleanDefault", func(t *testing.T) {
-		schema := Boolean().Build()
+		schema := schema2.NewBoolean().Build()
 		result := generator.Generate(schema)
 
 		if result != true {
@@ -248,12 +249,12 @@ func TestDefaultsWithTemplates(t *testing.T) {
 	// This test shows how default generation can be used with templates
 	generator := NewDefaultValueGenerator()
 
-	schema := Object().
-		Property("username", String().MinLength(3).MaxLength(20).Build()).
-		Property("email", String().MinLength(5).Build()).
-		Property("age", Integer().Range(18, 100).Build()).
-		Property("active", Boolean().Build()).
-		Property("tags", Array().Items(String().Build()).MinItems(0).Build()).
+	schema := schema2.NewObject().
+		Property("username", schema2.NewString().MinLength(3).MaxLength(20).Build()).
+		Property("email", schema2.NewString().MinLength(5).Build()).
+		Property("age", schema2.NewInteger().Range(18, 100).Build()).
+		Property("active", schema2.NewBoolean().Build()).
+		Property("tags", schema2.NewArray().Items(schema2.NewString().Build()).MinItems(0).Build()).
 		Required("username", "email").
 		Build()
 

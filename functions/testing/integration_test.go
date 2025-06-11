@@ -66,16 +66,16 @@ func TestCrossPortalIntegration_JavaScriptOverHTTP(t *testing.T) {
 	discountSchema := schema.NewFunctionSchema().
 		Name("calculateDiscount").
 		Description("Calculates customer discount based on tier and purchase amount").
-		Input("customerTier", schema.String().Description("Customer tier: bronze, silver, gold, platinum").Build()).
-		Input("purchaseAmount", schema.Number().Description("Purchase amount in dollars").Build()).
-		Input("promoCode", schema.String().Description("Optional promo code").Build()).
-		Output(schema.Object().
-								Property("originalAmount", schema.Number().Build()).
-								Property("discountPercent", schema.Integer().Build()).
-								Property("discountAmount", schema.Number().Build()).
-								Property("finalAmount", schema.Number().Build()).
-								Property("appliedTier", schema.String().Build()).
-								Property("appliedPromo", schema.String().Build()).
+		Input("customerTier", schema.NewString().Description("Customer tier: bronze, silver, gold, platinum").Build()).
+		Input("purchaseAmount", schema.NewNumber().Description("Purchase amount in dollars").Build()).
+		Input("promoCode", schema.NewString().Description("Optional promo code").Build()).
+		Output(schema.NewObject().
+								Property("originalAmount", schema.NewNumber().Build()).
+								Property("discountPercent", schema.NewInteger().Build()).
+								Property("discountAmount", schema.NewNumber().Build()).
+								Property("finalAmount", schema.NewNumber().Build()).
+								Property("appliedTier", schema.NewString().Build()).
+								Property("appliedPromo", schema.NewString().Build()).
 								Build()).
 		Required("customerTier", "purchaseAmount"). // promoCode is optional (not in required list)
 		Build()
@@ -331,21 +331,21 @@ func TestMultiplePortalChain_JavaScriptThroughMultipleHTTP(t *testing.T) {
 	orderSchema := schema.NewFunctionSchema().
 		Name("validateOrder").
 		Description("Validates order data").
-		Input("orderId", schema.String().Build()).
-		Input("customerId", schema.String().Build()).
-		Input("items", schema.Array().Items(
-			schema.Object().
-				Property("sku", schema.String().Build()).
-				Property("quantity", schema.Integer().Build()).
-				Property("price", schema.Number().Build()).
+		Input("orderId", schema.NewString().Build()).
+		Input("customerId", schema.NewString().Build()).
+		Input("items", schema.NewArray().Items(
+			schema.NewObject().
+				Property("sku", schema.NewString().Build()).
+				Property("quantity", schema.NewInteger().Build()).
+				Property("price", schema.NewNumber().Build()).
 				Build()).Build()).
-		Output(schema.Object().
-			Property("valid", schema.Boolean().Build()).
-			Property("errors", schema.Array().Items(schema.String().Build()).Build()).
-			Property("orderId", schema.String().Build()).
-			Property("customerId", schema.String().Build()).
-			Property("totalAmount", schema.Number().Build()).
-			Property("itemCount", schema.Integer().Build()).
+		Output(schema.NewObject().
+			Property("valid", schema.NewBoolean().Build()).
+			Property("errors", schema.NewArray().Items(schema.NewString().Build()).Build()).
+			Property("orderId", schema.NewString().Build()).
+			Property("customerId", schema.NewString().Build()).
+			Property("totalAmount", schema.NewNumber().Build()).
+			Property("itemCount", schema.NewInteger().Build()).
 			Build()).
 		Build()
 

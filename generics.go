@@ -499,9 +499,9 @@ func (s *MapSchema[K, V]) GenerateExample() any {
 	}
 }
 
-// Union creates a schema for union types (oneOf in JSON Schema).
-// Example: unionSchema := schema.Union[string, int]()
-func Union[T1, T2 any]() *UnionBuilder2[T1, T2] {
+// Union2 creates a schema for union types (oneOf in JSON Schema).
+// Example: unionSchema := schema.Union2[string, int]()
+func Union2[T1, T2 any]() *UnionBuilder2[T1, T2] {
 	schema1 := generateSchemaForType[T1]()
 	schema2 := generateSchemaForType[T2]()
 

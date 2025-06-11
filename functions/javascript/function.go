@@ -201,10 +201,10 @@ func buildParametersFromSchema(functionSchema *schema.FunctionSchema) schema.Sch
 	required := functionSchema.Required()
 
 	if len(inputs) == 0 {
-		return schema.Object().Build()
+		return schema.NewObject().Build()
 	}
 
-	builder := schema.Object()
+	builder := schema.NewObject()
 	for name, inputSchema := range inputs {
 		builder = builder.Property(name, inputSchema)
 	}

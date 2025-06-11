@@ -1,6 +1,7 @@
-package schema
+package generator
 
 import (
+	schema2 "defs.dev/schema"
 	"testing"
 )
 
@@ -15,10 +16,10 @@ func TestSchemaGenerator(t *testing.T) {
 
 		// Verify it has a valid type
 		schemaType := schema.Type()
-		validTypes := []SchemaType{
-			TypeString, TypeNumber, TypeInteger, TypeBoolean,
-			TypeObject, TypeArray, TypeUnion, TypeOptional,
-			TypeNull, TypeAny,
+		validTypes := []schema2.SchemaType{
+			schema2.TypeString, schema2.TypeNumber, schema2.TypeInteger, schema2.TypeBoolean,
+			schema2.TypeObject, schema2.TypeArray, schema2.TypeUnion, schema2.TypeOptional,
+			schema2.TypeNull, schema2.TypeAny,
 		}
 
 		isValid := false
@@ -57,7 +58,7 @@ func TestSchemaGenerator(t *testing.T) {
 
 		// Simple schemas should bias toward primitive types
 		schemaType := schema.Type()
-		primitiveTypes := []SchemaType{TypeString, TypeNumber, TypeInteger, TypeBoolean}
+		primitiveTypes := []schema2.SchemaType{schema2.TypeString, schema2.TypeNumber, schema2.TypeInteger, schema2.TypeBoolean}
 
 		isPrimitive := false
 		for _, primitiveType := range primitiveTypes {

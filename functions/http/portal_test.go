@@ -13,8 +13,8 @@ func TestHTTPPortal_BasicFunctionality(t *testing.T) {
 	testSchema := schema.NewFunctionSchema().
 		Name("testFunction").
 		Description("A test function").
-		Input("message", schema.String().Build()).
-		Output(schema.String().Build()).
+		Input("message", schema.NewString().Build()).
+		Output(schema.NewString().Build()).
 		Build()
 
 	// Create a test handler

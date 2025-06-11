@@ -306,7 +306,7 @@ func TestTypeRegistry(t *testing.T) {
 	// Register a custom type mapping
 	customType := reflect.TypeOf(CustomID(""))
 	RegisterTypeMapping(customType, func() Schema {
-		return String().
+		return NewString().
 			MinLength(5).
 			MaxLength(20).
 			Pattern("^[A-Z0-9]+$").

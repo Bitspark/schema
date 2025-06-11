@@ -1,4 +1,4 @@
-package schema
+package generator
 
 import (
 	"math/rand"
@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"defs.dev/schema"
 )
 
 // GeneratorConfig configures the behavior of the random value generator
@@ -50,7 +52,7 @@ type GeneratorConfig struct {
 	PreferExamples bool
 
 	// CustomGenerators allows overriding generation for specific schema types/names
-	CustomGenerators map[string]func(schema Schema, config GeneratorConfig, depth int) any
+	CustomGenerators map[string]func(schema schema.Schema, config GeneratorConfig, depth int) any
 
 	// FollowReferences when true, attempts to resolve schema references during generation
 	FollowReferences bool
@@ -92,7 +94,7 @@ func DefaultGeneratorConfig() GeneratorConfig {
 		UnionChoice:         "random",
 		Seed:                0,
 		PreferExamples:      true,
-		CustomGenerators:    make(map[string]func(schema Schema, config GeneratorConfig, depth int) any),
+		CustomGenerators:    make(map[string]func(schema schema.Schema, config GeneratorConfig, depth int) any),
 		FollowReferences:    true,
 		GenerateDefaults:    false,
 		DefaultValues: struct {
@@ -154,12 +156,12 @@ func NewMinimalGenerator() *Generator {
 }
 
 // Generate creates a random value that conforms to the given schema
-func (g *Generator) Generate(schema Schema) any {
+func (g *Generator) Generate(schema schema.Schema) any {
 	return g.generateWithDepth(schema, 0)
 }
 
 // GenerateMany creates multiple random values that conform to the given schema
-func (g *Generator) GenerateMany(schema Schema, count int) []any {
+func (g *Generator) GenerateMany(schema schema.Schema, count int) []any {
 	results := make([]any, count)
 	for i := 0; i < count; i++ {
 		results[i] = g.Generate(schema)
@@ -168,20 +170,20 @@ func (g *Generator) GenerateMany(schema Schema, count int) []any {
 }
 
 // generateWithDepth is the internal method that tracks recursion depth
-func (g *Generator) generateWithDepth(schema Schema, depth int) any {
+func (g *Generator) generateWithDepth(s schema.Schema, depth int) any {
 	// Prevent infinite recursion - generate a simple fallback value based on schema type
 	if depth > g.config.MaxDepth {
-		return g.generateFallbackValue(schema)
+		return g.generateFallbackValue(s)
 	}
 
 	// Check for custom generators first
-	if customGen, exists := g.config.CustomGenerators[schema.Metadata().Name]; exists {
-		return customGen(schema, g.config, depth)
+	if customGen, exists := g.config.CustomGenerators[s.Metadata().Name]; exists {
+		return customGen(s, g.config, depth)
 	}
 
 	// Use examples if preferred and available
 	if g.config.PreferExamples {
-		examples := schema.Metadata().Examples
+		examples := s.Metadata().Examples
 		if len(examples) > 0 {
 			// Pick a random example
 			return examples[g.rng.Intn(len(examples))]
@@ -189,88 +191,88 @@ func (g *Generator) generateWithDepth(schema Schema, depth int) any {
 	}
 
 	// Generate based on schema type
-	switch schema.Type() {
-	case TypeString:
-		return g.generateString(schema.(*StringSchema))
-	case TypeNumber:
-		return g.generateNumber(schema.(*NumberSchema))
-	case TypeInteger:
-		return g.generateInteger(schema.(*IntegerSchema))
-	case TypeBoolean:
-		return g.generateBoolean(schema.(*BooleanSchema))
-	case TypeObject:
-		return g.generateObject(schema.(*ObjectSchema), depth)
-	case TypeArray:
-		return g.generateArray(schema.(*ArraySchema), depth)
-	case TypeOptional:
-		return g.generateOptional(schema, depth)
-	case TypeResult:
-		return g.generateResult(schema, depth)
-	case TypeMap:
-		return g.generateMap(schema, depth)
-	case TypeUnion:
-		return g.generateUnion(schema.(*UnionSchema), depth)
-	case TypeNull:
+	switch s.Type() {
+	case schema.TypeString:
+		return g.generateString(s.(*schema.StringSchema))
+	case schema.TypeNumber:
+		return g.generateNumber(s.(*schema.NumberSchema))
+	case schema.TypeInteger:
+		return g.generateInteger(s.(*schema.IntegerSchema))
+	case schema.TypeBoolean:
+		return g.generateBoolean(s.(*schema.BooleanSchema))
+	case schema.TypeObject:
+		return g.generateObject(s.(*schema.ObjectSchema), depth)
+	case schema.TypeArray:
+		return g.generateArray(s.(*schema.ArraySchema), depth)
+	case schema.TypeOptional:
+		return g.generateOptional(s, depth)
+	case schema.TypeResult:
+		return g.generateResult(s, depth)
+	case schema.TypeMap:
+		return g.generateMap(s, depth)
+	case schema.TypeUnion:
+		return g.generateUnion(s.(*schema.UnionSchema), depth)
+	case schema.TypeNull:
 		return nil
-	case TypeAny:
+	case schema.TypeAny:
 		return g.generateAny(depth)
 	default:
 		// Fallback to GenerateExample method
-		return schema.GenerateExample()
+		return s.GenerateExample()
 	}
 }
 
 // generateString creates a random string following string schema constraints
-func (g *Generator) generateString(schema *StringSchema) any {
+func (g *Generator) generateString(s *schema.StringSchema) any {
 	// Generate default values if requested
 	if g.config.GenerateDefaults {
 		// Handle enum values first - use first enum value as default
-		if len(schema.enumValues) > 0 {
-			return schema.enumValues[0]
+		if len(s.EnumValues()) > 0 {
+			return s.EnumValues()[0]
 		}
 
 		// For default generation, use the configured default string value
 		defaultStr := g.config.DefaultValues.String
 
 		// Ensure it meets minimum length requirements
-		if schema.minLength != nil && len(defaultStr) < *schema.minLength {
+		if s.MinLength() != nil && len(defaultStr) < *s.MinLength() {
 			// Pad with 'a' characters to meet minimum length
-			needed := *schema.minLength - len(defaultStr)
+			needed := *s.MinLength() - len(defaultStr)
 			defaultStr += strings.Repeat("a", needed)
 		}
 
 		// Ensure it doesn't exceed maximum length
-		if schema.maxLength != nil && len(defaultStr) > *schema.maxLength {
-			defaultStr = defaultStr[:*schema.maxLength]
+		if s.MaxLength() != nil && len(defaultStr) > *s.MaxLength() {
+			defaultStr = defaultStr[:*s.MaxLength()]
 		}
 
 		return defaultStr
 	}
 
 	// Handle enum values first
-	if len(schema.enumValues) > 0 {
-		return schema.enumValues[g.rng.Intn(len(schema.enumValues))]
+	if len(s.EnumValues()) > 0 {
+		return s.EnumValues()[g.rng.Intn(len(s.EnumValues()))]
 	}
 
 	// Handle format-specific generation
-	if schema.format != "" {
-		return g.generateFormatString(schema.format)
+	if s.Format() != "" {
+		return g.generateFormatString(s.Format())
 	}
 
 	// Handle pattern-based generation (simplified)
-	if schema.pattern != "" {
-		return g.generatePatternString(schema.pattern)
+	if s.Pattern() != "" {
+		return g.generatePatternString(s.Pattern())
 	}
 
 	// Generate random string within length constraints
 	minLen := g.config.StringLength.Min
 	maxLen := g.config.StringLength.Max
 
-	if schema.minLength != nil && *schema.minLength > minLen {
-		minLen = *schema.minLength
+	if s.MinLength() != nil && *s.MinLength() > minLen {
+		minLen = *s.MinLength()
 	}
-	if schema.maxLength != nil && *schema.maxLength < maxLen {
-		maxLen = *schema.maxLength
+	if s.MaxLength() != nil && *s.MaxLength() < maxLen {
+		maxLen = *s.MaxLength()
 	}
 
 	// Ensure min <= max
@@ -287,17 +289,17 @@ func (g *Generator) generateString(schema *StringSchema) any {
 }
 
 // generateNumber creates a random number following number schema constraints
-func (g *Generator) generateNumber(schema *NumberSchema) any {
+func (g *Generator) generateNumber(s *schema.NumberSchema) any {
 	// Generate default values if requested
 	if g.config.GenerateDefaults {
 		defaultNum := g.config.DefaultValues.Number
 
 		// Ensure it meets constraints
-		if schema.minimum != nil && defaultNum < *schema.minimum {
-			return *schema.minimum
+		if s.Minimum() != nil && defaultNum < *s.Minimum() {
+			return *s.Minimum()
 		}
-		if schema.maximum != nil && defaultNum > *schema.maximum {
-			return *schema.maximum
+		if s.Maximum() != nil && defaultNum > *s.Maximum() {
+			return *s.Maximum()
 		}
 
 		return defaultNum
@@ -306,11 +308,11 @@ func (g *Generator) generateNumber(schema *NumberSchema) any {
 	min := g.config.NumberRange.Min
 	max := g.config.NumberRange.Max
 
-	if schema.minimum != nil && *schema.minimum > min {
-		min = *schema.minimum
+	if s.Minimum() != nil && *s.Minimum() > min {
+		min = *s.Minimum()
 	}
-	if schema.maximum != nil && *schema.maximum < max {
-		max = *schema.maximum
+	if s.Maximum() != nil && *s.Maximum() < max {
+		max = *s.Maximum()
 	}
 
 	// Ensure min <= max
@@ -322,17 +324,17 @@ func (g *Generator) generateNumber(schema *NumberSchema) any {
 }
 
 // generateInteger creates a random integer following integer schema constraints
-func (g *Generator) generateInteger(schema *IntegerSchema) any {
+func (g *Generator) generateInteger(s *schema.IntegerSchema) any {
 	// Generate default values if requested
 	if g.config.GenerateDefaults {
 		defaultInt := g.config.DefaultValues.Integer
 
 		// Ensure it meets constraints
-		if schema.minimum != nil && defaultInt < *schema.minimum {
-			return *schema.minimum
+		if s.Minimum() != nil && defaultInt < *s.Minimum() {
+			return *s.Minimum()
 		}
-		if schema.maximum != nil && defaultInt > *schema.maximum {
-			return *schema.maximum
+		if s.Maximum() != nil && defaultInt > *s.Maximum() {
+			return *s.Maximum()
 		}
 
 		return defaultInt
@@ -341,11 +343,11 @@ func (g *Generator) generateInteger(schema *IntegerSchema) any {
 	min := g.config.IntegerRange.Min
 	max := g.config.IntegerRange.Max
 
-	if schema.minimum != nil && *schema.minimum > min {
-		min = *schema.minimum
+	if s.Minimum() != nil && *s.Minimum() > min {
+		min = *s.Minimum()
 	}
-	if schema.maximum != nil && *schema.maximum < max {
-		max = *schema.maximum
+	if s.Maximum() != nil && *s.Maximum() < max {
+		max = *s.Maximum()
 	}
 
 	// Ensure min <= max
@@ -357,7 +359,7 @@ func (g *Generator) generateInteger(schema *IntegerSchema) any {
 }
 
 // generateBoolean creates a random boolean
-func (g *Generator) generateBoolean(schema *BooleanSchema) any {
+func (g *Generator) generateBoolean(schema *schema.BooleanSchema) any {
 	// Generate default values if requested
 	if g.config.GenerateDefaults {
 		return g.config.DefaultValues.Boolean
@@ -367,12 +369,12 @@ func (g *Generator) generateBoolean(schema *BooleanSchema) any {
 }
 
 // generateObject creates a random object following object schema constraints
-func (g *Generator) generateObject(schema *ObjectSchema, depth int) any {
+func (g *Generator) generateObject(s *schema.ObjectSchema, depth int) any {
 	result := make(map[string]any)
 
 	// Generate required properties first
-	for _, required := range schema.required {
-		if propSchema, exists := schema.properties[required]; exists {
+	for _, required := range s.Required() {
+		if propSchema, exists := s.Properties()[required]; exists {
 			result[required] = g.generateWithDepth(propSchema, depth+1)
 		} else {
 			// If required property doesn't exist in properties, create a simple fallback
@@ -382,7 +384,7 @@ func (g *Generator) generateObject(schema *ObjectSchema, depth int) any {
 
 	// Generate optional properties based on probability (skip for minimal generation)
 	if !g.config.MinimalGeneration {
-		for propName, propSchema := range schema.properties {
+		for propName, propSchema := range s.Properties() {
 			// Skip if already added as required
 			if _, exists := result[propName]; exists {
 				continue
@@ -395,7 +397,7 @@ func (g *Generator) generateObject(schema *ObjectSchema, depth int) any {
 		}
 
 		// Add additional properties if allowed (generate simple strings only)
-		if schema.additionalProps && len(result) < g.config.MaxItems {
+		if s.AdditionalProperties() && len(result) < g.config.MaxItems {
 			additionalCount := g.rng.Intn(g.config.MaxItems - len(result) + 1)
 			for i := 0; i < additionalCount; i++ {
 				propName := "additional_" + strconv.Itoa(i)
@@ -409,15 +411,15 @@ func (g *Generator) generateObject(schema *ObjectSchema, depth int) any {
 }
 
 // generateArray creates a random array following array schema constraints
-func (g *Generator) generateArray(schema *ArraySchema, depth int) any {
+func (g *Generator) generateArray(s *schema.ArraySchema, depth int) any {
 	minItems := g.config.MinItems
 	maxItems := g.config.MaxItems
 
-	if schema.minItems != nil && *schema.minItems > minItems {
-		minItems = *schema.minItems
+	if s.MinItems() != nil && *s.MinItems() > minItems {
+		minItems = *s.MinItems()
 	}
-	if schema.maxItems != nil && *schema.maxItems < maxItems {
-		maxItems = *schema.maxItems
+	if s.MaxItems() != nil && *s.MaxItems() < maxItems {
+		maxItems = *s.MaxItems()
 	}
 
 	// Ensure min <= max
@@ -433,10 +435,10 @@ func (g *Generator) generateArray(schema *ArraySchema, depth int) any {
 
 	result := make([]any, count)
 	for i := 0; i < count; i++ {
-		item := g.generateWithDepth(schema.itemSchema, depth+1)
+		item := g.generateWithDepth(s.ItemSchema(), depth+1)
 
 		// Handle unique items constraint
-		if schema.uniqueItems {
+		if s.UniqueItemsRequired() {
 			maxAttempts := 50 // Prevent infinite loops
 			attempts := 0
 			for attempts < maxAttempts {
@@ -451,7 +453,7 @@ func (g *Generator) generateArray(schema *ArraySchema, depth int) any {
 					break
 				}
 				// Generate a different value by adding variation
-				item = g.generateVariantValue(schema.itemSchema, depth+1, attempts)
+				item = g.generateVariantValue(s.ItemSchema(), depth+1, attempts)
 				attempts++
 			}
 			// If still duplicate after many attempts, use a fallback unique value
@@ -467,25 +469,16 @@ func (g *Generator) generateArray(schema *ArraySchema, depth int) any {
 }
 
 // generateOptional creates a random optional value
-func (g *Generator) generateOptional(schema Schema, depth int) any {
-	// Use reflection to get the actual optional schema
-	if optSchema, ok := schema.(*OptionalSchema[any]); ok {
-		// Decide whether to generate null or actual value
-		if g.rng.Float64() < g.config.OptionalProbability {
-			return g.generateWithDepth(optSchema.itemSchema, depth+1)
-		}
-		return nil
-	}
-
+func (g *Generator) generateOptional(s schema.Schema, depth int) any {
 	// Fallback: just use the example or nil
 	if g.rng.Float64() < g.config.OptionalProbability {
-		return schema.GenerateExample()
+		return s.GenerateExample()
 	}
 	return nil
 }
 
 // generateResult creates a random result value (success or error)
-func (g *Generator) generateResult(schema Schema, depth int) any {
+func (g *Generator) generateResult(schema schema.Schema, depth int) any {
 	// Simple implementation: 70% success, 30% error
 	if g.rng.Float64() < 0.7 {
 		// Generate success value with simple types to avoid constraint violations
@@ -503,7 +496,7 @@ func (g *Generator) generateResult(schema Schema, depth int) any {
 }
 
 // generateMap creates a random map
-func (g *Generator) generateMap(schema Schema, depth int) any {
+func (g *Generator) generateMap(schema schema.Schema, depth int) any {
 	count := g.config.MinItems + g.rng.Intn(g.config.MaxItems-g.config.MinItems+1)
 	result := make(map[string]any)
 
@@ -518,29 +511,30 @@ func (g *Generator) generateMap(schema Schema, depth int) any {
 }
 
 // generateUnion creates a random union value
-func (g *Generator) generateUnion(schema *UnionSchema, depth int) any {
-	if len(schema.schemas) == 0 {
+func (g *Generator) generateUnion(s *schema.UnionSchema, depth int) any {
+	schemas := s.Schemas()
+	if len(schemas) == 0 {
 		return nil
 	}
 
-	var chosenSchema Schema
+	var chosenSchema schema.Schema
 
 	switch g.config.UnionChoice {
 	case "first":
-		chosenSchema = schema.schemas[0]
+		chosenSchema = schemas[0]
 	case "balanced":
 		// Try to balance between different types
-		chosenSchema = schema.schemas[g.rng.Intn(len(schema.schemas))]
+		chosenSchema = schemas[g.rng.Intn(len(schemas))]
 	default: // "random"
-		chosenSchema = schema.schemas[g.rng.Intn(len(schema.schemas))]
+		chosenSchema = schemas[g.rng.Intn(len(schemas))]
 	}
 
 	// Generate value with fallback if the chosen schema fails
 	value := g.generateWithDepth(chosenSchema, depth+1)
 
 	// If the generated value is nil or empty for non-null schemas, try the first schema as fallback
-	if value == nil && len(schema.schemas) > 0 && schema.schemas[0].Type() != TypeNull {
-		value = g.generateWithDepth(schema.schemas[0], depth+1)
+	if value == nil && len(schemas) > 0 && schemas[0].Type() != schema.TypeNull {
+		value = g.generateWithDepth(schemas[0], depth+1)
 	}
 
 	return value
@@ -688,21 +682,21 @@ func (g *Generator) zeroPad(num int) string {
 }
 
 // generateFallbackValue generates a simple fallback value when depth limit is exceeded
-func (g *Generator) generateFallbackValue(schema Schema) any {
-	switch schema.Type() {
-	case TypeString:
+func (g *Generator) generateFallbackValue(s schema.Schema) any {
+	switch s.Type() {
+	case schema.TypeString:
 		return "fallback"
-	case TypeNumber:
+	case schema.TypeNumber:
 		return 0.0
-	case TypeInteger:
+	case schema.TypeInteger:
 		return int64(0)
-	case TypeBoolean:
+	case schema.TypeBoolean:
 		return false
-	case TypeObject:
+	case schema.TypeObject:
 		return make(map[string]any)
-	case TypeArray:
+	case schema.TypeArray:
 		return []any{}
-	case TypeNull:
+	case schema.TypeNull:
 		return nil
 	default:
 		return "fallback"
@@ -727,7 +721,7 @@ func (g *Generator) generateSimplePrimitive() any {
 }
 
 // generateVariantValue generates a variant of a value for unique constraints
-func (g *Generator) generateVariantValue(schema Schema, depth int, attempt int) any {
+func (g *Generator) generateVariantValue(schema schema.Schema, depth int, attempt int) any {
 	// Add variation based on attempt number to increase uniqueness probability
 	oldSeed := g.rng.Int63()
 	g.rng.Seed(oldSeed + int64(attempt*1000)) // Change seed to get different values
@@ -753,36 +747,36 @@ func (g *Generator) valuesEqual(a, b any) bool {
 // Convenience functions
 
 // Generate creates a random value using default configuration
-func Generate(schema Schema) any {
+func Generate(schema schema.Schema) any {
 	return NewGeneratorWithDefaults().Generate(schema)
 }
 
 // GenerateMany creates multiple random values using default configuration
-func GenerateMany(schema Schema, count int) []any {
+func GenerateMany(schema schema.Schema, count int) []any {
 	return NewGeneratorWithDefaults().GenerateMany(schema, count)
 }
 
 // GenerateWithSeed creates a random value with a specific seed for reproducibility
-func GenerateWithSeed(schema Schema, seed int64) any {
+func GenerateWithSeed(schema schema.Schema, seed int64) any {
 	config := DefaultGeneratorConfig()
 	config.Seed = seed
 	return NewGenerator(config).Generate(schema)
 }
 
 // GenerateDefaults creates default/empty values for the given schema
-func GenerateDefaults(schema Schema) any {
+func GenerateDefaults(schema schema.Schema) any {
 	generator := NewDefaultValueGenerator()
 	return generator.Generate(schema)
 }
 
 // GenerateMinimal creates minimal valid data for the given schema
-func GenerateMinimal(schema Schema) any {
+func GenerateMinimal(schema schema.Schema) any {
 	generator := NewMinimalGenerator()
 	return generator.Generate(schema)
 }
 
 // GenerateCustomDefaults creates values using custom default configuration
-func GenerateCustomDefaults(schema Schema, defaultString string, defaultNumber float64, defaultInteger int64, defaultBoolean bool) any {
+func GenerateCustomDefaults(schema schema.Schema, defaultString string, defaultNumber float64, defaultInteger int64, defaultBoolean bool) any {
 	config := DefaultGeneratorConfig()
 	config.GenerateDefaults = true
 	config.MinimalGeneration = true

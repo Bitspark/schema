@@ -8,22 +8,22 @@ import (
 
 func TestVisitorPattern(t *testing.T) {
 	// Create a complex schema to test with
-	apiSchema := Object().
+	apiSchema := NewObject().
 		Name("APIResponse").
-		Property("user", Object().
+		Property("user", NewObject().
 			Name("User").
-			Property("id", Integer().Min(1).Build()).
-			Property("name", String().MinLength(1).Build()).
-			Property("email", String().Email().Build()).
-			Property("roles", Array().Items(String().Enum("admin", "user", "guest").Build()).Build()).
+			Property("id", NewInteger().Min(1).Build()).
+			Property("name", NewString().MinLength(1).Build()).
+			Property("email", NewString().Email().Build()).
+			Property("roles", NewArray().Items(NewString().Enum("admin", "user", "guest").Build()).Build()).
 			Required("id", "name", "email").
 			Build()).
-		Property("metadata", Object().
+		Property("metadata", NewObject().
 			Name("Metadata").
-			Property("timestamp", String().Build()).
-			Property("version", String().Build()).
+			Property("timestamp", NewString().Build()).
+			Property("version", NewString().Build()).
 			Build()).
-		Property("data", Union[string, int]().Build()).
+		Property("data", Union2[string, int]().Build()).
 		Required("user").
 		Build()
 
@@ -168,12 +168,12 @@ func TestFunctionSchemaVisitor(t *testing.T) {
 	calcSchema := NewFunctionSchema().
 		Name("calculator").
 		Description("Performs mathematical operations").
-		Input("operands", Array().Items(Number().Build()).MinItems(2).Build()).
-		Input("operation", String().Enum("add", "subtract", "multiply", "divide").Build()).
-		Input("precision", Integer().Min(0).Max(10).Build()).
-		Output(Object().
-			Property("result", Number().Build()).
-			Property("precision", Integer().Build()).
+		Input("operands", NewArray().Items(NewNumber().Build()).MinItems(2).Build()).
+		Input("operation", NewString().Enum("add", "subtract", "multiply", "divide").Build()).
+		Input("precision", NewInteger().Min(0).Max(10).Build()).
+		Output(NewObject().
+			Property("result", NewNumber().Build()).
+			Property("precision", NewInteger().Build()).
 			Required("result").
 			Build()).
 		Required("operands", "operation").
@@ -245,8 +245,8 @@ func TestFunctionSchemaVisitor(t *testing.T) {
 
 func ExampleWalk() {
 	// Create a simple schema
-	userSchema := Object().
-		Property("name", String().MinLength(1).Build()).
+	userSchema := NewObject().
+		Property("name", NewString().MinLength(1).Build()).
 		Required("name").
 		Build()
 
@@ -281,9 +281,9 @@ func ExampleTraversalVisitor() {
 		return nil
 	})
 
-	schema := Object().
-		Property("title", String().Build()).
-		Property("description", String().Build()).
+	schema := NewObject().
+		Property("title", NewString().Build()).
+		Property("description", NewString().Build()).
 		Build()
 
 	err := Walk(schema, func(s Schema) error {
@@ -303,13 +303,13 @@ func ExampleTraversalVisitor() {
 
 // Demonstrate the combination of both patterns
 func ExampleWalk_combined() {
-	schema := Object().
-		Property("user", Object().
-			Property("name", String().Build()).
-			Property("age", Integer().Build()).
+	schema := NewObject().
+		Property("user", NewObject().
+			Property("name", NewString().Build()).
+			Property("age", NewInteger().Build()).
 			Required("name").
 			Build()).
-		Property("tags", Array().Items(String().Build()).Build()).
+		Property("tags", NewArray().Items(NewString().Build()).Build()).
 		Required("user").
 		Build()
 

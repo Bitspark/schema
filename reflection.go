@@ -69,37 +69,37 @@ func generateSchemaFromTypeUncached(typ reflect.Type) Schema {
 
 	switch typ.Kind() {
 	case reflect.String:
-		return String().Build()
+		return NewString().Build()
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return Integer().Build()
+		return NewInteger().Build()
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return Integer().Build()
+		return NewInteger().Build()
 	case reflect.Float32, reflect.Float64:
-		return Number().Build()
+		return NewNumber().Build()
 	case reflect.Bool:
-		return Boolean().Build()
+		return NewBoolean().Build()
 	case reflect.Slice, reflect.Array:
 		itemSchema := generateSchemaFromType(typ.Elem())
-		return Array().Items(itemSchema).Build()
+		return NewArray().Items(itemSchema).Build()
 	case reflect.Map:
 		// Map types are treated as objects with additional properties
 		if typ.Key().Kind() == reflect.String {
-			return Object().AdditionalProperties(true).
+			return NewObject().AdditionalProperties(true).
 				Name(fmt.Sprintf("Map[string]%s", getTypeName(typ.Elem()))).
 				Build()
 		}
-		return Object().AdditionalProperties(true).Build()
+		return NewObject().AdditionalProperties(true).Build()
 	case reflect.Struct:
 		return generateObjectSchemaFromStruct(typ)
 	case reflect.Interface:
 		// Interfaces are treated as "any" type
-		return Object().AdditionalProperties(true).
+		return NewObject().AdditionalProperties(true).
 			Name("any").
 			Description("Any value").
 			Build()
 	default:
 		// Fallback to object for unknown types
-		return Object().AdditionalProperties(true).
+		return NewObject().AdditionalProperties(true).
 			Name(typ.String()).
 			Build()
 	}
@@ -107,7 +107,7 @@ func generateSchemaFromTypeUncached(typ reflect.Type) Schema {
 
 // generateObjectSchemaFromStruct generates an object schema from a struct type.
 func generateObjectSchemaFromStruct(typ reflect.Type) Schema {
-	builder := Object().Name(typ.Name())
+	builder := NewObject().Name(typ.Name())
 
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
@@ -216,7 +216,7 @@ func parseSchemaTag(tagValue string) map[string]string {
 // Tag application functions for different schema types
 
 func applyStringTags(schema *StringSchema, tags map[string]string, field reflect.StructField) Schema {
-	builder := String()
+	builder := NewString()
 
 	// Copy existing properties
 	if schema.minLength != nil {
@@ -280,7 +280,7 @@ func applyStringTags(schema *StringSchema, tags map[string]string, field reflect
 }
 
 func applyNumberTags(schema *NumberSchema, tags map[string]string, field reflect.StructField) Schema {
-	builder := Number()
+	builder := NewNumber()
 
 	// Copy existing properties
 	if schema.minimum != nil {
@@ -314,7 +314,7 @@ func applyNumberTags(schema *NumberSchema, tags map[string]string, field reflect
 }
 
 func applyIntegerTags(schema *IntegerSchema, tags map[string]string, field reflect.StructField) Schema {
-	builder := Integer()
+	builder := NewInteger()
 
 	// Copy existing properties
 	if schema.minimum != nil {
@@ -348,7 +348,7 @@ func applyIntegerTags(schema *IntegerSchema, tags map[string]string, field refle
 }
 
 func applyBooleanTags(schema *BooleanSchema, tags map[string]string, field reflect.StructField) Schema {
-	builder := Boolean()
+	builder := NewBoolean()
 
 	// Apply tag directives
 	for key, value := range tags {
@@ -366,7 +366,7 @@ func applyBooleanTags(schema *BooleanSchema, tags map[string]string, field refle
 }
 
 func applyArrayTags(schema *ArraySchema, tags map[string]string, field reflect.StructField) Schema {
-	builder := Array()
+	builder := NewArray()
 
 	// Copy existing properties
 	if schema.itemSchema != nil {
@@ -400,7 +400,7 @@ func applyArrayTags(schema *ArraySchema, tags map[string]string, field reflect.S
 			if schema.itemSchema != nil {
 				if _, ok := schema.itemSchema.(*StringSchema); ok {
 					values := strings.Split(value, "|")
-					newStringSchema := String().Enum(values...).Build()
+					newStringSchema := NewString().Enum(values...).Build()
 					builder.Items(newStringSchema)
 				}
 			}

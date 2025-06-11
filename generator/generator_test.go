@@ -1,4 +1,4 @@
-package schema
+package generator
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	schema2 "defs.dev/schema"
 )
 
 func TestGeneratorBasicTypes(t *testing.T) {
@@ -13,12 +15,12 @@ func TestGeneratorBasicTypes(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		schema Schema
+		schema schema2.Schema
 		check  func(value any) bool
 	}{
 		{
 			name:   "String",
-			schema: String().MinLength(5).MaxLength(10).Build(),
+			schema: schema2.NewString().MinLength(5).MaxLength(10).Build(),
 			check: func(value any) bool {
 				str, ok := value.(string)
 				return ok && len(str) >= 5 && len(str) <= 10
@@ -26,7 +28,7 @@ func TestGeneratorBasicTypes(t *testing.T) {
 		},
 		{
 			name:   "StringWithEnum",
-			schema: String().Enum("red", "green", "blue").Build(),
+			schema: schema2.NewString().Enum("red", "green", "blue").Build(),
 			check: func(value any) bool {
 				str, ok := value.(string)
 				return ok && (str == "red" || str == "green" || str == "blue")
@@ -34,7 +36,7 @@ func TestGeneratorBasicTypes(t *testing.T) {
 		},
 		{
 			name:   "StringWithFormat",
-			schema: String().Email().Build(),
+			schema: schema2.NewString().Email().Build(),
 			check: func(value any) bool {
 				str, ok := value.(string)
 				return ok && strings.Contains(str, "@")
@@ -42,7 +44,7 @@ func TestGeneratorBasicTypes(t *testing.T) {
 		},
 		{
 			name:   "Number",
-			schema: Number().Range(10, 100).Build(),
+			schema: schema2.NewNumber().Range(10, 100).Build(),
 			check: func(value any) bool {
 				num, ok := value.(float64)
 				return ok && num >= 10 && num <= 100
@@ -50,7 +52,7 @@ func TestGeneratorBasicTypes(t *testing.T) {
 		},
 		{
 			name:   "Integer",
-			schema: Integer().Range(1, 50).Build(),
+			schema: schema2.NewInteger().Range(1, 50).Build(),
 			check: func(value any) bool {
 				num, ok := value.(int64)
 				return ok && num >= 1 && num <= 50
@@ -58,7 +60,7 @@ func TestGeneratorBasicTypes(t *testing.T) {
 		},
 		{
 			name:   "Boolean",
-			schema: Boolean().Build(),
+			schema: schema2.NewBoolean().Build(),
 			check: func(value any) bool {
 				_, ok := value.(bool)
 				return ok
@@ -89,8 +91,8 @@ func TestGeneratorComplexTypes(t *testing.T) {
 	generator := NewGeneratorWithDefaults()
 
 	t.Run("Array", func(t *testing.T) {
-		schema := Array().
-			Items(String().MinLength(3).Build()).
+		schema := schema2.NewArray().
+			Items(schema2.NewString().MinLength(3).Build()).
 			MinItems(2).
 			MaxItems(5).
 			Build()
@@ -124,10 +126,10 @@ func TestGeneratorComplexTypes(t *testing.T) {
 	})
 
 	t.Run("Object", func(t *testing.T) {
-		schema := Object().
-			Property("name", String().MinLength(2).Build()).
-			Property("age", Integer().Range(18, 100).Build()).
-			Property("email", String().Email().Build()).
+		schema := schema2.NewObject().
+			Property("name", schema2.NewString().MinLength(2).Build()).
+			Property("age", schema2.NewInteger().Range(18, 100).Build()).
+			Property("email", schema2.NewString().Email().Build()).
 			Required("name", "age").
 			Build()
 
@@ -153,17 +155,17 @@ func TestGeneratorComplexTypes(t *testing.T) {
 	})
 
 	t.Run("NestedObject", func(t *testing.T) {
-		addressSchema := Object().
-			Property("street", String().MinLength(5).Build()).
-			Property("city", String().MinLength(2).Build()).
-			Property("zipcode", String().Pattern("[0-9]{5}").Build()).
+		addressSchema := schema2.NewObject().
+			Property("street", schema2.NewString().MinLength(5).Build()).
+			Property("city", schema2.NewString().MinLength(2).Build()).
+			Property("zipcode", schema2.NewString().Pattern("[0-9]{5}").Build()).
 			Required("street", "city").
 			Build()
 
-		userSchema := Object().
-			Property("name", String().MinLength(2).Build()).
+		userSchema := schema2.NewObject().
+			Property("name", schema2.NewString().MinLength(2).Build()).
 			Property("address", addressSchema).
-			Property("hobbies", Array().Items(String().Build()).MinItems(1).MaxItems(3).Build()).
+			Property("hobbies", schema2.NewArray().Items(schema2.NewString().Build()).MinItems(1).MaxItems(3).Build()).
 			Required("name", "address").
 			Build()
 
@@ -188,11 +190,11 @@ func TestGeneratorConfiguration(t *testing.T) {
 		generator := NewGenerator(config)
 
 		// Create a deeply nested schema
-		deepSchema := Object().
-			Property("level1", Object().
-				Property("level2", Object().
-					Property("level3", Object().
-						Property("level4", String().Build()).
+		deepSchema := schema2.NewObject().
+			Property("level1", schema2.NewObject().
+				Property("level2", schema2.NewObject().
+					Property("level3", schema2.NewObject().
+						Property("level4", schema2.NewString().Build()).
 						Build()).
 					Build()).
 				Build()).
@@ -214,7 +216,7 @@ func TestGeneratorConfiguration(t *testing.T) {
 		config.PreferExamples = true
 		generator := NewGenerator(config)
 
-		schema := String().Example("test-example").Build()
+		schema := schema2.NewString().Example("test-example").Build()
 
 		// Should always return the example when PreferExamples is true
 		for i := 0; i < 5; i++ {
@@ -230,9 +232,9 @@ func TestGeneratorConfiguration(t *testing.T) {
 		config.OptionalProbability = 0.0 // Never include optional properties
 		generator := NewGenerator(config)
 
-		schema := Object().
-			Property("required", String().Build()).
-			Property("optional", String().Build()).
+		schema := schema2.NewObject().
+			Property("required", schema2.NewString().Build()).
+			Property("optional", schema2.NewString().Build()).
 			Required("required").
 			Build()
 
@@ -254,12 +256,12 @@ func TestGeneratorConfiguration(t *testing.T) {
 
 	t.Run("CustomGenerator", func(t *testing.T) {
 		config := DefaultGeneratorConfig()
-		config.CustomGenerators["special"] = func(schema Schema, config GeneratorConfig, depth int) any {
+		config.CustomGenerators["special"] = func(schema schema2.Schema, config GeneratorConfig, depth int) any {
 			return "custom-generated-value"
 		}
 		generator := NewGenerator(config)
 
-		schema := String().Name("special").Build()
+		schema := schema2.NewString().Name("special").Build()
 
 		value := generator.Generate(schema)
 		if value != "custom-generated-value" {
@@ -278,7 +280,7 @@ func TestGeneratorConfiguration(t *testing.T) {
 		config2.Seed = seed
 		generator2 := NewGenerator(config2)
 
-		schema := String().MinLength(10).MaxLength(10).Build()
+		schema := schema2.NewString().MinLength(10).MaxLength(10).Build()
 
 		// Same seed should produce same results
 		value1 := generator1.Generate(schema)
@@ -293,10 +295,10 @@ func TestGeneratorConfiguration(t *testing.T) {
 func TestGeneratorManyValues(t *testing.T) {
 	generator := NewGeneratorWithDefaults()
 
-	schema := Object().
-		Property("id", Integer().Range(1, 1000).Build()).
-		Property("name", String().MinLength(3).MaxLength(15).Build()).
-		Property("active", Boolean().Build()).
+	schema := schema2.NewObject().
+		Property("id", schema2.NewInteger().Range(1, 1000).Build()).
+		Property("name", schema2.NewString().MinLength(3).MaxLength(15).Build()).
+		Property("active", schema2.NewBoolean().Build()).
 		Required("id", "name", "active").
 		Build()
 
@@ -354,20 +356,17 @@ func TestGeneratorFormats(t *testing.T) {
 
 	for format, validator := range formats {
 		t.Run(format, func(t *testing.T) {
-			var schema Schema
+			var schema schema2.Schema
 			switch format {
 			case "email":
-				schema = String().Email().Build()
+				schema = schema2.NewString().Email().Build()
 			case "uuid":
-				schema = String().UUID().Build()
+				schema = schema2.NewString().UUID().Build()
 			case "url":
-				schema = String().URL().Build()
+				schema = schema2.NewString().URL().Build()
 			default:
 				// Create a string schema with the format
-				schema = &StringSchema{
-					metadata: SchemaMetadata{},
-					format:   format,
-				}
+				schema = schema2.NewString().Format(format).Build()
 			}
 
 			for i := 0; i < 5; i++ {
@@ -389,9 +388,9 @@ func TestGeneratorFormats(t *testing.T) {
 }
 
 func TestConvenienceFunctions(t *testing.T) {
-	schema := Object().
-		Property("name", String().MinLength(3).Build()).
-		Property("count", Integer().Range(1, 100).Build()).
+	schema := schema2.NewObject().
+		Property("name", schema2.NewString().MinLength(3).Build()).
+		Property("count", schema2.NewInteger().Range(1, 100).Build()).
 		Required("name", "count").
 		Build()
 
@@ -439,34 +438,34 @@ func TestGeneratorWithComplexScenarios(t *testing.T) {
 
 	t.Run("APIResponse", func(t *testing.T) {
 		// Simulate a complex API response schema
-		userSchema := Object().
-			Property("id", Integer().Range(1, 10000).Build()).
-			Property("username", String().MinLength(3).MaxLength(20).Build()).
-			Property("email", String().Email().Build()).
-			Property("profile", Object().
-				Property("firstName", String().MinLength(1).MaxLength(50).Build()).
-				Property("lastName", String().MinLength(1).MaxLength(50).Build()).
-				Property("avatar", String().URL().Build()).
-				Property("preferences", Object().
-					Property("theme", String().Enum("light", "dark").Build()).
-					Property("notifications", Boolean().Build()).
+		userSchema := schema2.NewObject().
+			Property("id", schema2.NewInteger().Range(1, 10000).Build()).
+			Property("username", schema2.NewString().MinLength(3).MaxLength(20).Build()).
+			Property("email", schema2.NewString().Email().Build()).
+			Property("profile", schema2.NewObject().
+				Property("firstName", schema2.NewString().MinLength(1).MaxLength(50).Build()).
+				Property("lastName", schema2.NewString().MinLength(1).MaxLength(50).Build()).
+				Property("avatar", schema2.NewString().URL().Build()).
+				Property("preferences", schema2.NewObject().
+					Property("theme", schema2.NewString().Enum("light", "dark").Build()).
+					Property("notifications", schema2.NewBoolean().Build()).
 					Build()).
 				Required("firstName", "lastName").
 				Build()).
-			Property("roles", Array().
-				Items(String().Enum("admin", "user", "moderator").Build()).
+			Property("roles", schema2.NewArray().
+				Items(schema2.NewString().Enum("admin", "user", "moderator").Build()).
 				MinItems(1).
 				MaxItems(3).
 				Build()).
 			Required("id", "username", "email", "profile", "roles").
 			Build()
 
-		apiResponseSchema := Object().
-			Property("success", Boolean().Build()).
+		apiResponseSchema := schema2.NewObject().
+			Property("success", schema2.NewBoolean().Build()).
 			Property("data", userSchema).
-			Property("metadata", Object().
-				Property("timestamp", String().Build()).
-				Property("version", String().Build()).
+			Property("metadata", schema2.NewObject().
+				Property("timestamp", schema2.NewString().Build()).
+				Property("version", schema2.NewString().Build()).
 				Build()).
 			Required("success", "data").
 			Build()
@@ -484,26 +483,26 @@ func TestGeneratorWithComplexScenarios(t *testing.T) {
 
 	t.Run("ConfigurationFile", func(t *testing.T) {
 		// Simulate a configuration file schema
-		configSchema := Object().
-			Property("server", Object().
-				Property("host", String().Default("localhost").Build()).
-				Property("port", Integer().Range(1000, 9999).Build()).
-				Property("ssl", Boolean().Build()).
+		configSchema := schema2.NewObject().
+			Property("server", schema2.NewObject().
+				Property("host", schema2.NewString().Default("localhost").Build()).
+				Property("port", schema2.NewInteger().Range(1000, 9999).Build()).
+				Property("ssl", schema2.NewBoolean().Build()).
 				Required("port").
 				Build()).
-			Property("database", Object().
-				Property("url", String().URL().Build()).
-				Property("maxConnections", Integer().Range(10, 100).Build()).
-				Property("timeout", Integer().Range(5, 60).Build()).
+			Property("database", schema2.NewObject().
+				Property("url", schema2.NewString().URL().Build()).
+				Property("maxConnections", schema2.NewInteger().Range(10, 100).Build()).
+				Property("timeout", schema2.NewInteger().Range(5, 60).Build()).
 				Required("url").
 				Build()).
-			Property("features", Object().
-				Property("enableLogging", Boolean().Build()).
-				Property("enableMetrics", Boolean().Build()).
-				Property("enableTracing", Boolean().Build()).
+			Property("features", schema2.NewObject().
+				Property("enableLogging", schema2.NewBoolean().Build()).
+				Property("enableMetrics", schema2.NewBoolean().Build()).
+				Property("enableTracing", schema2.NewBoolean().Build()).
 				Build()).
-			Property("environments", Array().
-				Items(String().Enum("development", "staging", "production").Build()).
+			Property("environments", schema2.NewArray().
+				Items(schema2.NewString().Enum("development", "staging", "production").Build()).
 				MinItems(1).
 				MaxItems(3).
 				UniqueItems().
@@ -527,22 +526,22 @@ func TestGeneratorWithComplexScenarios(t *testing.T) {
 func BenchmarkGenerator(b *testing.B) {
 	generator := NewGeneratorWithDefaults()
 
-	schema := Object().
-		Property("users", Array().
-			Items(Object().
-				Property("id", Integer().Range(1, 1000000).Build()).
-				Property("name", String().MinLength(5).MaxLength(25).Build()).
-				Property("email", String().Email().Build()).
-				Property("metadata", Object().
-					Property("created", String().Build()).
-					Property("updated", String().Build()).
+	schema := schema2.NewObject().
+		Property("users", schema2.NewArray().
+			Items(schema2.NewObject().
+				Property("id", schema2.NewInteger().Range(1, 1000000).Build()).
+				Property("name", schema2.NewString().MinLength(5).MaxLength(25).Build()).
+				Property("email", schema2.NewString().Email().Build()).
+				Property("metadata", schema2.NewObject().
+					Property("created", schema2.NewString().Build()).
+					Property("updated", schema2.NewString().Build()).
 					Build()).
 				Required("id", "name", "email").
 				Build()).
 			MinItems(10).
 			MaxItems(50).
 			Build()).
-		Property("total", Integer().Build()).
+		Property("total", schema2.NewInteger().Build()).
 		Required("users", "total").
 		Build()
 
@@ -565,13 +564,13 @@ func ExampleGenerator() {
 	generator := NewGenerator(config)
 
 	// Define a user schema
-	userSchema := Object().
-		Property("id", Integer().Range(1, 1000).Build()).
-		Property("name", String().MinLength(3).MaxLength(20).Build()).
-		Property("email", String().Email().Build()).
-		Property("age", Integer().Range(18, 80).Build()).
-		Property("isActive", Boolean().Build()).
-		Property("tags", Array().Items(String().Build()).MaxItems(3).Build()).
+	userSchema := schema2.NewObject().
+		Property("id", schema2.NewInteger().Range(1, 1000).Build()).
+		Property("name", schema2.NewString().MinLength(3).MaxLength(20).Build()).
+		Property("email", schema2.NewString().Email().Build()).
+		Property("age", schema2.NewInteger().Range(18, 80).Build()).
+		Property("isActive", schema2.NewBoolean().Build()).
+		Property("tags", schema2.NewArray().Items(schema2.NewString().Build()).MaxItems(3).Build()).
 		Required("id", "name", "email").
 		Build()
 

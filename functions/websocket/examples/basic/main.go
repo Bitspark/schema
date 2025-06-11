@@ -55,13 +55,13 @@ func main() {
 	calcSchema := schema.NewFunctionSchema().
 		Name("calculator").
 		Description("A simple calculator function").
-		Input("operation", schema.String().Description("Operation: add, subtract, multiply, divide").Build()).
-		Input("a", schema.Number().Description("First number").Build()).
-		Input("b", schema.Number().Description("Second number").Build()).
-		Output(schema.Object().
-			Property("result", schema.Number().Build()).
-			Property("operation", schema.String().Build()).
-			Property("operands", schema.Array().Items(schema.Number().Build()).Build()).
+		Input("operation", schema.NewString().Description("Operation: add, subtract, multiply, divide").Build()).
+		Input("a", schema.NewNumber().Description("First number").Build()).
+		Input("b", schema.NewNumber().Description("Second number").Build()).
+		Output(schema.NewObject().
+			Property("result", schema.NewNumber().Build()).
+			Property("operation", schema.NewString().Build()).
+			Property("operands", schema.NewArray().Items(schema.NewNumber().Build()).Build()).
 			Build()).
 		Build()
 
