@@ -14,7 +14,6 @@ type Schema interface {
 	// Metadata
 	Type() SchemaType
 	Metadata() SchemaMetadata
-	WithMetadata(metadata SchemaMetadata) Schema
 
 	// Example generation
 	GenerateExample() any
