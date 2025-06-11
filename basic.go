@@ -3,7 +3,6 @@ package schema
 import (
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 // String schema
@@ -206,14 +205,9 @@ func (s *StringSchema) GenerateExample() any {
 		return s.metadata.Examples[0]
 	}
 
-	// Use enum values
+	// Use enum values if available
 	if len(s.enumValues) > 0 {
 		return s.enumValues[0]
-	}
-
-	// Use default
-	if s.defaultVal != nil {
-		return *s.defaultVal
 	}
 
 	// Generate based on format
@@ -221,13 +215,13 @@ func (s *StringSchema) GenerateExample() any {
 		return generateFormatExample(s.format)
 	}
 
-	// Generic example
-	example := "example"
-	if s.minLength != nil && len(example) < *s.minLength {
-		example = strings.Repeat("x", *s.minLength)
+	// Generate pattern-based example (simplified)
+	if s.pattern != "" {
+		return "example"
 	}
 
-	return example
+	// Default example
+	return "string"
 }
 
 // Object schema
@@ -249,8 +243,7 @@ func (s *ObjectSchema) Properties() map[string]Schema {
 }
 
 func (s *ObjectSchema) Required() []string {
-	// Return a copy to prevent external mutation
-	return append([]string(nil), s.required...)
+	return s.required
 }
 
 func (s *ObjectSchema) AdditionalProperties() bool {
@@ -292,7 +285,7 @@ func (s *ObjectSchema) Validate(value any) ValidationResult {
 				Code:       "type_mismatch",
 				Value:      value,
 				Expected:   "object",
-				Suggestion: "Provide an object with key-value pairs",
+				Suggestion: "Provide an object value",
 			}},
 		}
 	}
@@ -307,12 +300,12 @@ func (s *ObjectSchema) Validate(value any) ValidationResult {
 				Message:    fmt.Sprintf("Required property '%s' is missing", reqProp),
 				Code:       "required_missing",
 				Expected:   fmt.Sprintf("Property '%s'", reqProp),
-				Suggestion: fmt.Sprintf("Add required property '%s'", reqProp),
+				Suggestion: fmt.Sprintf("Add the required property '%s'", reqProp),
 			})
 		}
 	}
 
-	// Validate properties
+	// Validate each property
 	for propName, propValue := range obj {
 		propSchema, exists := s.properties[propName]
 		if !exists {
@@ -322,21 +315,16 @@ func (s *ObjectSchema) Validate(value any) ValidationResult {
 					Message:    fmt.Sprintf("Additional property '%s' not allowed", propName),
 					Code:       "additional_property",
 					Value:      propValue,
-					Suggestion: fmt.Sprintf("Remove property '%s' or add it to schema", propName),
+					Suggestion: "Remove this property or allow additional properties",
 				})
 			}
 			continue
 		}
 
-		// Validate property value
 		result := propSchema.Validate(propValue)
 		if !result.Valid {
 			for _, err := range result.Errors {
-				if err.Path == "" {
-					err.Path = propName
-				} else {
-					err.Path = propName + "." + err.Path
-				}
+				err.Path = propName + "." + err.Path
 				errors = append(errors, err)
 			}
 		}

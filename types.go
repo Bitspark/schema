@@ -1,6 +1,43 @@
 package schema
 
-// Core interfaces
+import "defs.dev/schema/api"
+
+// Type aliases for transitional compatibility
+// These allow gradual migration from concrete types to API interfaces
+
+// SchemaMetadata alias to the API version
+type SchemaMetadata = api.SchemaMetadata
+
+// SchemaType alias to the API version
+type SchemaType = api.SchemaType
+
+// ValidationResult alias to the API version
+type ValidationResult = api.ValidationResult
+
+// ValidationError alias to the API version
+type ValidationError = api.ValidationError
+
+// Schema type constants - these are now aliases to the API constants
+const (
+	TypeObject    = api.TypeObject
+	TypeArray     = api.TypeArray
+	TypeString    = api.TypeString
+	TypeNumber    = api.TypeNumber
+	TypeInteger   = api.TypeInteger
+	TypeBoolean   = api.TypeBoolean
+	TypeNull      = api.TypeNull
+	TypeAny       = api.TypeAny
+	TypeOptional  = api.TypeOptional
+	TypeResult    = api.TypeResult
+	TypeMap       = api.TypeMap
+	TypeUnion     = api.TypeUnion
+	TypeRef       = api.TypeRef
+	TypeParameter = api.TypeParameter
+	TypeFunction  = api.TypeFunction
+)
+
+// Legacy Schema interface for backward compatibility
+// This will be gradually phased out in favor of api.Schema
 type Schema interface {
 	// Validation
 	Validate(value any) ValidationResult
@@ -18,48 +55,4 @@ type Schema interface {
 
 	// Utilities
 	Clone() Schema
-}
-
-type SchemaType string
-
-const (
-	TypeObject    SchemaType = "object"
-	TypeArray     SchemaType = "array"
-	TypeString    SchemaType = "string"
-	TypeNumber    SchemaType = "number"
-	TypeInteger   SchemaType = "integer"
-	TypeBoolean   SchemaType = "boolean"
-	TypeNull      SchemaType = "null"
-	TypeAny       SchemaType = "any"
-	TypeOptional  SchemaType = "optional"
-	TypeResult    SchemaType = "result"
-	TypeMap       SchemaType = "map"
-	TypeUnion     SchemaType = "union"
-	TypeRef       SchemaType = "ref"
-	TypeParameter SchemaType = "parameter"
-	TypeFunction  SchemaType = "function"
-)
-
-type ValidationResult struct {
-	Valid    bool              `json:"valid"`
-	Errors   []ValidationError `json:"errors,omitempty"`
-	Metadata map[string]any    `json:"metadata,omitempty"`
-}
-
-type ValidationError struct {
-	Path       string `json:"path"`
-	Message    string `json:"message"`
-	Code       string `json:"code"`
-	Value      any    `json:"value,omitempty"`
-	Expected   string `json:"expected,omitempty"`
-	Suggestion string `json:"suggestion,omitempty"`
-	Context    string `json:"context,omitempty"`
-}
-
-type SchemaMetadata struct {
-	Name        string            `json:"name,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Examples    []any             `json:"examples,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
-	Properties  map[string]string `json:"properties,omitempty"`
 }

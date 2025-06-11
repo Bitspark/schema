@@ -1,6 +1,8 @@
 package schema
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // SchemaVisitor defines the visitor interface for schema traversal
 type SchemaVisitor interface {
