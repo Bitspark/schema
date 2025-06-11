@@ -1,6 +1,6 @@
 module defs.dev/schema
 
-go 1.24.3
+go 1.24
 
 require (
 	github.com/dop251/goja v0.0.0-20250531102226-cb187b08699c
