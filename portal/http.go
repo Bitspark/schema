@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // HTTPPortal implements the api.HTTPPortal interface for HTTP-based function execution.
@@ -25,7 +26,7 @@ type HTTPPortal struct {
 
 	// Function registry
 	functions map[string]api.Function
-	schemas   map[string]api.FunctionSchema
+	schemas   map[string]core.FunctionSchema
 
 	// Client components
 	client *http.Client
@@ -95,7 +96,7 @@ func NewHTTPPortal(config *HTTPConfig) *HTTPPortal {
 		config:    config,
 		mux:       mux,
 		functions: make(map[string]api.Function),
-		schemas:   make(map[string]api.FunctionSchema),
+		schemas:   make(map[string]core.FunctionSchema),
 		client: &http.Client{
 			Timeout: config.ClientTimeout,
 		},
@@ -175,21 +176,19 @@ func (h *HTTPPortal) ApplyService(ctx context.Context, service api.Service) (api
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	name := service.Name()
+	name := service.Schema().Name()
 
 	// Register service methods as individual functions
-	methodNames := service.Methods()
-	for _, methodName := range methodNames {
-		function, exists := service.GetMethod(methodName)
-		if !exists {
-			continue
-		}
-
+	methods := service.Schema().Methods()
+	for _, method := range methods {
+		methodName := method.Name()
 		functionName := name + "." + methodName
 
-		// Register the service method as a function
-		h.functions[functionName] = function
-		h.schemas[functionName] = function.Schema()
+		// TODO: ServiceMethodSchema doesn't implement api.Function directly
+		// We need to create a wrapper function that handles service method calls
+		// For now, just store the schema
+		// h.functions[functionName] = method
+		h.schemas[functionName] = method.Function()
 
 		// Register HTTP endpoint
 		path := "/services/" + name + "/" + methodName
@@ -498,7 +497,7 @@ func (h *HTTPPortal) extractServiceName(path string) string {
 	return path
 }
 
-func (h *HTTPPortal) validateInput(input api.FunctionData, schema api.FunctionSchema) error {
+func (h *HTTPPortal) validateInput(input api.FunctionData, schema core.FunctionSchema) error {
 	// Basic validation - would be enhanced with proper schema validation
 	return nil
 }

@@ -5,39 +5,39 @@ import (
 	"reflect"
 	"strings"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // ServiceMethodSchema represents a single method in a service schema.
 type ServiceMethodSchema struct {
-	name     string             `json:"name"`
-	function api.FunctionSchema `json:"function"`
-	metadata api.SchemaMetadata `json:"metadata,omitempty"`
+	name     string              `json:"name"`
+	function core.FunctionSchema `json:"function"`
+	metadata core.SchemaMetadata `json:"metadata,omitempty"`
 }
 
 // Ensure ServiceMethodSchema implements the API interface at compile time
-var _ api.ServiceMethodSchema = (*ServiceMethodSchema)(nil)
+var _ core.ServiceMethodSchema = (*ServiceMethodSchema)(nil)
 
 // NewServiceMethodSchema creates a new ServiceMethodSchema.
-func NewServiceMethodSchema(name string, functionSchema api.FunctionSchema) *ServiceMethodSchema {
+func NewServiceMethodSchema(name string, functionSchema core.FunctionSchema) *ServiceMethodSchema {
 	return &ServiceMethodSchema{
 		name:     name,
 		function: functionSchema,
-		metadata: api.SchemaMetadata{},
+		metadata: core.SchemaMetadata{},
 	}
 }
 
 // Core Schema interface implementation for ServiceMethodSchema
 
-func (s *ServiceMethodSchema) Type() api.SchemaType {
-	return api.TypeFunction // Service method is essentially a function
+func (s *ServiceMethodSchema) Type() core.SchemaType {
+	return core.TypeFunction // Service method is essentially a function
 }
 
-func (s *ServiceMethodSchema) Metadata() api.SchemaMetadata {
+func (s *ServiceMethodSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
 }
 
-func (s *ServiceMethodSchema) Validate(value any) api.ValidationResult {
+func (s *ServiceMethodSchema) Validate(value any) core.ValidationResult {
 	// Delegate validation to the underlying function schema
 	return s.function.Validate(value)
 }
@@ -58,10 +58,10 @@ func (s *ServiceMethodSchema) GenerateExample() any {
 	return s.function.GenerateExample()
 }
 
-func (s *ServiceMethodSchema) Clone() api.Schema {
+func (s *ServiceMethodSchema) Clone() core.Schema {
 	return &ServiceMethodSchema{
 		name:     s.name,
-		function: s.function.Clone().(api.FunctionSchema),
+		function: s.function.Clone().(core.FunctionSchema),
 		metadata: s.metadata,
 	}
 }
@@ -72,13 +72,13 @@ func (s *ServiceMethodSchema) Name() string {
 	return s.name
 }
 
-func (s *ServiceMethodSchema) Function() api.FunctionSchema {
+func (s *ServiceMethodSchema) Function() core.FunctionSchema {
 	return s.function
 }
 
 // Visitor pattern support
 
-func (s *ServiceMethodSchema) Accept(visitor api.SchemaVisitor) error {
+func (s *ServiceMethodSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitFunction(s.function)
 }
 
@@ -86,34 +86,34 @@ func (s *ServiceMethodSchema) Accept(visitor api.SchemaVisitor) error {
 type ServiceSchema struct {
 	name     string                 `json:"name"`
 	methods  []*ServiceMethodSchema `json:"methods"`
-	metadata api.SchemaMetadata     `json:"metadata,omitempty"`
+	metadata core.SchemaMetadata    `json:"metadata,omitempty"`
 }
 
 // Ensure ServiceSchema implements the API interface at compile time
-var _ api.ServiceSchema = (*ServiceSchema)(nil)
-var _ api.Schema = (*ServiceSchema)(nil)
-var _ api.Accepter = (*ServiceSchema)(nil)
+var _ core.ServiceSchema = (*ServiceSchema)(nil)
+var _ core.Schema = (*ServiceSchema)(nil)
+var _ core.Accepter = (*ServiceSchema)(nil)
 
 // NewServiceSchema creates a new ServiceSchema.
 func NewServiceSchema(name string) *ServiceSchema {
 	return &ServiceSchema{
 		name:     name,
 		methods:  []*ServiceMethodSchema{},
-		metadata: api.SchemaMetadata{},
+		metadata: core.SchemaMetadata{},
 	}
 }
 
 // Core Schema interface implementation
 
-func (s *ServiceSchema) Type() api.SchemaType {
-	return api.TypeService
+func (s *ServiceSchema) Type() core.SchemaType {
+	return core.TypeService
 }
 
-func (s *ServiceSchema) Metadata() api.SchemaMetadata {
+func (s *ServiceSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
 }
 
-func (s *ServiceSchema) Validate(value any) api.ValidationResult {
+func (s *ServiceSchema) Validate(value any) core.ValidationResult {
 	// Service schema validation could validate:
 	// 1. Service instance conformity
 	// 2. Method availability
@@ -129,8 +129,8 @@ func (s *ServiceSchema) Validate(value any) api.ValidationResult {
 }
 
 // validateServiceData validates service data as a map
-func (s *ServiceSchema) validateServiceData(data map[string]any) api.ValidationResult {
-	var errors []api.ValidationError
+func (s *ServiceSchema) validateServiceData(data map[string]any) core.ValidationResult {
+	var errors []core.ValidationError
 
 	// Check if all required methods are represented
 	methodMap := make(map[string]bool)
@@ -150,7 +150,7 @@ func (s *ServiceSchema) validateServiceData(data map[string]any) api.ValidationR
 	// Check for missing required methods
 	for methodName, found := range methodMap {
 		if !found {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       methodName,
 				Message:    fmt.Sprintf("required service method '%s' not found", methodName),
 				Code:       "missing_service_method",
@@ -161,7 +161,7 @@ func (s *ServiceSchema) validateServiceData(data map[string]any) api.ValidationR
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 		Metadata: map[string]any{
@@ -173,11 +173,11 @@ func (s *ServiceSchema) validateServiceData(data map[string]any) api.ValidationR
 }
 
 // validateServiceStruct validates a service struct using reflection
-func (s *ServiceSchema) validateServiceStruct(instance any) api.ValidationResult {
+func (s *ServiceSchema) validateServiceStruct(instance any) core.ValidationResult {
 	if instance == nil {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "service instance cannot be nil",
 				Code:       "nil_service_instance",
@@ -188,16 +188,16 @@ func (s *ServiceSchema) validateServiceStruct(instance any) api.ValidationResult
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 	instanceType := reflect.TypeOf(instance)
 	instanceValue := reflect.ValueOf(instance)
 
 	// Handle pointer to struct
 	if instanceType.Kind() == reflect.Ptr {
 		if instanceValue.IsNil() {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "service instance pointer is nil",
 					Code:       "nil_service_pointer",
@@ -212,9 +212,9 @@ func (s *ServiceSchema) validateServiceStruct(instance any) api.ValidationResult
 	}
 
 	if instanceType.Kind() != reflect.Struct {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    fmt.Sprintf("service instance must be a struct, got %T", instance),
 				Code:       "invalid_service_type",
@@ -230,7 +230,7 @@ func (s *ServiceSchema) validateServiceStruct(instance any) api.ValidationResult
 	for _, methodSchema := range s.methods {
 		_, found := instanceType.MethodByName(methodSchema.name)
 		if !found {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       methodSchema.name,
 				Message:    fmt.Sprintf("service method '%s' not found on struct", methodSchema.name),
 				Code:       "missing_service_method",
@@ -241,7 +241,7 @@ func (s *ServiceSchema) validateServiceStruct(instance any) api.ValidationResult
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 		Metadata: map[string]any{
@@ -299,14 +299,14 @@ func (s *ServiceSchema) GenerateExample() any {
 	return example
 }
 
-func (s *ServiceSchema) Clone() api.Schema {
+func (s *ServiceSchema) Clone() core.Schema {
 	clonedMethods := make([]*ServiceMethodSchema, len(s.methods))
 	for i, method := range s.methods {
 		clonedMethods[i] = method.Clone().(*ServiceMethodSchema)
 	}
 
 	// Clone metadata
-	clonedMetadata := api.SchemaMetadata{
+	clonedMetadata := core.SchemaMetadata{
 		Name:        s.metadata.Name,
 		Description: s.metadata.Description,
 		Examples:    append([]any(nil), s.metadata.Examples...),
@@ -333,8 +333,8 @@ func (s *ServiceSchema) Name() string {
 	return s.name
 }
 
-func (s *ServiceSchema) Methods() []api.ServiceMethodSchema {
-	methods := make([]api.ServiceMethodSchema, len(s.methods))
+func (s *ServiceSchema) Methods() []core.ServiceMethodSchema {
+	methods := make([]core.ServiceMethodSchema, len(s.methods))
 	for i, method := range s.methods {
 		methods[i] = method
 	}
@@ -343,21 +343,21 @@ func (s *ServiceSchema) Methods() []api.ServiceMethodSchema {
 
 // Visitor pattern support
 
-func (s *ServiceSchema) Accept(visitor api.SchemaVisitor) error {
+func (s *ServiceSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitService(s)
 }
 
 // Additional utility methods
 
 // WithMetadata creates a new ServiceSchema with updated metadata
-func (s *ServiceSchema) WithMetadata(metadata api.SchemaMetadata) *ServiceSchema {
+func (s *ServiceSchema) WithMetadata(metadata core.SchemaMetadata) *ServiceSchema {
 	clone := s.Clone().(*ServiceSchema)
 	clone.metadata = metadata
 	return clone
 }
 
 // WithMethod adds or updates a method in the service schema
-func (s *ServiceSchema) WithMethod(name string, functionSchema api.FunctionSchema) *ServiceSchema {
+func (s *ServiceSchema) WithMethod(name string, functionSchema core.FunctionSchema) *ServiceSchema {
 	clone := s.Clone().(*ServiceSchema)
 
 	// Check if method already exists and update it
@@ -392,7 +392,7 @@ func (s *ServiceSchema) MethodNames() []string {
 }
 
 // GetMethod returns a method schema by name
-func (s *ServiceSchema) GetMethod(name string) (api.ServiceMethodSchema, bool) {
+func (s *ServiceSchema) GetMethod(name string) (core.ServiceMethodSchema, bool) {
 	for _, method := range s.methods {
 		if method.name == name {
 			return method, true

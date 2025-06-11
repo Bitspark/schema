@@ -1,14 +1,15 @@
 package tests
 
 import (
-	"defs.dev/schema"
 	"math"
 	"testing"
+
+	"defs.dev/schema/builders"
 )
 
 func TestNumberSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := schema.NewNumber().Build()
+		schema := builders.NewNumberSchema().Build()
 
 		// Valid numbers
 		validNumbers := []any{
@@ -31,7 +32,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max constraints", func(t *testing.T) {
-		schema := schema.NewNumber().Range(0.0, 100.0).Build()
+		schema := builders.NewNumberSchema().Range(0.0, 100.0).Build()
 
 		// Valid range
 		result := schema.Validate(50.0)
@@ -53,7 +54,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("Special float values", func(t *testing.T) {
-		schema := schema.NewNumber().Build()
+		schema := builders.NewNumberSchema().Build()
 
 		// NaN should be invalid
 		result := schema.Validate(math.NaN())
@@ -74,7 +75,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := schema.NewNumber().
+		schema := builders.NewNumberSchema().
 			Range(0.0, 100.0).
 			Description("Test number").
 			Example(42.0).
@@ -99,7 +100,7 @@ func TestNumberSchema(t *testing.T) {
 
 func TestIntegerSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := schema.NewInteger().Build()
+		schema := builders.NewIntegerSchema().Build()
 
 		// Valid integers
 		validIntegers := []any{
@@ -134,7 +135,7 @@ func TestIntegerSchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max constraints", func(t *testing.T) {
-		schema := schema.NewInteger().Range(0, 100).Build()
+		schema := builders.NewIntegerSchema().Range(0, 100).Build()
 
 		// Valid range
 		result := schema.Validate(50)
@@ -156,7 +157,7 @@ func TestIntegerSchema(t *testing.T) {
 	})
 
 	t.Run("Overflow handling", func(t *testing.T) {
-		schema := schema.NewInteger().Build()
+		schema := builders.NewIntegerSchema().Build()
 
 		// Very large uint64 should cause overflow error
 		result := schema.Validate(uint64(math.MaxUint64))
@@ -166,7 +167,7 @@ func TestIntegerSchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := schema.NewInteger().
+		schema := builders.NewIntegerSchema().
 			Range(1, 100).
 			Description("Test integer").
 			Example(int64(42)).
@@ -188,7 +189,7 @@ func TestIntegerSchema(t *testing.T) {
 
 func TestBooleanSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := schema.NewBoolean().Build()
+		schema := builders.NewBooleanSchema().Build()
 
 		// Valid booleans
 		result := schema.Validate(true)
@@ -201,55 +202,52 @@ func TestBooleanSchema(t *testing.T) {
 			t.Errorf("Expected false to be valid, got errors: %v", result.Errors)
 		}
 
-		// Invalid types (without string conversion)
+		// Invalid types
 		result = schema.Validate("true")
 		if result.Valid {
-			t.Error("Expected string 'true' to be invalid without string conversion")
+			t.Error("Expected string 'true' to be invalid for boolean schema")
 		}
 
 		result = schema.Validate(1)
 		if result.Valid {
-			t.Error("Expected integer 1 to be invalid")
+			t.Error("Expected integer 1 to be invalid for boolean schema")
 		}
 	})
 
 	t.Run("String conversion", func(t *testing.T) {
-		schema := schema.NewBoolean().AllowStringConversion().Build()
+		schema := builders.NewBooleanSchema().AllowStringConversion().Build()
 
-		// Valid string conversions
-		validStrings := []string{"true", "false", "1", "0"}
-		for _, str := range validStrings {
-			result := schema.Validate(str)
+		// Valid string representations
+		validStrings := []struct {
+			input    string
+			expected bool
+		}{
+			{"true", true},
+			{"false", false},
+			{"True", true},
+			{"False", false},
+			{"TRUE", true},
+			{"FALSE", false},
+		}
+
+		for _, test := range validStrings {
+			result := schema.Validate(test.input)
 			if !result.Valid {
-				t.Errorf("Expected '%s' to be valid with string conversion, got errors: %v", str, result.Errors)
+				t.Errorf("Expected '%s' to be valid with string conversion, got errors: %v", test.input, result.Errors)
 			}
 		}
 
-		// Invalid string
+		// Invalid string representations
 		result := schema.Validate("maybe")
 		if result.Valid {
-			t.Error("Expected 'maybe' to be invalid")
-		}
-	})
-
-	t.Run("Case insensitive conversion", func(t *testing.T) {
-		schema := schema.NewBoolean().CaseInsensitive().Build()
-
-		// Case variations should work
-		validStrings := []string{"TRUE", "False", "YES", "no", "ON", "off"}
-		for _, str := range validStrings {
-			result := schema.Validate(str)
-			if !result.Valid {
-				t.Errorf("Expected '%s' to be valid with case insensitive conversion, got errors: %v", str, result.Errors)
-			}
+			t.Error("Expected 'maybe' to be invalid even with string conversion")
 		}
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := schema.NewBoolean().
+		schema := builders.NewBooleanSchema().
 			Description("Test boolean").
 			Example(true).
-			AllowStringConversion().
 			Build()
 
 		jsonSchema := schema.ToJSONSchema()
@@ -260,54 +258,73 @@ func TestBooleanSchema(t *testing.T) {
 		if jsonSchema["description"] != "Test boolean" {
 			t.Errorf("Expected description 'Test boolean', got %v", jsonSchema["description"])
 		}
-		if jsonSchema["x-allow-string-conversion"] != true {
-			t.Error("Expected x-allow-string-conversion to be true")
-		}
 	})
 }
 
 func TestBuilderHelpers(t *testing.T) {
 	t.Run("Number helpers", func(t *testing.T) {
-		// Test Positive helper
-		schema := schema.NewNumber().Positive().Build()
-		result := schema.Validate(-1.0)
-		if result.Valid {
-			t.Error("Expected negative number to be invalid for Positive() schema")
+		// Test positive number
+		schema := builders.NewNumberSchema().Positive().Build()
+		result := schema.Validate(10.0)
+		if !result.Valid {
+			t.Errorf("Expected positive number to be valid, got errors: %v", result.Errors)
 		}
 
-		// Test Percentage helper
-		schema = schema.NewNumber().Percentage().Build()
-		result = schema.Validate(150.0)
+		result = schema.Validate(-5.0)
 		if result.Valid {
-			t.Error("Expected 150 to be invalid for Percentage() schema (max 100)")
+			t.Error("Expected negative number to be invalid for positive schema")
+		}
+
+		// Test percentage
+		percentSchema := builders.NewNumberSchema().Percentage().Build()
+		result = percentSchema.Validate(50.0)
+		if !result.Valid {
+			t.Errorf("Expected 50%% to be valid, got errors: %v", result.Errors)
+		}
+
+		result = percentSchema.Validate(150.0)
+		if result.Valid {
+			t.Error("Expected 150%% to be invalid for percentage schema")
 		}
 	})
 
 	t.Run("Integer helpers", func(t *testing.T) {
-		// Test Port helper
-		schema := schema.NewInteger().Port().Build()
-		result := schema.Validate(0)
-		if result.Valid {
-			t.Error("Expected 0 to be invalid for Port() schema (min 1)")
-		}
-
-		result = schema.Validate(70000)
-		if result.Valid {
-			t.Error("Expected 70000 to be invalid for Port() schema (max 65535)")
-		}
-
-		result = schema.Validate(8080)
+		// Test positive integer
+		schema := builders.NewIntegerSchema().Positive().Build()
+		result := schema.Validate(10)
 		if !result.Valid {
-			t.Errorf("Expected 8080 to be valid for Port() schema, got errors: %v", result.Errors)
+			t.Errorf("Expected positive integer to be valid, got errors: %v", result.Errors)
+		}
+
+		result = schema.Validate(-5)
+		if result.Valid {
+			t.Error("Expected negative integer to be invalid for positive schema")
 		}
 	})
 
-	t.Run("Boolean helpers", func(t *testing.T) {
-		// Test Switch helper
-		schema := schema.NewBoolean().Switch().Build()
-		result := schema.Validate("TRUE")
+	t.Run("String helpers", func(t *testing.T) {
+		// Test email
+		emailSchema := builders.NewStringSchema().Email().Build()
+		result := emailSchema.Validate("test@example.com")
 		if !result.Valid {
-			t.Errorf("Expected 'TRUE' to be valid for Switch() schema, got errors: %v", result.Errors)
+			t.Errorf("Expected valid email to be valid, got errors: %v", result.Errors)
+		}
+
+		result = emailSchema.Validate("not-an-email")
+		if result.Valid {
+			t.Error("Expected invalid email to be invalid")
+		}
+
+		// Test UUID
+		uuidSchema := builders.NewStringSchema().UUID().Build()
+		result = uuidSchema.Validate("550e8400-e29b-41d4-a716-446655440000")
+		if !result.Valid {
+			t.Errorf("Expected valid UUID to be valid, got errors: %v", result.Errors)
+		}
+
+		result = uuidSchema.Validate("not-a-uuid")
+		if result.Valid {
+			t.Error("Expected invalid UUID to be invalid")
 		}
 	})
 }

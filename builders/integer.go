@@ -1,70 +1,70 @@
 package builders
 
 import (
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 	"defs.dev/schema/schemas"
 )
 
 // IntegerBuilder provides a fluent interface for building IntegerSchema instances.
-// It implements api.IntegerSchemaBuilder interface and returns api.IntegerSchema.
+// It implements core.IntegerSchemaBuilder interface and returns core.IntegerSchema.
 type IntegerBuilder struct {
 	config schemas.IntegerSchemaConfig
 }
 
 // Ensure IntegerBuilder implements the API interface at compile time
-var _ api.IntegerSchemaBuilder = (*IntegerBuilder)(nil)
+var _ core.IntegerSchemaBuilder = (*IntegerBuilder)(nil)
 
 // NewIntegerSchema creates a new IntegerBuilder for creating integer schemas.
-func NewIntegerSchema() api.IntegerSchemaBuilder {
+func NewIntegerSchema() core.IntegerSchemaBuilder {
 	return &IntegerBuilder{
 		config: schemas.IntegerSchemaConfig{
-			Metadata: api.SchemaMetadata{},
+			Metadata: core.SchemaMetadata{},
 		},
 	}
 }
 
-// Build returns the constructed IntegerSchema as an api.IntegerSchema.
-func (b *IntegerBuilder) Build() api.IntegerSchema {
+// Build returns the constructed IntegerSchema as an core.IntegerSchema.
+func (b *IntegerBuilder) Build() core.IntegerSchema {
 	return schemas.NewIntegerSchema(b.config)
 }
 
 // Description sets the description metadata.
-func (b *IntegerBuilder) Description(desc string) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Description(desc string) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Metadata.Description = desc
 	return clone
 }
 
 // Name sets the name metadata.
-func (b *IntegerBuilder) Name(name string) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Name(name string) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Metadata.Name = name
 	return clone
 }
 
 // Tag adds a tag to the metadata.
-func (b *IntegerBuilder) Tag(tag string) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Tag(tag string) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Metadata.Tags = append(clone.config.Metadata.Tags, tag)
 	return clone
 }
 
 // Min sets the minimum value constraint.
-func (b *IntegerBuilder) Min(min int64) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Min(min int64) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Minimum = &min
 	return clone
 }
 
 // Max sets the maximum value constraint.
-func (b *IntegerBuilder) Max(max int64) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Max(max int64) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Maximum = &max
 	return clone
 }
 
 // Range sets both minimum and maximum value constraints.
-func (b *IntegerBuilder) Range(min, max int64) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Range(min, max int64) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Minimum = &min
 	clone.config.Maximum = &max
@@ -72,14 +72,14 @@ func (b *IntegerBuilder) Range(min, max int64) api.IntegerSchemaBuilder {
 }
 
 // Example adds an example value to the metadata.
-func (b *IntegerBuilder) Example(example int64) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Example(example int64) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.Metadata.Examples = append(clone.config.Metadata.Examples, example)
 	return clone
 }
 
 // Default sets the default value.
-func (b *IntegerBuilder) Default(value int64) api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Default(value int64) core.IntegerSchemaBuilder {
 	clone := b.clone()
 	clone.config.DefaultVal = &value
 	return clone
@@ -88,42 +88,42 @@ func (b *IntegerBuilder) Default(value int64) api.IntegerSchemaBuilder {
 // Common integer type helpers
 
 // Positive ensures the integer is positive (> 0).
-func (b *IntegerBuilder) Positive() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Positive() core.IntegerSchemaBuilder {
 	return b.Min(1).
 		Description("Positive integer").
 		Example(1)
 }
 
 // NonNegative ensures the integer is non-negative (≥ 0).
-func (b *IntegerBuilder) NonNegative() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) NonNegative() core.IntegerSchemaBuilder {
 	return b.Min(0).
 		Description("Non-negative integer").
 		Example(0)
 }
 
 // Port creates a port number (1-65535).
-func (b *IntegerBuilder) Port() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Port() core.IntegerSchemaBuilder {
 	return b.Range(1, 65535).
 		Description("Port number").
 		Example(8080)
 }
 
 // Age creates an age value (0-150).
-func (b *IntegerBuilder) Age() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Age() core.IntegerSchemaBuilder {
 	return b.Range(0, 150).
 		Description("Age in years").
 		Example(25)
 }
 
 // ID creates a positive ID value.
-func (b *IntegerBuilder) ID() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) ID() core.IntegerSchemaBuilder {
 	return b.Positive().
 		Description("Unique identifier").
 		Example(1)
 }
 
 // Count creates a count value (≥ 0).
-func (b *IntegerBuilder) Count() api.IntegerSchemaBuilder {
+func (b *IntegerBuilder) Count() core.IntegerSchemaBuilder {
 	return b.NonNegative().
 		Description("Count of items").
 		Example(5)

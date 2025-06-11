@@ -1,4 +1,4 @@
-package api
+package core
 
 // StringSchema interface for string-based schemas with introspection methods.
 type StringSchema interface {

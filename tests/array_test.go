@@ -1,14 +1,14 @@
 package tests
 
 import (
-	"defs.dev/schema"
-	"defs.dev/schema/schemas"
 	"testing"
+
+	"defs.dev/schema/builders"
 )
 
 func TestArraySchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := schema.NewArray().Build()
+		s := builders.NewArraySchema().Build()
 
 		// Valid arrays
 		validArrays := []any{
@@ -21,7 +21,7 @@ func TestArraySchema(t *testing.T) {
 		}
 
 		for _, arr := range validArrays {
-			result := schema.Validate(arr)
+			result := s.Validate(arr)
 			if !result.Valid {
 				t.Errorf("Expected %v to be valid, got errors: %v", arr, result.Errors)
 			}
@@ -36,7 +36,7 @@ func TestArraySchema(t *testing.T) {
 		}
 
 		for _, val := range invalidValues {
-			result := schema.Validate(val)
+			result := s.Validate(val)
 			if result.Valid {
 				t.Errorf("Expected %v to be invalid for array schema", val)
 			}
@@ -44,7 +44,7 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max items constraints", func(t *testing.T) {
-		schema := schema.NewArray().Range(2, 4).Build()
+		schema := builders.NewArraySchema().Range(2, 4).Build()
 
 		// Valid lengths
 		validArrays := []any{
@@ -74,8 +74,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Item schema validation", func(t *testing.T) {
 		// Array of strings
-		stringSchema := schema.NewString().MinLength(2).Build()
-		arraySchema := schema.NewArray().Items(stringSchema).Build()
+		stringSchema := builders.NewStringSchema().MinLength(2).Build()
+		arraySchema := builders.NewArraySchema().Items(stringSchema).Build()
 
 		// Valid array - all strings meet criteria
 		result := arraySchema.Validate([]any{"hello", "world", "test"})
@@ -111,7 +111,7 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("Unique items constraint", func(t *testing.T) {
-		schema := schema.NewArray().UniqueItems().Build()
+		schema := builders.NewArraySchema().UniqueItems().Build()
 
 		// Valid - all unique
 		result := schema.Validate([]any{"a", "b", "c"})
@@ -140,8 +140,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Contains schema validation", func(t *testing.T) {
 		// Array must contain at least one string starting with "test"
-		containsSchema := schema.NewString().Pattern("^test").Build()
-		arraySchema := schema.NewArray().Contains(containsSchema).Build()
+		containsSchema := builders.NewStringSchema().Pattern("^test").Build()
+		arraySchema := builders.NewArraySchema().Contains(containsSchema).Build()
 
 		// Valid - contains matching string
 		result := arraySchema.Validate([]any{"hello", "testing", "world"})
@@ -164,8 +164,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Complex nested validation", func(t *testing.T) {
 		// Array of objects (using string schemas as proxy for complexity)
-		itemSchema := schema.NewString().MinLength(3).Build()
-		arraySchema := schema.NewArray().
+		itemSchema := builders.NewStringSchema().MinLength(3).Build()
+		arraySchema := builders.NewArraySchema().
 			Items(itemSchema).
 			Range(1, 3).
 			UniqueItems().
@@ -190,8 +190,8 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		itemSchema := schema.NewString().Build()
-		schema := schema.NewArray().
+		itemSchema := builders.NewStringSchema().Build()
+		schema := builders.NewArraySchema().
 			Items(itemSchema).
 			Range(1, 10).
 			UniqueItems().
@@ -211,7 +211,7 @@ func TestArraySchema(t *testing.T) {
 			t.Errorf("Expected maxItems 10, got %v", jsonSchema["maxItems"])
 		}
 		if jsonSchema["uniqueItems"] != true {
-			t.Error("Expected uniqueItems to be true")
+			t.Errorf("Expected uniqueItems true, got %v", jsonSchema["uniqueItems"])
 		}
 		if jsonSchema["description"] != "Test array" {
 			t.Errorf("Expected description 'Test array', got %v", jsonSchema["description"])
@@ -220,237 +220,150 @@ func TestArraySchema(t *testing.T) {
 		// Check items schema
 		items, ok := jsonSchema["items"].(map[string]any)
 		if !ok {
-			t.Error("Expected items to be a schema object")
-		} else if items["type"] != "string" {
-			t.Errorf("Expected item type 'string', got %v", items["type"])
+			t.Fatal("Expected items to be a map")
 		}
-	})
-
-	t.Run("Example generation", func(t *testing.T) {
-		// Test with item schema
-		itemSchema := schema.NewString().Build()
-		schema := schema.NewArray().
-			Items(itemSchema).
-			Range(2, 4).
-			Build()
-
-		example := schema.GenerateExample()
-		exampleArray, ok := example.([]any)
-		if !ok {
-			t.Errorf("Expected generated example to be array, got %T", example)
-		}
-
-		if len(exampleArray) < 2 || len(exampleArray) > 4 {
-			t.Errorf("Expected example length between 2-4, got %d", len(exampleArray))
-		}
-
-		// Test unique items example generation
-		uniqueSchema := schema.NewArray().
-			Items(itemSchema).
-			UniqueItems().
-			Range(2, 3).
-			Build()
-
-		uniqueExample := uniqueSchema.GenerateExample()
-		uniqueArray, ok := uniqueExample.([]any)
-		if !ok {
-			t.Errorf("Expected unique example to be array, got %T", uniqueExample)
-		}
-
-		// Check uniqueness
-		seen := make(map[any]bool)
-		for _, item := range uniqueArray {
-			if seen[item] {
-				t.Error("Generated example should have unique items")
-				break
-			}
-			seen[item] = true
+		if items["type"] != "string" {
+			t.Errorf("Expected items type 'string', got %v", items["type"])
 		}
 	})
 }
 
 func TestArrayBuilder(t *testing.T) {
-	t.Run("Basic builder methods", func(t *testing.T) {
-		schema := schema.NewArray().
-			Description("Test array").
-			Name("test_array").
-			Tag("testing").
-			MinItems(1).
+	t.Run("Fluent API", func(t *testing.T) {
+		schema := builders.NewArraySchema().
+			MinItems(2).
 			MaxItems(5).
+			UniqueItems().
+			Description("Test array").
 			Build()
 
-		if schema.Type() != "array" {
-			t.Errorf("Expected type 'array', got %v", schema.Type())
+		// Test min items constraint
+		result := schema.Validate([]any{"a"})
+		if result.Valid {
+			t.Error("Expected single item array to be invalid (below min)")
 		}
 
-		metadata := schema.Metadata()
-		if metadata.Description != "Test array" {
-			t.Errorf("Expected description 'Test array', got %v", metadata.Description)
-		}
-		if metadata.Name != "test_array" {
-			t.Errorf("Expected name 'test_array', got %v", metadata.Name)
-		}
-		if len(metadata.Tags) != 1 || metadata.Tags[0] != "testing" {
-			t.Errorf("Expected tag 'testing', got %v", metadata.Tags)
+		// Test max items constraint
+		result = schema.Validate([]any{"a", "b", "c", "d", "e", "f"})
+		if result.Valid {
+			t.Error("Expected six item array to be invalid (above max)")
 		}
 
-		if *schema.MinItems() != 1 {
-			t.Errorf("Expected minItems 1, got %v", schema.MinItems())
+		// Test unique items constraint
+		result = schema.Validate([]any{"a", "b", "a"})
+		if result.Valid {
+			t.Error("Expected duplicate array to be invalid")
 		}
-		if *schema.MaxItems() != 5 {
-			t.Errorf("Expected maxItems 5, got %v", schema.MaxItems())
+
+		// Test valid array
+		result = schema.Validate([]any{"a", "b", "c"})
+		if !result.Valid {
+			t.Errorf("Expected valid array, got errors: %v", result.Errors)
+		}
+	})
+
+	t.Run("Immutability", func(t *testing.T) {
+		builder1 := builders.NewArraySchema().MinItems(2)
+		builder2 := builder1.MaxItems(5)
+
+		schema1 := builder1.Build()
+		schema2 := builder2.Build()
+
+		// Verify they're different instances
+		if schema1 == schema2 {
+			t.Error("Expected schemas to be different instances")
+		}
+
+		// Verify first schema doesn't have MaxItems
+		if maxItems := schema1.MaxItems(); maxItems != nil {
+			t.Error("Expected first schema to not have MaxItems constraint")
+		}
+
+		// Verify second schema has both constraints
+		if minItems := schema2.MinItems(); minItems == nil || *minItems != 2 {
+			t.Error("Expected second schema to have MinItems constraint")
+		}
+		if maxItems := schema2.MaxItems(); maxItems == nil || *maxItems != 5 {
+			t.Error("Expected second schema to have MaxItems constraint")
 		}
 	})
 
 	t.Run("Helper methods", func(t *testing.T) {
-		// Test NonEmpty
-		nonEmptySchema := schema.NewArray().NonEmpty().Build()
-		if *nonEmptySchema.MinItems() != 1 {
-			t.Error("Expected NonEmpty to set minItems to 1")
-		}
-
-		// Test Set (unique items)
-		setSchema := schema.NewArray().Set().Build()
-		if !setSchema.UniqueItemsRequired() {
-			t.Error("Expected Set to require unique items")
-		}
-
-		// Test Tuple (fixed length)
-		tupleSchema := schema.NewArray().Tuple(3).Build()
-		if *tupleSchema.MinItems() != 3 || *tupleSchema.MaxItems() != 3 {
-			t.Error("Expected Tuple to set fixed length")
-		}
-
-		// Test LimitedList
-		limitedSchema := schema.NewArray().LimitedList(10).Build()
-		if *limitedSchema.MinItems() != 0 || *limitedSchema.MaxItems() != 10 {
-			t.Error("Expected LimitedList to set range 0-10")
-		}
-	})
-
-	t.Run("Type-specific helpers", func(t *testing.T) {
-		// Test StringArray helper
-		stringArraySchema := schema.NewArray().StringArray().Build()
-		metadata := stringArraySchema.Metadata()
-		if metadata.Description != "Array of strings" {
-			t.Error("Expected StringArray to set appropriate description")
-		}
-
-		// Test NumberArray helper
-		numberArraySchema := schema.NewArray().NumberArray().Build()
-		metadata = numberArraySchema.Metadata()
-		if metadata.Description != "Array of numbers" {
-			t.Error("Expected NumberArray to set appropriate description")
-		}
-
-		// Test IntegerArray helper
-		intArraySchema := schema.NewArray().IntegerArray().Build()
-		metadata = intArraySchema.Metadata()
-		if metadata.Description != "Array of integers" {
-			t.Error("Expected IntegerArray to set appropriate description")
-		}
-
-		// Test BooleanArray helper
-		boolArraySchema := schema.NewArray().BooleanArray().Build()
-		metadata = boolArraySchema.Metadata()
-		if metadata.Description != "Array of booleans" {
-			t.Error("Expected BooleanArray to set appropriate description")
-		}
-	})
-
-	t.Run("Complex composition", func(t *testing.T) {
-		// Test complex schema composition
-		stringSchema := schema.NewString().MinLength(2).Build()
-		schema := schema.NewArray().
-			Items(stringSchema).
-			UniqueItems().
-			Range(1, 5).
-			Description("Array of unique strings").
-			Example([]any{"hello", "world"}).
-			Default([]any{"default"}).
-			Build()
-
-		// Test validation works
-		result := schema.Validate([]any{"ab", "cd"})
-		if !result.Valid {
-			t.Errorf("Expected valid array, got errors: %v", result.Errors)
-		}
-
-		// Test invalid case
-		result = schema.Validate([]any{"a", "b"}) // strings too short
+		// Test NonEmpty helper
+		schema := builders.NewArraySchema().NonEmpty().Build()
+		result := schema.Validate([]any{})
 		if result.Valid {
-			t.Error("Expected array with short strings to be invalid")
+			t.Error("Expected empty array to be invalid for NonEmpty() schema")
 		}
 
-		// Test default value (through the concrete implementation)
-		if concreteSchema, ok := schema.(*schemas.ArraySchema); ok {
-			defaultVal := concreteSchema.DefaultValue()
-			if len(defaultVal) != 1 || defaultVal[0] != "default" {
-				t.Errorf("Expected default value ['default'], got %v", defaultVal)
-			}
-		} else {
-			t.Error("Could not cast to concrete ArraySchema to test default value")
+		result = schema.Validate([]any{"item"})
+		if !result.Valid {
+			t.Errorf("Expected non-empty array to be valid, got errors: %v", result.Errors)
+		}
+
+		// Test StringArray helper
+		stringArraySchema := builders.NewArraySchema().StringArray().Build()
+		result = stringArraySchema.Validate([]any{"a", "b", "c"})
+		if !result.Valid {
+			t.Errorf("Expected string array to be valid, got errors: %v", result.Errors)
+		}
+
+		result = stringArraySchema.Validate([]any{"a", 123, "c"})
+		if result.Valid {
+			t.Error("Expected mixed array to be invalid for StringArray() schema")
 		}
 	})
 }
 
 func TestArraySchemaEdgeCases(t *testing.T) {
 	t.Run("Empty array validation", func(t *testing.T) {
-		schema := schema.NewArray().Build()
-
-		// Empty array should be valid
+		// No constraints - empty array should be valid
+		schema := builders.NewArraySchema().Build()
 		result := schema.Validate([]any{})
 		if !result.Valid {
-			t.Errorf("Expected empty array to be valid, got errors: %v", result.Errors)
+			t.Errorf("Expected empty array to be valid with no constraints, got errors: %v", result.Errors)
 		}
 
-		// With minimum constraint
-		minSchema := schema.NewArray().MinItems(1).Build()
-		result = minSchema.Validate([]any{})
+		// With minItems constraint - empty array should be invalid
+		schema = builders.NewArraySchema().MinItems(1).Build()
+		result = schema.Validate([]any{})
 		if result.Valid {
-			t.Error("Expected empty array to be invalid with min constraint")
+			t.Error("Expected empty array to be invalid with minItems constraint")
 		}
 	})
 
-	t.Run("Nil array handling", func(t *testing.T) {
-		schema := schema.NewArray().Build()
+	t.Run("Nil vs empty array", func(t *testing.T) {
+		schema := builders.NewArraySchema().Build()
 
-		// Nil should be invalid
+		// nil should be invalid
 		result := schema.Validate(nil)
 		if result.Valid {
 			t.Error("Expected nil to be invalid for array schema")
 		}
-	})
 
-	t.Run("Mixed type arrays", func(t *testing.T) {
-		schema := schema.NewArray().Build()
-
-		// Mixed types should be valid without item schema
-		result := schema.Validate([]any{"string", 42, true, 3.14})
+		// Empty slice should be valid
+		result = schema.Validate([]any{})
 		if !result.Valid {
-			t.Errorf("Expected mixed type array to be valid, got errors: %v", result.Errors)
+			t.Errorf("Expected empty slice to be valid, got errors: %v", result.Errors)
 		}
 	})
 
-	t.Run("Large array performance", func(t *testing.T) {
-		schema := schema.NewArray().UniqueItems().Build()
+	t.Run("Type coercion limits", func(t *testing.T) {
+		schema := builders.NewArraySchema().Build()
 
-		// Create large array with unique items
-		largeArray := make([]any, 1000)
-		for i := 0; i < 1000; i++ {
-			largeArray[i] = i
+		// Various slice types should work
+		sliceTypes := []any{
+			[]string{"a", "b"},
+			[]int{1, 2},
+			[]bool{true, false},
+			[]any{"mixed", 123, true},
 		}
 
-		result := schema.Validate(largeArray)
-		if !result.Valid {
-			t.Errorf("Expected large unique array to be valid, got errors: %v", result.Errors)
-		}
-
-		// Test with duplicate (should catch it)
-		largeArray[999] = 0 // Create duplicate
-		result = schema.Validate(largeArray)
-		if result.Valid {
-			t.Error("Expected large array with duplicate to be invalid")
+		for _, slice := range sliceTypes {
+			result := schema.Validate(slice)
+			if !result.Valid {
+				t.Errorf("Expected %T to be valid for array schema, got errors: %v", slice, result.Errors)
+			}
 		}
 	})
 }

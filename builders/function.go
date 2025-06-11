@@ -2,26 +2,27 @@ package builders
 
 import (
 	"context"
-	"defs.dev/schema/schemas"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
+	"defs.dev/schema/schemas"
 )
 
-// FunctionSchemaBuilder implements api.FunctionSchemaBuilder for creating function schemas.
+// FunctionSchemaBuilder implements core.FunctionSchemaBuilder for creating function schemas.
 type FunctionSchemaBuilder struct {
 	inputs          schemas.ArgSchemas
 	outputs         schemas.ArgSchemas
-	errors          api.Schema
+	errors          core.Schema
 	examples        []map[string]any
 	allowNilError   bool
 	validationRules []schemas.FunctionValidationRule
-	metadata        api.SchemaMetadata
+	metadata        core.SchemaMetadata
 }
 
 // Ensure FunctionBuilder implements the API interface at compile time
-var _ api.FunctionSchemaBuilder = (*FunctionSchemaBuilder)(nil)
-var _ api.Builder[api.FunctionSchema] = (*FunctionSchemaBuilder)(nil)
-var _ api.MetadataBuilder[api.FunctionSchemaBuilder] = (*FunctionSchemaBuilder)(nil)
+var _ core.FunctionSchemaBuilder = (*FunctionSchemaBuilder)(nil)
+var _ core.Builder[core.FunctionSchema] = (*FunctionSchemaBuilder)(nil)
+var _ core.MetadataBuilder[core.FunctionSchemaBuilder] = (*FunctionSchemaBuilder)(nil)
 
 // NewFunctionSchema creates a new FunctionBuilder.
 func NewFunctionSchema() *FunctionSchemaBuilder {
@@ -30,30 +31,30 @@ func NewFunctionSchema() *FunctionSchemaBuilder {
 		outputs:         schemas.NewArgSchemas(),
 		examples:        []map[string]any{},
 		validationRules: []schemas.FunctionValidationRule{},
-		metadata:        api.SchemaMetadata{},
+		metadata:        core.SchemaMetadata{},
 	}
 }
 
 // Core builder methods (API compliance)
 
-func (b *FunctionSchemaBuilder) Input(name string, schema api.Schema) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Input(name string, schema core.Schema) core.FunctionSchemaBuilder {
 	arg := schemas.NewArgSchema(name, schema)
 	b.inputs.AddArg(arg)
 	return b
 }
 
-func (b *FunctionSchemaBuilder) Output(name string, schema api.Schema) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Output(name string, schema core.Schema) core.FunctionSchemaBuilder {
 	arg := schemas.NewArgSchema(name, schema)
 	b.outputs.AddArg(arg)
 	return b
 }
 
-func (b *FunctionSchemaBuilder) Error(schema api.Schema) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Error(schema core.Schema) core.FunctionSchemaBuilder {
 	b.errors = schema
 	return b
 }
 
-func (b *FunctionSchemaBuilder) RequiredInputs(names ...string) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) RequiredInputs(names ...string) core.FunctionSchemaBuilder {
 	// Mark specified inputs as required
 	for _, name := range names {
 		b.inputs.SetOptionalByName(name, false)
@@ -61,7 +62,7 @@ func (b *FunctionSchemaBuilder) RequiredInputs(names ...string) api.FunctionSche
 	return b
 }
 
-func (b *FunctionSchemaBuilder) RequiredOutputs(names ...string) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) RequiredOutputs(names ...string) core.FunctionSchemaBuilder {
 	// Mark specified outputs as required
 	for _, name := range names {
 		b.outputs.SetOptionalByName(name, false)
@@ -69,24 +70,24 @@ func (b *FunctionSchemaBuilder) RequiredOutputs(names ...string) api.FunctionSch
 	return b
 }
 
-func (b *FunctionSchemaBuilder) Example(example map[string]any) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Example(example map[string]any) core.FunctionSchemaBuilder {
 	b.examples = append(b.examples, example)
 	return b
 }
 
 // Metadata builder methods (API compliance)
 
-func (b *FunctionSchemaBuilder) Description(desc string) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Description(desc string) core.FunctionSchemaBuilder {
 	b.metadata.Description = desc
 	return b
 }
 
-func (b *FunctionSchemaBuilder) Name(name string) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Name(name string) core.FunctionSchemaBuilder {
 	b.metadata.Name = name
 	return b
 }
 
-func (b *FunctionSchemaBuilder) Tag(tag string) api.FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) Tag(tag string) core.FunctionSchemaBuilder {
 	b.metadata.Tags = append(b.metadata.Tags, tag)
 	return b
 }
@@ -94,56 +95,56 @@ func (b *FunctionSchemaBuilder) Tag(tag string) api.FunctionSchemaBuilder {
 // Extended builder methods (beyond API requirements)
 
 // RequiredInput adds a required input parameter (convenience method)
-func (b *FunctionSchemaBuilder) RequiredInput(name string, schema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) RequiredInput(name string, schema core.Schema) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", false, nil)
 	b.inputs.AddArg(arg)
 	return b
 }
 
 // OptionalInput adds an optional input parameter (convenience method)
-func (b *FunctionSchemaBuilder) OptionalInput(name string, schema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) OptionalInput(name string, schema core.Schema) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", true, nil)
 	b.inputs.AddArg(arg)
 	return b
 }
 
 // RequiredOutput adds a required output parameter (convenience method)
-func (b *FunctionSchemaBuilder) RequiredOutput(name string, schema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) RequiredOutput(name string, schema core.Schema) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", false, nil)
 	b.outputs.AddArg(arg)
 	return b
 }
 
 // OptionalOutput adds an optional output parameter (convenience method)
-func (b *FunctionSchemaBuilder) OptionalOutput(name string, schema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) OptionalOutput(name string, schema core.Schema) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", true, nil)
 	b.outputs.AddArg(arg)
 	return b
 }
 
 // InputWithConstraints adds an input with constraints
-func (b *FunctionSchemaBuilder) InputWithConstraints(name string, schema api.Schema, constraints ...string) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) InputWithConstraints(name string, schema core.Schema, constraints ...string) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", false, constraints)
 	b.inputs.AddArg(arg)
 	return b
 }
 
 // OutputWithConstraints adds an output with constraints
-func (b *FunctionSchemaBuilder) OutputWithConstraints(name string, schema api.Schema, constraints ...string) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) OutputWithConstraints(name string, schema core.Schema, constraints ...string) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, "", false, constraints)
 	b.outputs.AddArg(arg)
 	return b
 }
 
 // InputWithDescription adds an input with description
-func (b *FunctionSchemaBuilder) InputWithDescription(name string, schema api.Schema, description string) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) InputWithDescription(name string, schema core.Schema, description string) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, description, false, nil)
 	b.inputs.AddArg(arg)
 	return b
 }
 
 // OutputWithDescription adds an output with description
-func (b *FunctionSchemaBuilder) OutputWithDescription(name string, schema api.Schema, description string) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) OutputWithDescription(name string, schema core.Schema, description string) *FunctionSchemaBuilder {
 	arg := schemas.NewArgSchemaWithOptions(name, schema, description, false, nil)
 	b.outputs.AddArg(arg)
 	return b
@@ -252,7 +253,7 @@ func (b *FunctionSchemaBuilder) EventHandler() *FunctionSchemaBuilder {
 // Common function patterns
 
 // SimpleFunction creates a basic function with input and output
-func (b *FunctionSchemaBuilder) SimpleFunction(inputName string, inputSchema api.Schema, outputName string, outputSchema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) SimpleFunction(inputName string, inputSchema core.Schema, outputName string, outputSchema core.Schema) *FunctionSchemaBuilder {
 	b.RequiredInput(inputName, inputSchema)
 	b.RequiredOutput(outputName, outputSchema)
 	return b.Strict()
@@ -264,7 +265,7 @@ func (b *FunctionSchemaBuilder) NoOutputFunction() *FunctionSchemaBuilder {
 }
 
 // ErrorReturningFunction creates a function that can return errors
-func (b *FunctionSchemaBuilder) ErrorReturningFunction(errorSchema api.Schema) *FunctionSchemaBuilder {
+func (b *FunctionSchemaBuilder) ErrorReturningFunction(errorSchema core.Schema) *FunctionSchemaBuilder {
 	b.Error(errorSchema)
 	return b.AllowNilError(false)
 }
@@ -276,7 +277,7 @@ func (b *FunctionSchemaBuilder) VoidFunction() *FunctionSchemaBuilder {
 }
 
 // Build creates the final FunctionSchema
-func (b *FunctionSchemaBuilder) Build() api.FunctionSchema {
+func (b *FunctionSchemaBuilder) Build() core.FunctionSchema {
 	schema := schemas.NewFunctionSchema(b.inputs, b.outputs)
 
 	// Apply all builder configurations
@@ -352,7 +353,7 @@ func (b *FunctionSchemaBuilder) FileProcessingExample() *FunctionSchemaBuilder {
 }
 
 type FunctionBuilder struct {
-	schema  api.FunctionSchema
+	schema  core.FunctionSchema
 	handler func(ctx context.Context, params api.FunctionData) (api.FunctionData, error)
 }
 
@@ -369,12 +370,20 @@ func (b *FunctionBuilder) Build() api.Function {
 }
 
 type FunctionImpl struct {
-	schema  api.FunctionSchema
+	schema  core.FunctionSchema
 	handler func(ctx context.Context, params api.FunctionData) (api.FunctionData, error)
 }
 
-func (f *FunctionImpl) Schema() api.FunctionSchema {
+func (f *FunctionImpl) Schema() core.FunctionSchema {
 	return f.schema
+}
+
+func (f *FunctionImpl) Call(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+	return f.handler(ctx, params)
+}
+
+func (f *FunctionImpl) Name() string {
+	return f.schema.Metadata().Name
 }
 
 func (f *FunctionImpl) Handler() func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {

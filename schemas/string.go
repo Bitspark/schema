@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // StringSchemaConfig holds the configuration for building a StringSchema.
 type StringSchemaConfig struct {
-	Metadata   api.SchemaMetadata
+	Metadata   core.SchemaMetadata
 	MinLength  *int
 	MaxLength  *int
 	Pattern    *regexp.Regexp
@@ -19,15 +19,15 @@ type StringSchemaConfig struct {
 }
 
 // StringSchema is a clean, API-first implementation of string schema validation.
-// It implements api.StringSchema interface and provides immutable operations.
+// It implements core.StringSchema interface and provides immutable operations.
 type StringSchema struct {
 	config StringSchemaConfig
 }
 
 // Ensure StringSchema implements the API interfaces at compile time
-var _ api.Schema = (*StringSchema)(nil)
-var _ api.StringSchema = (*StringSchema)(nil)
-var _ api.Accepter = (*StringSchema)(nil)
+var _ core.Schema = (*StringSchema)(nil)
+var _ core.StringSchema = (*StringSchema)(nil)
+var _ core.Accepter = (*StringSchema)(nil)
 
 // NewStringSchema creates a new StringSchema with the given configuration.
 func NewStringSchema(config StringSchemaConfig) *StringSchema {
@@ -35,17 +35,17 @@ func NewStringSchema(config StringSchemaConfig) *StringSchema {
 }
 
 // Type returns the schema type constant.
-func (s *StringSchema) Type() api.SchemaType {
-	return api.TypeString
+func (s *StringSchema) Type() core.SchemaType {
+	return core.TypeString
 }
 
 // Metadata returns the schema metadata.
-func (s *StringSchema) Metadata() api.SchemaMetadata {
+func (s *StringSchema) Metadata() core.SchemaMetadata {
 	return s.config.Metadata
 }
 
 // Clone returns a deep copy of the StringSchema.
-func (s *StringSchema) Clone() api.Schema {
+func (s *StringSchema) Clone() core.Schema {
 	newConfig := s.config
 
 	// Deep copy enumValues
@@ -107,12 +107,12 @@ func (s *StringSchema) DefaultValue() *string {
 }
 
 // Validate validates a value against the string schema.
-func (s *StringSchema) Validate(value any) api.ValidationResult {
+func (s *StringSchema) Validate(value any) core.ValidationResult {
 	str, ok := value.(string)
 	if !ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "Expected string",
 				Code:       "type_mismatch",
@@ -123,11 +123,11 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 
 	// Length validation
 	if s.config.MinLength != nil && len(str) < *s.config.MinLength {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("String too short (minimum %d characters)", *s.config.MinLength),
 			Code:       "min_length",
@@ -137,7 +137,7 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 	}
 
 	if s.config.MaxLength != nil && len(str) > *s.config.MaxLength {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("String too long (maximum %d characters)", *s.config.MaxLength),
 			Code:       "max_length",
@@ -156,7 +156,7 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 			}
 		}
 		if !valid {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    fmt.Sprintf("Value must be one of: %v", s.config.EnumValues),
 				Code:       "enum_mismatch",
@@ -170,7 +170,7 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 	// Pattern validation (optimized with pre-compiled regex)
 	if s.config.Pattern != nil {
 		if !s.config.Pattern.MatchString(str) {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    fmt.Sprintf("String does not match pattern: %s", s.config.Pattern.String()),
 				Code:       "pattern_mismatch",
@@ -184,7 +184,7 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 	// Format validation
 	if s.config.Format != "" {
 		if err := validateFormat(str, s.config.Format); err != nil {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    fmt.Sprintf("Invalid %s format", s.config.Format),
 				Code:       "format_invalid",
@@ -195,7 +195,7 @@ func (s *StringSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
@@ -267,7 +267,7 @@ func (s *StringSchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern.
-func (s *StringSchema) Accept(visitor api.SchemaVisitor) error {
+func (s *StringSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitString(s)
 }
 

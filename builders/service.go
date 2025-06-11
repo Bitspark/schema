@@ -1,44 +1,44 @@
 package builders
 
 import (
-	"defs.dev/schema/schemas"
 	"fmt"
 	"reflect"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
+	"defs.dev/schema/schemas"
 )
 
-// ServiceBuilder implements api.ServiceSchemaBuilder for creating service schemas.
+// ServiceBuilder implements core.ServiceSchemaBuilder for creating service schemas.
 type ServiceBuilder struct {
 	name     string
-	methods  map[string]api.FunctionSchema
+	methods  map[string]core.FunctionSchema
 	examples []map[string]any
-	metadata api.SchemaMetadata
+	metadata core.SchemaMetadata
 }
 
 // Ensure ServiceBuilder implements the API interface at compile time
-var _ api.ServiceSchemaBuilder = (*ServiceBuilder)(nil)
-var _ api.Builder[api.ServiceSchema] = (*ServiceBuilder)(nil)
-var _ api.MetadataBuilder[api.ServiceSchemaBuilder] = (*ServiceBuilder)(nil)
+var _ core.ServiceSchemaBuilder = (*ServiceBuilder)(nil)
+var _ core.Builder[core.ServiceSchema] = (*ServiceBuilder)(nil)
+var _ core.MetadataBuilder[core.ServiceSchemaBuilder] = (*ServiceBuilder)(nil)
 
 // NewServiceSchema creates a new ServiceBuilder.
 func NewServiceSchema() *ServiceBuilder {
 	return &ServiceBuilder{
 		name:     "",
-		methods:  make(map[string]api.FunctionSchema),
+		methods:  make(map[string]core.FunctionSchema),
 		examples: []map[string]any{},
-		metadata: api.SchemaMetadata{},
+		metadata: core.SchemaMetadata{},
 	}
 }
 
 // Core builder methods (API compliance)
 
-func (b *ServiceBuilder) Method(name string, functionSchema api.FunctionSchema) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) Method(name string, functionSchema core.FunctionSchema) core.ServiceSchemaBuilder {
 	b.methods[name] = functionSchema
 	return b
 }
 
-func (b *ServiceBuilder) FromStruct(instance any) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) FromStruct(instance any) core.ServiceSchemaBuilder {
 	if instance == nil {
 		return b
 	}
@@ -82,31 +82,31 @@ func (b *ServiceBuilder) FromStruct(instance any) api.ServiceSchemaBuilder {
 	return b
 }
 
-func (b *ServiceBuilder) Example(example map[string]any) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) Example(example map[string]any) core.ServiceSchemaBuilder {
 	b.examples = append(b.examples, example)
 	return b
 }
 
 // Metadata builder methods (API compliance)
 
-func (b *ServiceBuilder) Description(desc string) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) Description(desc string) core.ServiceSchemaBuilder {
 	b.metadata.Description = desc
 	return b
 }
 
-func (b *ServiceBuilder) Name(name string) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) Name(name string) core.ServiceSchemaBuilder {
 	b.name = name
 	b.metadata.Name = name
 	return b
 }
 
-func (b *ServiceBuilder) Tag(tag string) api.ServiceSchemaBuilder {
+func (b *ServiceBuilder) Tag(tag string) core.ServiceSchemaBuilder {
 	b.metadata.Tags = append(b.metadata.Tags, tag)
 	return b
 }
 
 // Build creates the final ServiceSchema
-func (b *ServiceBuilder) Build() api.ServiceSchema {
+func (b *ServiceBuilder) Build() core.ServiceSchema {
 	serviceSchema := schemas.NewServiceSchema(b.name)
 
 	// Add all methods
@@ -151,7 +151,7 @@ func isValidServiceMethod(method reflect.Method) bool {
 }
 
 // createFunctionSchemaFromMethod creates a basic function schema from a reflect.Method
-func createFunctionSchemaFromMethod(method reflect.Method) api.FunctionSchema {
+func createFunctionSchemaFromMethod(method reflect.Method) core.FunctionSchema {
 	// This is a simplified implementation
 	// In a real system, you'd want more sophisticated type analysis
 
@@ -193,7 +193,7 @@ func createFunctionSchemaFromMethod(method reflect.Method) api.FunctionSchema {
 }
 
 // createSchemaFromType creates a basic schema from a reflect.Type
-func createSchemaFromType(t reflect.Type) api.Schema {
+func createSchemaFromType(t reflect.Type) core.Schema {
 	// This is a very basic implementation
 	// In a real system, you'd want comprehensive type mapping
 
@@ -246,13 +246,13 @@ func (b *ServiceBuilder) ServiceName(name string) *ServiceBuilder {
 }
 
 // AddMethod adds a method with a function schema (alias for Method)
-func (b *ServiceBuilder) AddMethod(name string, functionSchema api.FunctionSchema) *ServiceBuilder {
+func (b *ServiceBuilder) AddMethod(name string, functionSchema core.FunctionSchema) *ServiceBuilder {
 	b.Method(name, functionSchema)
 	return b
 }
 
 // SimpleMethod creates a simple method with basic input/output
-func (b *ServiceBuilder) SimpleMethod(name string, inputSchema api.Schema, outputSchema api.Schema) *ServiceBuilder {
+func (b *ServiceBuilder) SimpleMethod(name string, inputSchema core.Schema, outputSchema core.Schema) *ServiceBuilder {
 	functionSchema := NewFunctionSchema().
 		Input("input", inputSchema).
 		Output("output", outputSchema).

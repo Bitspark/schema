@@ -1,4 +1,4 @@
-package api
+package core
 
 // SchemaVisitor defines the visitor interface for schema traversal.
 // This enables the visitor pattern for processing different schema types.

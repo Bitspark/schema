@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // FunctionRegistry implements api.Registry for managing callable functions.
@@ -86,11 +87,11 @@ func (r *FunctionRegistry) List() []string {
 }
 
 // ListWithSchemas returns all registered functions with their schemas.
-func (r *FunctionRegistry) ListWithSchemas() map[string]api.FunctionSchema {
+func (r *FunctionRegistry) ListWithSchemas() map[string]core.FunctionSchema {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	result := make(map[string]api.FunctionSchema, len(r.functions))
+	result := make(map[string]core.FunctionSchema, len(r.functions))
 	for name, fn := range r.functions {
 		result[name] = fn.Schema()
 	}
@@ -128,15 +129,15 @@ func (r *FunctionRegistry) Clear() error {
 // Validation methods
 
 // Validate validates input parameters for a function.
-func (r *FunctionRegistry) Validate(name string, input any) api.ValidationResult {
+func (r *FunctionRegistry) Validate(name string, input any) core.ValidationResult {
 	r.mu.RLock()
 	fn, exists := r.functions[name]
 	r.mu.RUnlock()
 
 	if !exists {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{
+			Errors: []core.ValidationError{
 				{
 					Path:       "",
 					Message:    fmt.Sprintf("function %s not found", name),
@@ -152,9 +153,9 @@ func (r *FunctionRegistry) Validate(name string, input any) api.ValidationResult
 
 	schema := fn.Schema()
 	if schema == nil {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid:  true,
-			Errors: []api.ValidationError{},
+			Errors: []core.ValidationError{},
 		}
 	}
 

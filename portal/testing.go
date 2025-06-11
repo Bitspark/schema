@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // TestingPortalImpl implements api.TestingPortal
@@ -43,7 +44,7 @@ func (p *TestingPortalImpl) Apply(ctx context.Context, function api.Function) (a
 
 // ApplyService registers service (basic implementation)
 func (p *TestingPortalImpl) ApplyService(ctx context.Context, service api.Service) (api.Address, error) {
-	address := p.generateServiceAddress(service.Name())
+	address := p.generateServiceAddress(service.Schema().Name())
 	return address, nil
 }
 
@@ -168,7 +169,7 @@ func (rf *RecordingFunction) Call(ctx context.Context, params api.FunctionData) 
 	return output, err
 }
 
-func (rf *RecordingFunction) Schema() api.FunctionSchema {
+func (rf *RecordingFunction) Schema() core.FunctionSchema {
 	return rf.original.Schema()
 }
 

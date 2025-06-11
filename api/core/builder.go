@@ -1,4 +1,4 @@
-package api
+package core
 
 // Builder defines the base interface for all schema builders.
 type Builder[T Schema] interface {

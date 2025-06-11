@@ -53,7 +53,7 @@ func (p *LocalPortalImpl) ApplyService(ctx context.Context, service api.Service)
 	defer p.mutex.Unlock()
 
 	// Generate unique address for the service
-	address := p.generateServiceAddress(service.Name())
+	address := p.generateServiceAddress(service.Schema().Name())
 
 	// Store service
 	p.services[address.String()] = service

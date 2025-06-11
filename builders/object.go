@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 	"defs.dev/schema/schemas"
 )
 
@@ -11,14 +11,14 @@ type ObjectBuilder struct {
 }
 
 // Ensure ObjectBuilder implements the API interface at compile time
-var _ api.ObjectSchemaBuilder = (*ObjectBuilder)(nil)
+var _ core.ObjectSchemaBuilder = (*ObjectBuilder)(nil)
 
 // NewObjectSchema creates a new ObjectBuilder with default configuration.
 func NewObjectSchema() *ObjectBuilder {
 	return &ObjectBuilder{
 		config: schemas.ObjectSchemaConfig{
-			Metadata:             api.SchemaMetadata{},
-			Properties:           make(map[string]api.Schema),
+			Metadata:             core.SchemaMetadata{},
+			Properties:           make(map[string]core.Schema),
 			Required:             []string{},
 			AdditionalProperties: true, // Default to allowing additional properties
 		},
@@ -26,56 +26,56 @@ func NewObjectSchema() *ObjectBuilder {
 }
 
 // NewObject creates a new ObjectBuilder - this is the public API entry point.
-func NewObject() api.ObjectSchemaBuilder {
+func NewObject() core.ObjectSchemaBuilder {
 	return NewObjectSchema()
 }
 
 // Build returns the constructed ObjectSchema.
-func (b *ObjectBuilder) Build() api.ObjectSchema {
+func (b *ObjectBuilder) Build() core.ObjectSchema {
 	return schemas.NewObjectSchema(b.config)
 }
 
 // Description sets the schema description.
-func (b *ObjectBuilder) Description(desc string) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Description(desc string) core.ObjectSchemaBuilder {
 	b.config.Metadata.Description = desc
 	return b
 }
 
 // Name sets the schema name.
-func (b *ObjectBuilder) Name(name string) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Name(name string) core.ObjectSchemaBuilder {
 	b.config.Metadata.Name = name
 	return b
 }
 
 // Tag adds a tag to the schema.
-func (b *ObjectBuilder) Tag(tag string) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Tag(tag string) core.ObjectSchemaBuilder {
 	b.config.Metadata.Tags = append(b.config.Metadata.Tags, tag)
 	return b
 }
 
 // Property adds a property with its schema to the object.
-func (b *ObjectBuilder) Property(name string, schema api.Schema) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Property(name string, schema core.Schema) core.ObjectSchemaBuilder {
 	if b.config.Properties == nil {
-		b.config.Properties = make(map[string]api.Schema)
+		b.config.Properties = make(map[string]core.Schema)
 	}
 	b.config.Properties[name] = schema
 	return b
 }
 
 // Required marks properties as required.
-func (b *ObjectBuilder) Required(names ...string) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Required(names ...string) core.ObjectSchemaBuilder {
 	b.config.Required = append(b.config.Required, names...)
 	return b
 }
 
 // AdditionalProperties sets whether additional properties are allowed.
-func (b *ObjectBuilder) AdditionalProperties(allowed bool) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) AdditionalProperties(allowed bool) core.ObjectSchemaBuilder {
 	b.config.AdditionalProperties = allowed
 	return b
 }
 
 // Example adds an example value.
-func (b *ObjectBuilder) Example(example map[string]any) api.ObjectSchemaBuilder {
+func (b *ObjectBuilder) Example(example map[string]any) core.ObjectSchemaBuilder {
 	b.config.Metadata.Examples = append(b.config.Metadata.Examples, example)
 	return b
 }
@@ -113,9 +113,9 @@ func (b *ObjectBuilder) PropertyRange(min, max int) *ObjectBuilder {
 }
 
 // PatternProperty adds a pattern-based property validation.
-func (b *ObjectBuilder) PatternProperty(pattern string, schema api.Schema) *ObjectBuilder {
+func (b *ObjectBuilder) PatternProperty(pattern string, schema core.Schema) *ObjectBuilder {
 	if b.config.PatternProperties == nil {
-		b.config.PatternProperties = make(map[string]api.Schema)
+		b.config.PatternProperties = make(map[string]core.Schema)
 	}
 	b.config.PatternProperties[pattern] = schema
 	return b
@@ -143,14 +143,14 @@ func (b *ObjectBuilder) Flexible() *ObjectBuilder {
 }
 
 // RequiredProperty adds a property and marks it as required in one call.
-func (b *ObjectBuilder) RequiredProperty(name string, schema api.Schema) *ObjectBuilder {
+func (b *ObjectBuilder) RequiredProperty(name string, schema core.Schema) *ObjectBuilder {
 	b.Property(name, schema)
 	b.Required(name)
 	return b
 }
 
 // OptionalProperty adds a property without marking it as required.
-func (b *ObjectBuilder) OptionalProperty(name string, schema api.Schema) *ObjectBuilder {
+func (b *ObjectBuilder) OptionalProperty(name string, schema core.Schema) *ObjectBuilder {
 	b.Property(name, schema)
 	return b
 }
@@ -184,7 +184,7 @@ func (b *ObjectBuilder) Bounded(min, max int) *ObjectBuilder {
 }
 
 // Dict creates a dictionary-like object with string keys and uniform value schema.
-func (b *ObjectBuilder) Dict(valueSchema api.Schema) *ObjectBuilder {
+func (b *ObjectBuilder) Dict(valueSchema core.Schema) *ObjectBuilder {
 	b.PatternProperty("*", valueSchema) // Universal pattern
 	b.config.AdditionalProperties = true
 	return b

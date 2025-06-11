@@ -1,6 +1,10 @@
 package api
 
-import "context"
+import (
+	"context"
+
+	"defs.dev/schema/api/core"
+)
 
 // Registry defines the interface for function registries.
 type Registry interface {
@@ -14,14 +18,14 @@ type Registry interface {
 
 	// Listing
 	List() []string
-	ListWithSchemas() map[string]FunctionSchema
+	ListWithSchemas() map[string]core.FunctionSchema
 
 	// Management
 	Unregister(name string) error
 	Clear() error
 
 	// Validation
-	Validate(name string, input any) ValidationResult
+	Validate(name string, input any) core.ValidationResult
 
 	// Execution
 	Call(ctx context.Context, name string, params FunctionData) (FunctionData, error)

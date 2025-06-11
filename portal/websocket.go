@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 	"github.com/gorilla/websocket"
 )
 
@@ -87,13 +88,15 @@ func NewWebSocketPortal(config *WebSocketConfig) api.WebSocketPortal {
 }
 
 // Apply registers a function and makes it available via WebSocket
-func (p *WebSocketPortal) Apply(ctx context.Context, name string, function api.Function) (api.Address, error) {
+func (p *WebSocketPortal) Apply(ctx context.Context, function api.Function) (api.Address, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	if function == nil {
 		return nil, fmt.Errorf("function cannot be nil")
 	}
+
+	name := function.Name()
 
 	if name == "" {
 		return nil, fmt.Errorf("function name cannot be empty")
@@ -115,7 +118,7 @@ func (p *WebSocketPortal) ApplyService(ctx context.Context, service api.Service)
 		return nil, fmt.Errorf("service cannot be nil")
 	}
 
-	name := service.Name()
+	name := service.Schema().Name()
 	if name == "" {
 		return nil, fmt.Errorf("service name cannot be empty")
 	}
@@ -411,7 +414,7 @@ func (p *WebSocketPortal) handleFunctionCall(msg WSMessage) *WSMessage {
 	// Handle service method calls
 	if msg.Service != "" && msg.Method != "" {
 		p.mu.RLock()
-		service, exists := p.services[msg.Service]
+		svc, exists := p.services[msg.Service]
 		p.mu.RUnlock()
 
 		if !exists {
@@ -420,25 +423,29 @@ func (p *WebSocketPortal) handleFunctionCall(msg WSMessage) *WSMessage {
 			return response
 		}
 
-		method, exists := service.GetMethod(msg.Method)
-		if !exists {
+		// Find method by name
+		var method core.ServiceMethodSchema
+		var methodExists bool
+		for _, m := range svc.Schema().Methods() {
+			if m.Name() == msg.Method {
+				method = m
+				methodExists = true
+				break
+			}
+		}
+
+		if !methodExists {
 			response.Type = WSMsgTypeError
 			response.Error = fmt.Sprintf("method not found: %s.%s", msg.Service, msg.Method)
 			return response
 		}
 
-		// Call the service method
-		data := NewFunctionData(msg.Data)
-		result, err := method.Call(ctx, data)
-		if err != nil {
-			response.Type = WSMsgTypeError
-			response.Error = err.Error()
-			return response
-		}
-
-		response.Data = map[string]interface{}{
-			"result": result.Value(),
-		}
+		// Note: ServiceMethodSchema doesn't implement api.Function directly
+		// We would need to create a wrapper or different calling mechanism
+		// For now, this is a placeholder that shows the structure
+		_ = method // Mark as used for now
+		response.Type = WSMsgTypeError
+		response.Error = "service method calling not yet implemented"
 		return response
 	}
 

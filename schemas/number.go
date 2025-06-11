@@ -4,27 +4,27 @@ import (
 	"fmt"
 	"math"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // NumberSchemaConfig holds the configuration for building a NumberSchema.
 type NumberSchemaConfig struct {
-	Metadata   api.SchemaMetadata
+	Metadata   core.SchemaMetadata
 	Minimum    *float64
 	Maximum    *float64
 	DefaultVal *float64
 }
 
 // NumberSchema is a clean, API-first implementation of number schema validation.
-// It implements api.NumberSchema interface and provides immutable operations.
+// It implements core.NumberSchema interface and provides immutable operations.
 type NumberSchema struct {
 	config NumberSchemaConfig
 }
 
 // Ensure NumberSchema implements the API interfaces at compile time
-var _ api.Schema = (*NumberSchema)(nil)
-var _ api.NumberSchema = (*NumberSchema)(nil)
-var _ api.Accepter = (*NumberSchema)(nil)
+var _ core.Schema = (*NumberSchema)(nil)
+var _ core.NumberSchema = (*NumberSchema)(nil)
+var _ core.Accepter = (*NumberSchema)(nil)
 
 // NewNumberSchema creates a new NumberSchema with the given configuration.
 func NewNumberSchema(config NumberSchemaConfig) *NumberSchema {
@@ -32,17 +32,17 @@ func NewNumberSchema(config NumberSchemaConfig) *NumberSchema {
 }
 
 // Type returns the schema type constant.
-func (n *NumberSchema) Type() api.SchemaType {
-	return api.TypeNumber
+func (n *NumberSchema) Type() core.SchemaType {
+	return core.TypeNumber
 }
 
 // Metadata returns the schema metadata.
-func (n *NumberSchema) Metadata() api.SchemaMetadata {
+func (n *NumberSchema) Metadata() core.SchemaMetadata {
 	return n.config.Metadata
 }
 
 // Clone returns a deep copy of the NumberSchema.
-func (n *NumberSchema) Clone() api.Schema {
+func (n *NumberSchema) Clone() core.Schema {
 	newConfig := n.config
 
 	// Deep copy metadata examples and tags
@@ -75,7 +75,7 @@ func (n *NumberSchema) DefaultValue() *float64 {
 }
 
 // Validate validates a value against the number schema.
-func (n *NumberSchema) Validate(value any) api.ValidationResult {
+func (n *NumberSchema) Validate(value any) core.ValidationResult {
 	// Handle different numeric types
 	var num float64
 	var ok bool
@@ -110,9 +110,9 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 	}
 
 	if !ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "Expected number",
 				Code:       "type_mismatch",
@@ -123,11 +123,11 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 
 	// Check for special float values
 	if math.IsNaN(num) {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    "NaN (Not a Number) is not allowed",
 			Code:       "invalid_number",
@@ -138,7 +138,7 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 	}
 
 	if math.IsInf(num, 0) {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    "Infinite values are not allowed",
 			Code:       "invalid_number",
@@ -150,7 +150,7 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 
 	// Minimum validation
 	if n.config.Minimum != nil && num < *n.config.Minimum {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Number too small (minimum %g)", *n.config.Minimum),
 			Code:       "minimum",
@@ -162,7 +162,7 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 
 	// Maximum validation
 	if n.config.Maximum != nil && num > *n.config.Maximum {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Number too large (maximum %g)", *n.config.Maximum),
 			Code:       "maximum",
@@ -172,7 +172,7 @@ func (n *NumberSchema) Validate(value any) api.ValidationResult {
 		})
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
@@ -256,6 +256,6 @@ func (n *NumberSchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern for schema traversal.
-func (n *NumberSchema) Accept(visitor api.SchemaVisitor) error {
+func (n *NumberSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitNumber(n)
 }

@@ -1,6 +1,10 @@
 package api
 
-import "context"
+import (
+	"context"
+
+	"defs.dev/schema/api/core"
+)
 
 // FunctionData represents unified data for function inputs and outputs.
 // This provides symmetry with the schema system and simplifies the API.
@@ -20,7 +24,7 @@ type FunctionData interface {
 // Function interface defines the contract for callable functions.
 type Function interface {
 	Call(ctx context.Context, params FunctionData) (FunctionData, error)
-	Schema() FunctionSchema
+	Schema() core.FunctionSchema
 	Name() string
 }
 

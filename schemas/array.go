@@ -4,30 +4,30 @@ import (
 	"fmt"
 	"reflect"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // ArraySchemaConfig holds the configuration for building an ArraySchema.
 type ArraySchemaConfig struct {
-	Metadata       api.SchemaMetadata
-	ItemSchema     api.Schema
+	Metadata       core.SchemaMetadata
+	ItemSchema     core.Schema
 	MinItems       *int
 	MaxItems       *int
 	UniqueItems    bool
-	ContainsSchema api.Schema
+	ContainsSchema core.Schema
 	DefaultVal     []any
 }
 
 // ArraySchema is a clean, API-first implementation of array schema validation.
-// It implements api.ArraySchema interface and provides immutable operations.
+// It implements core.ArraySchema interface and provides immutable operations.
 type ArraySchema struct {
 	config ArraySchemaConfig
 }
 
 // Ensure ArraySchema implements the API interfaces at compile time
-var _ api.Schema = (*ArraySchema)(nil)
-var _ api.ArraySchema = (*ArraySchema)(nil)
-var _ api.Accepter = (*ArraySchema)(nil)
+var _ core.Schema = (*ArraySchema)(nil)
+var _ core.ArraySchema = (*ArraySchema)(nil)
+var _ core.Accepter = (*ArraySchema)(nil)
 
 // NewArraySchema creates a new ArraySchema with the given configuration.
 func NewArraySchema(config ArraySchemaConfig) *ArraySchema {
@@ -35,17 +35,17 @@ func NewArraySchema(config ArraySchemaConfig) *ArraySchema {
 }
 
 // Type returns the schema type constant.
-func (a *ArraySchema) Type() api.SchemaType {
-	return api.TypeArray
+func (a *ArraySchema) Type() core.SchemaType {
+	return core.TypeArray
 }
 
 // Metadata returns the schema metadata.
-func (a *ArraySchema) Metadata() api.SchemaMetadata {
+func (a *ArraySchema) Metadata() core.SchemaMetadata {
 	return a.config.Metadata
 }
 
 // Clone returns a deep copy of the ArraySchema.
-func (a *ArraySchema) Clone() api.Schema {
+func (a *ArraySchema) Clone() core.Schema {
 	newConfig := a.config
 
 	// Deep copy metadata examples and tags
@@ -72,7 +72,7 @@ func (a *ArraySchema) Clone() api.Schema {
 }
 
 // ItemSchema returns the schema for array items.
-func (a *ArraySchema) ItemSchema() api.Schema {
+func (a *ArraySchema) ItemSchema() core.Schema {
 	return a.config.ItemSchema
 }
 
@@ -92,7 +92,7 @@ func (a *ArraySchema) UniqueItemsRequired() bool {
 }
 
 // ContainsSchema returns the contains constraint schema.
-func (a *ArraySchema) ContainsSchema() api.Schema {
+func (a *ArraySchema) ContainsSchema() core.Schema {
 	return a.config.ContainsSchema
 }
 
@@ -107,13 +107,13 @@ func (a *ArraySchema) DefaultValue() []any {
 }
 
 // Validate validates a value against the array schema.
-func (a *ArraySchema) Validate(value any) api.ValidationResult {
+func (a *ArraySchema) Validate(value any) core.ValidationResult {
 	// Convert to slice/array
 	arrayValue, ok := a.convertToSlice(value)
 	if !ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "Expected array or slice",
 				Code:       "type_mismatch",
@@ -124,13 +124,13 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 
 	// Length validation
 	length := len(arrayValue)
 
 	if a.config.MinItems != nil && length < *a.config.MinItems {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Array too short (minimum %d items)", *a.config.MinItems),
 			Code:       "min_items",
@@ -141,7 +141,7 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 	}
 
 	if a.config.MaxItems != nil && length > *a.config.MaxItems {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Array too long (maximum %d items)", *a.config.MaxItems),
 			Code:       "max_items",
@@ -154,7 +154,7 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 	// Unique items validation
 	if a.config.UniqueItems {
 		if !a.areItemsUnique(arrayValue) {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    "Array items must be unique",
 				Code:       "unique_items",
@@ -171,7 +171,7 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 			itemResult := a.config.ItemSchema.Validate(item)
 			if !itemResult.Valid {
 				for _, itemError := range itemResult.Errors {
-					errors = append(errors, api.ValidationError{
+					errors = append(errors, core.ValidationError{
 						Path:       fmt.Sprintf("[%d]%s", i, itemError.Path),
 						Message:    itemError.Message,
 						Code:       itemError.Code,
@@ -195,7 +195,7 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 			}
 		}
 		if !containsValid {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    "Array must contain at least one item matching the contains schema",
 				Code:       "contains",
@@ -206,7 +206,7 @@ func (a *ArraySchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
@@ -388,6 +388,6 @@ func (a *ArraySchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern for schema traversal.
-func (a *ArraySchema) Accept(visitor api.SchemaVisitor) error {
+func (a *ArraySchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitArray(a)
 }

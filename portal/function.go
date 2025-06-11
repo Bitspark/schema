@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // FunctionDataMap implements api.FunctionData as a unified map-based data structure
@@ -126,7 +127,7 @@ func (f *FunctionDataValue) ToAny() any {
 
 // Legacy types for backward compatibility
 
-// FunctionInputMap implements api.FunctionInput as a map (deprecated)
+// FunctionInputMap implements core.FunctionInput as a map (deprecated)
 type FunctionInputMap map[string]any
 
 // NewFunctionInputMap creates a new FunctionInputMap (deprecated, use NewFunctionData)
@@ -175,13 +176,13 @@ func (f FunctionInputMap) Keys() []string {
 // RemoteFunction represents a function accessible via a portal
 type RemoteFunction struct {
 	name    string
-	schema  api.FunctionSchema
+	schema  core.FunctionSchema
 	address api.Address
 	portal  api.FunctionPortal
 }
 
 // NewRemoteFunction creates a new RemoteFunction
-func NewRemoteFunction(name string, schema api.FunctionSchema, address api.Address, portal api.FunctionPortal) api.Function {
+func NewRemoteFunction(name string, schema core.FunctionSchema, address api.Address, portal api.FunctionPortal) api.Function {
 	return &RemoteFunction{
 		name:    name,
 		schema:  schema,
@@ -203,7 +204,7 @@ func (f *RemoteFunction) Call(ctx context.Context, params api.FunctionData) (api
 }
 
 // Schema returns the function schema
-func (f *RemoteFunction) Schema() api.FunctionSchema {
+func (f *RemoteFunction) Schema() core.FunctionSchema {
 	return f.schema
 }
 
@@ -221,12 +222,12 @@ func (f *RemoteFunction) Address() api.Address {
 type ServiceImpl struct {
 	name        string
 	description string
-	schema      api.ServiceSchema
+	schema      core.ServiceSchema
 	methods     map[string]api.Function
 }
 
 // NewService creates a new Service
-func NewService(name string, schema api.ServiceSchema) api.Service {
+func NewService(name string, schema core.ServiceSchema) api.Service {
 	return &ServiceImpl{
 		name:    name,
 		schema:  schema,
@@ -245,7 +246,7 @@ func (s *ServiceImpl) Description() string {
 }
 
 // Schema returns the service schema
-func (s *ServiceImpl) Schema() api.ServiceSchema {
+func (s *ServiceImpl) Schema() core.ServiceSchema {
 	return s.schema
 }
 

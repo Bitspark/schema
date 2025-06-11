@@ -5,32 +5,32 @@ import (
 	"reflect"
 	"sort"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // ObjectSchemaConfig holds the configuration for building an ObjectSchema.
 type ObjectSchemaConfig struct {
-	Metadata             api.SchemaMetadata
-	Properties           map[string]api.Schema
+	Metadata             core.SchemaMetadata
+	Properties           map[string]core.Schema
 	Required             []string
 	AdditionalProperties bool
 	MinProperties        *int
 	MaxProperties        *int
-	PatternProperties    map[string]api.Schema
+	PatternProperties    map[string]core.Schema
 	PropertyDependencies map[string][]string
 	DefaultVal           map[string]any
 }
 
 // ObjectSchema is a clean, API-first implementation of object schema validation.
-// It implements api.ObjectSchema interface and provides immutable operations.
+// It implements core.ObjectSchema interface and provides immutable operations.
 type ObjectSchema struct {
 	config ObjectSchemaConfig
 }
 
 // Ensure ObjectSchema implements the API interfaces at compile time
-var _ api.Schema = (*ObjectSchema)(nil)
-var _ api.ObjectSchema = (*ObjectSchema)(nil)
-var _ api.Accepter = (*ObjectSchema)(nil)
+var _ core.Schema = (*ObjectSchema)(nil)
+var _ core.ObjectSchema = (*ObjectSchema)(nil)
+var _ core.Accepter = (*ObjectSchema)(nil)
 
 // NewObjectSchema creates a new ObjectSchema with the given configuration.
 func NewObjectSchema(config ObjectSchemaConfig) *ObjectSchema {
@@ -38,17 +38,17 @@ func NewObjectSchema(config ObjectSchemaConfig) *ObjectSchema {
 }
 
 // Type returns the schema type constant.
-func (o *ObjectSchema) Type() api.SchemaType {
-	return api.TypeObject
+func (o *ObjectSchema) Type() core.SchemaType {
+	return core.TypeObject
 }
 
 // Metadata returns the schema metadata.
-func (o *ObjectSchema) Metadata() api.SchemaMetadata {
+func (o *ObjectSchema) Metadata() core.SchemaMetadata {
 	return o.config.Metadata
 }
 
 // Clone returns a deep copy of the ObjectSchema.
-func (o *ObjectSchema) Clone() api.Schema {
+func (o *ObjectSchema) Clone() core.Schema {
 	newConfig := o.config
 
 	// Deep copy metadata examples and tags
@@ -64,7 +64,7 @@ func (o *ObjectSchema) Clone() api.Schema {
 
 	// Deep copy properties map
 	if o.config.Properties != nil {
-		newConfig.Properties = make(map[string]api.Schema, len(o.config.Properties))
+		newConfig.Properties = make(map[string]core.Schema, len(o.config.Properties))
 		for k, v := range o.config.Properties {
 			newConfig.Properties[k] = v // Schemas should be immutable
 		}
@@ -78,7 +78,7 @@ func (o *ObjectSchema) Clone() api.Schema {
 
 	// Deep copy pattern properties
 	if o.config.PatternProperties != nil {
-		newConfig.PatternProperties = make(map[string]api.Schema, len(o.config.PatternProperties))
+		newConfig.PatternProperties = make(map[string]core.Schema, len(o.config.PatternProperties))
 		for k, v := range o.config.PatternProperties {
 			newConfig.PatternProperties[k] = v
 		}
@@ -106,12 +106,12 @@ func (o *ObjectSchema) Clone() api.Schema {
 }
 
 // Properties returns the property schemas.
-func (o *ObjectSchema) Properties() map[string]api.Schema {
+func (o *ObjectSchema) Properties() map[string]core.Schema {
 	if o.config.Properties == nil {
-		return make(map[string]api.Schema)
+		return make(map[string]core.Schema)
 	}
 	// Return a copy to maintain immutability
-	result := make(map[string]api.Schema, len(o.config.Properties))
+	result := make(map[string]core.Schema, len(o.config.Properties))
 	for k, v := range o.config.Properties {
 		result[k] = v
 	}
@@ -145,12 +145,12 @@ func (o *ObjectSchema) MaxProperties() *int {
 }
 
 // PatternProperties returns the pattern properties map.
-func (o *ObjectSchema) PatternProperties() map[string]api.Schema {
+func (o *ObjectSchema) PatternProperties() map[string]core.Schema {
 	if o.config.PatternProperties == nil {
-		return make(map[string]api.Schema)
+		return make(map[string]core.Schema)
 	}
 	// Return a copy to maintain immutability
-	result := make(map[string]api.Schema, len(o.config.PatternProperties))
+	result := make(map[string]core.Schema, len(o.config.PatternProperties))
 	for k, v := range o.config.PatternProperties {
 		result[k] = v
 	}
@@ -185,13 +185,13 @@ func (o *ObjectSchema) DefaultValue() map[string]any {
 }
 
 // Validate validates a value against the object schema.
-func (o *ObjectSchema) Validate(value any) api.ValidationResult {
+func (o *ObjectSchema) Validate(value any) core.ValidationResult {
 	// Convert to object/map
 	objectValue, ok := o.convertToMap(value)
 	if !ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "Expected object or map",
 				Code:       "type_mismatch",
@@ -202,13 +202,13 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 
 	// Property count validation
 	propertyCount := len(objectValue)
 
 	if o.config.MinProperties != nil && propertyCount < *o.config.MinProperties {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Object has too few properties (minimum %d)", *o.config.MinProperties),
 			Code:       "min_properties",
@@ -219,7 +219,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 	}
 
 	if o.config.MaxProperties != nil && propertyCount > *o.config.MaxProperties {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Object has too many properties (maximum %d)", *o.config.MaxProperties),
 			Code:       "max_properties",
@@ -232,7 +232,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 	// Required properties validation
 	for _, reqProp := range o.config.Required {
 		if _, exists := objectValue[reqProp]; !exists {
-			errors = append(errors, api.ValidationError{
+			errors = append(errors, core.ValidationError{
 				Path:       "",
 				Message:    fmt.Sprintf("Missing required property '%s'", reqProp),
 				Code:       "required_property",
@@ -250,7 +250,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 			propResult := propSchema.Validate(propValue)
 			if !propResult.Valid {
 				for _, propError := range propResult.Errors {
-					errors = append(errors, api.ValidationError{
+					errors = append(errors, core.ValidationError{
 						Path:       o.buildPropertyPath(propName, propError.Path),
 						Message:    propError.Message,
 						Code:       propError.Code,
@@ -272,7 +272,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 						propResult := patternSchema.Validate(propValue)
 						if !propResult.Valid {
 							for _, propError := range propResult.Errors {
-								errors = append(errors, api.ValidationError{
+								errors = append(errors, core.ValidationError{
 									Path:       o.buildPropertyPath(propName, propError.Path),
 									Message:    propError.Message,
 									Code:       propError.Code,
@@ -290,7 +290,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 
 			// Check additional properties
 			if !matched && !o.config.AdditionalProperties {
-				errors = append(errors, api.ValidationError{
+				errors = append(errors, core.ValidationError{
 					Path:       "",
 					Message:    fmt.Sprintf("Additional property '%s' is not allowed", propName),
 					Code:       "additional_property",
@@ -307,7 +307,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 		if _, exists := objectValue[propName]; exists {
 			for _, dep := range dependencies {
 				if _, depExists := objectValue[dep]; !depExists {
-					errors = append(errors, api.ValidationError{
+					errors = append(errors, core.ValidationError{
 						Path:       "",
 						Message:    fmt.Sprintf("Property '%s' requires property '%s'", propName, dep),
 						Code:       "property_dependency",
@@ -320,7 +320,7 @@ func (o *ObjectSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
@@ -532,6 +532,6 @@ func (o *ObjectSchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern for schema traversal.
-func (o *ObjectSchema) Accept(visitor api.SchemaVisitor) error {
+func (o *ObjectSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitObject(o)
 }

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
+	"defs.dev/schema/builders"
 )
 
 func TestAddressSystem(t *testing.T) {
@@ -57,7 +59,7 @@ func TestAddressSystem(t *testing.T) {
 	t.Run("Address builder", func(t *testing.T) {
 		addr := NewAddressBuilder().
 			Scheme("https").
-			Host("api.example.com").
+			Host("core.example.com").
 			Path("/api/v1/add").
 			Query("version", "1").
 			Build()
@@ -66,8 +68,8 @@ func TestAddressSystem(t *testing.T) {
 			t.Errorf("Expected scheme https, got %s", addr.Scheme())
 		}
 
-		if addr.Authority() != "api.example.com" {
-			t.Errorf("Expected authority api.example.com, got %s", addr.Authority())
+		if addr.Authority() != "core.example.com" {
+			t.Errorf("Expected authority core.example.com, got %s", addr.Authority())
 		}
 
 		query := addr.Query()
@@ -81,17 +83,28 @@ func TestLocalPortal(t *testing.T) {
 	portal := NewLocalPortal()
 	ctx := context.Background()
 
-	// Create a simple function handler
-	addHandler := func(ctx context.Context, params api.FunctionInput) (api.FunctionOutput, error) {
-		a, _ := params.Get("a")
-		b, _ := params.Get("b")
-		result := a.(float64) + b.(float64)
-		return NewFunctionValue(result), nil
+	// Create a test function
+	testFunc := &TestFunction{
+		name: "add",
+		schema: builders.NewFunctionSchema().
+			Name("add").
+			Description("Add two numbers").
+			Input("a", builders.NewNumberSchema().Build()).
+			Input("b", builders.NewNumberSchema().Build()).
+			RequiredInputs("a", "b").
+			Output("result", builders.NewNumberSchema().Build()).
+			Build(),
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			a, _ := params.Get("a")
+			b, _ := params.Get("b")
+			result := a.(float64) + b.(float64)
+			return NewFunctionData(map[string]any{"result": result}), nil
+		},
 	}
 
 	t.Run("Function registration and execution", func(t *testing.T) {
-		// Apply the function to the portal (using nil schema for simplicity)
-		addr, err := portal.Apply(ctx, "add", nil, addHandler)
+		// Apply the function to the portal
+		addr, err := portal.Apply(ctx, testFunc)
 		if err != nil {
 			t.Fatalf("Failed to apply function: %v", err)
 		}
@@ -111,18 +124,19 @@ func TestLocalPortal(t *testing.T) {
 		}
 
 		// Test function call
-		params := FunctionInputMap{
+		params := NewFunctionData(map[string]any{
 			"a": 10.0,
 			"b": 5.0,
-		}
+		})
 
 		result, err := function.Call(ctx, params)
 		if err != nil {
 			t.Fatalf("Failed to call function: %v", err)
 		}
 
-		if result.ToAny() != 15.0 {
-			t.Errorf("Expected result 15.0, got %v", result.ToAny())
+		resultValue, _ := result.Get("result")
+		if resultValue != 15.0 {
+			t.Errorf("Expected result 15.0, got %v", resultValue)
 		}
 	})
 
@@ -155,14 +169,27 @@ func TestTestingPortal(t *testing.T) {
 	portal := NewTestingPortal()
 	ctx := context.Background()
 
-	mockHandler := func(ctx context.Context, params api.FunctionInput) (api.FunctionOutput, error) {
-		input, _ := params.Get("input")
-		return NewFunctionValue("mocked: " + input.(string)), nil
+	// Create a mock function
+	mockFunc := &TestFunction{
+		name: "mock",
+		schema: builders.NewFunctionSchema().
+			Name("mock").
+			Description("Mock function").
+			Input("input", builders.NewStringSchema().Build()).
+			RequiredInputs("input").
+			Output("output", builders.NewStringSchema().Build()).
+			Build(),
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			input, _ := params.Get("input")
+			return NewFunctionData(map[string]any{
+				"output": "mocked: " + input.(string),
+			}), nil
+		},
 	}
 
 	t.Run("Mock functionality", func(t *testing.T) {
-		// Register a mock (using nil schema for simplicity)
-		addr := portal.Mock("mock", nil, mockHandler)
+		// Register a mock
+		addr := portal.Mock(mockFunc)
 		if addr.Scheme() != "mock" {
 			t.Errorf("Expected mock scheme, got %s", addr.Scheme())
 		}
@@ -173,17 +200,18 @@ func TestTestingPortal(t *testing.T) {
 			t.Fatalf("Failed to resolve mock function: %v", err)
 		}
 
-		params := FunctionInputMap{
+		params := NewFunctionData(map[string]any{
 			"input": "test",
-		}
+		})
 
 		result, err := function.Call(ctx, params)
 		if err != nil {
 			t.Fatalf("Failed to call mock function: %v", err)
 		}
 
-		if result.ToAny() != "mocked: test" {
-			t.Errorf("Expected 'mocked: test', got %v", result.ToAny())
+		output, _ := result.Get("output")
+		if output != "mocked: test" {
+			t.Errorf("Expected 'mocked: test', got %v", output)
 		}
 
 		// Check call history
@@ -254,55 +282,75 @@ func TestDefaultPortalRegistry(t *testing.T) {
 }
 
 func TestFunctionInputOutput(t *testing.T) {
-	t.Run("FunctionInputMap", func(t *testing.T) {
-		input := FunctionInputMap{
+	t.Run("FunctionData", func(t *testing.T) {
+		data := NewFunctionData(map[string]any{
 			"a": 10.0,
 			"b": "test",
 			"c": true,
-		}
+		})
 
 		// Test Get
-		if val, exists := input.Get("a"); !exists || val != 10.0 {
+		if val, exists := data.Get("a"); !exists || val != 10.0 {
 			t.Errorf("Expected a=10.0, got %v", val)
 		}
 
 		// Test Has
-		if !input.Has("b") {
+		if !data.Has("b") {
 			t.Error("Expected to have key 'b'")
 		}
 
-		if input.Has("nonexistent") {
+		if data.Has("nonexistent") {
 			t.Error("Expected to not have key 'nonexistent'")
 		}
 
 		// Test Set
-		input.Set("d", 42)
-		if val, exists := input.Get("d"); !exists || val != 42 {
+		data.Set("d", 42)
+		if val, exists := data.Get("d"); !exists || val != 42 {
 			t.Errorf("Expected d=42, got %v", val)
 		}
 
 		// Test Keys
-		keys := input.Keys()
+		keys := data.Keys()
 		if len(keys) != 4 {
 			t.Errorf("Expected 4 keys, got %d", len(keys))
 		}
 
 		// Test ToMap
-		m := input.ToMap()
+		m := data.ToMap()
 		if len(m) != 4 {
 			t.Errorf("Expected map with 4 entries, got %d", len(m))
 		}
 	})
 
-	t.Run("FunctionOutput", func(t *testing.T) {
-		output := NewFunctionValue("test result")
+	t.Run("FunctionDataValue", func(t *testing.T) {
+		data := NewFunctionDataValue("test result")
 
-		if output.Value() != "test result" {
-			t.Errorf("Expected 'test result', got %v", output.Value())
+		if data.Value() != "test result" {
+			t.Errorf("Expected 'test result', got %v", data.Value())
 		}
 
-		if output.ToAny() != "test result" {
-			t.Errorf("Expected 'test result', got %v", output.ToAny())
+		if data.ToAny() != "test result" {
+			t.Errorf("Expected 'test result', got %v", data.ToAny())
 		}
 	})
+}
+
+// Test helper types
+
+type TestFunction struct {
+	name    string
+	schema  core.FunctionSchema
+	handler func(ctx context.Context, params api.FunctionData) (api.FunctionData, error)
+}
+
+func (f *TestFunction) Name() string {
+	return f.name
+}
+
+func (f *TestFunction) Schema() core.FunctionSchema {
+	return f.schema
+}
+
+func (f *TestFunction) Call(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+	return f.handler(ctx, params)
 }

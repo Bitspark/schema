@@ -2,11 +2,13 @@ package registry
 
 import (
 	"context"
-	"defs.dev/schema/portal"
 	"fmt"
 	"sync"
 
+	"defs.dev/schema/portal"
+
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // ServiceRegistry manages registered services and their methods.
@@ -19,7 +21,7 @@ type ServiceRegistry struct {
 
 // RegisteredService represents a service with its methods and metadata.
 type RegisteredService struct {
-	Schema       api.ServiceSchema
+	Schema       core.ServiceSchema
 	Instance     any // The actual service instance (if available)
 	Methods      map[string]api.Function
 	Metadata     ServiceMetadata
@@ -45,7 +47,7 @@ func NewServiceRegistry() *ServiceRegistry {
 // Service registration methods
 
 // RegisterService registers a service with its schema.
-func (r *ServiceRegistry) RegisterService(name string, schema api.ServiceSchema) error {
+func (r *ServiceRegistry) RegisterService(name string, schema core.ServiceSchema) error {
 	if name == "" {
 		return fmt.Errorf("service name cannot be empty")
 	}
@@ -83,7 +85,7 @@ func (r *ServiceRegistry) RegisterService(name string, schema api.ServiceSchema)
 }
 
 // RegisterServiceWithInstance registers a service with its schema and instance.
-func (r *ServiceRegistry) RegisterServiceWithInstance(name string, schema api.ServiceSchema, instance any) error {
+func (r *ServiceRegistry) RegisterServiceWithInstance(name string, schema core.ServiceSchema, instance any) error {
 	if err := r.RegisterService(name, schema); err != nil {
 		return err
 	}
@@ -225,12 +227,12 @@ func (r *ServiceRegistry) CallServiceMethod(ctx context.Context, serviceName, me
 }
 
 // ValidateServiceMethod validates input for a service method.
-func (r *ServiceRegistry) ValidateServiceMethod(serviceName, methodName string, input any) api.ValidationResult {
+func (r *ServiceRegistry) ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult {
 	method, exists := r.GetServiceMethod(serviceName, methodName)
 	if !exists {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{
+			Errors: []core.ValidationError{
 				{
 					Path:       "",
 					Message:    fmt.Sprintf("method %s.%s not found", serviceName, methodName),
@@ -304,7 +306,7 @@ func (r *ServiceRegistry) GetFunctionRegistry() *FunctionRegistry {
 type ServiceMethodFunction struct {
 	serviceName string
 	methodName  string
-	schema      api.FunctionSchema
+	schema      core.FunctionSchema
 	registry    *ServiceRegistry
 }
 
@@ -334,7 +336,7 @@ func (f *ServiceMethodFunction) Call(ctx context.Context, params api.FunctionDat
 	}), nil
 }
 
-func (f *ServiceMethodFunction) Schema() api.FunctionSchema {
+func (f *ServiceMethodFunction) Schema() core.FunctionSchema {
 	return f.schema
 }
 

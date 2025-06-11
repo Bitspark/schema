@@ -3,7 +3,6 @@ package portal
 import (
 	"bytes"
 	"context"
-	builders2 "defs.dev/schema/builders"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,7 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"defs.dev/schema/builders"
+
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 func TestHTTPPortal_Creation(t *testing.T) {
@@ -49,20 +51,24 @@ func TestHTTPPortal_FunctionRegistration(t *testing.T) {
 	portal := NewHTTPPortal(DefaultHTTPConfig())
 	ctx := context.Background()
 
-	// Create a simple function schema
-	schema := builders2.NewFunctionSchema().
-		Name("testFunc").
-		Description("Test function").
-		Build()
-
-	// Create a simple handler
-	handler := func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
-		name, _ := params.Get("name")
-		return NewFunctionData(map[string]any{"result": fmt.Sprintf("Hello, %s!", name)}), nil
+	// Create a test function
+	testFunc := &HTTPTestFunction{
+		name: "testFunc",
+		schema: builders.NewFunctionSchema().
+			Name("testFunc").
+			Description("Test function").
+			Input("name", builders.NewStringSchema().Build()).
+			RequiredInputs("name").
+			Output("result", builders.NewStringSchema().Build()).
+			Build(),
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			name, _ := params.Get("name")
+			return NewFunctionData(map[string]any{"result": fmt.Sprintf("Hello, %s!", name)}), nil
+		},
 	}
 
 	// Test function registration
-	address, err := portal.Apply(ctx, NewPortalFunction("testFunc", schema, handler))
+	address, err := portal.Apply(ctx, testFunc)
 	if err != nil {
 		t.Fatalf("Failed to register function: %v", err)
 	}
@@ -76,7 +82,7 @@ func TestHTTPPortal_FunctionRegistration(t *testing.T) {
 	}
 
 	// Test duplicate registration
-	_, err = portal.Apply(ctx, "testFunc", schema, handler)
+	_, err = portal.Apply(ctx, testFunc)
 	if err == nil {
 		t.Error("Expected error for duplicate function registration")
 	}
@@ -86,22 +92,27 @@ func TestHTTPPortal_ServiceRegistration(t *testing.T) {
 	portal := NewHTTPPortal(DefaultHTTPConfig())
 	ctx := context.Background()
 
-	// Create a simple service schema
-	methodSchema := builders2.NewFunctionSchema().
-		Name("greet").
-		Description("Greet method").
-		Build()
-
-	serviceSchema := builders2.NewServiceSchema().
-		Name("TestService").
-		Method("greet", methodSchema).
-		Build()
-
-	// Create a simple service
-	service := &TestService{}
+	// Create a test service
+	testService := &TestService{
+		name: "TestService",
+		schema: builders.NewServiceSchema().
+			Name("TestService").
+			Method("greet", builders.NewFunctionSchema().
+				Name("greet").
+				Description("Greet method").
+				Input("name", builders.NewStringSchema().Build()).
+				RequiredInputs("name").
+				Output("greeting", builders.NewStringSchema().Build()).
+				Build()).
+			Build(),
+		greetHandler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			name, _ := params.Get("name")
+			return NewFunctionData(map[string]any{"greeting": fmt.Sprintf("Hello, %s!", name)}), nil
+		},
+	}
 
 	// Test service registration
-	address, err := portal.ApplyService(ctx, "TestService", serviceSchema, service)
+	address, err := portal.ApplyService(ctx, testService)
 	if err != nil {
 		t.Fatalf("Failed to register service: %v", err)
 	}
@@ -120,12 +131,15 @@ func TestHTTPPortal_FunctionResolution(t *testing.T) {
 	ctx := context.Background()
 
 	// Register a function first
-	schema := builders2.NewFunctionSchema().Name("testFunc").Build()
-	handler := func(ctx context.Context, params api.FunctionInput) (api.FunctionOutput, error) {
-		return NewFunctionValue("test result"), nil
+	testFunc := &HTTPTestFunction{
+		name:   "testFunc",
+		schema: builders.NewFunctionSchema().Name("testFunc").Build(),
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			return NewFunctionData(map[string]any{"result": "test result"}), nil
+		},
 	}
 
-	address, err := portal.Apply(ctx, "testFunc", schema, handler)
+	address, err := portal.Apply(ctx, testFunc)
 	if err != nil {
 		t.Fatalf("Failed to register function: %v", err)
 	}
@@ -165,13 +179,16 @@ func TestHTTPPortal_HTTPHandler(t *testing.T) {
 	ctx := context.Background()
 
 	// Register a test function
-	schema := builders2.NewFunctionSchema().Name("echo").Build()
-	handler := func(ctx context.Context, params api.FunctionInput) (api.FunctionOutput, error) {
-		message, _ := params.Get("message")
-		return NewFunctionValue(map[string]any{"echo": message}), nil
+	testFunc := &HTTPTestFunction{
+		name:   "echo",
+		schema: builders.NewFunctionSchema().Name("echo").Build(),
+		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+			message, _ := params.Get("message")
+			return NewFunctionData(map[string]any{"echo": message}), nil
+		},
 	}
 
-	_, err := portal.Apply(ctx, "echo", schema, handler)
+	_, err := portal.Apply(ctx, testFunc)
 	if err != nil {
 		t.Fatalf("Failed to register function: %v", err)
 	}
@@ -397,7 +414,48 @@ func TestHTTPPortal_ExtractFunctionName(t *testing.T) {
 
 // Test helper types
 
-type TestService struct{}
+type HTTPTestFunction struct {
+	name    string
+	schema  core.FunctionSchema
+	handler func(ctx context.Context, params api.FunctionData) (api.FunctionData, error)
+}
+
+func (f *HTTPTestFunction) Name() string {
+	return f.name
+}
+
+func (f *HTTPTestFunction) Schema() core.FunctionSchema {
+	return f.schema
+}
+
+func (f *HTTPTestFunction) Call(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+	return f.handler(ctx, params)
+}
+
+type TestService struct {
+	name         string
+	schema       core.ServiceSchema
+	greetHandler func(ctx context.Context, params api.FunctionData) (api.FunctionData, error)
+}
+
+func (s *TestService) Name() string {
+	return s.name
+}
+
+func (s *TestService) Schema() core.ServiceSchema {
+	return s.schema
+}
+
+func (s *TestService) GetFunction(name string) (api.Function, bool) {
+	if name == "greet" {
+		return &HTTPTestFunction{
+			name:    "greet",
+			schema:  builders.NewFunctionSchema().Name("greet").Build(),
+			handler: s.greetHandler,
+		}, true
+	}
+	return nil, false
+}
 
 type TestMiddleware struct {
 	called bool

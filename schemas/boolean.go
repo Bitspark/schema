@@ -4,27 +4,27 @@ import (
 	"strconv"
 	"strings"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // BooleanSchemaConfig holds the configuration for building a BooleanSchema.
 type BooleanSchemaConfig struct {
-	Metadata        api.SchemaMetadata
+	Metadata        core.SchemaMetadata
 	DefaultVal      *bool
 	AllowStringConv bool // Allow conversion from string ("true", "false", "1", "0")
 	CaseInsensitive bool // Case-insensitive string conversion
 }
 
 // BooleanSchema is a clean, API-first implementation of boolean schema validation.
-// It implements api.BooleanSchema interface and provides immutable operations.
+// It implements core.BooleanSchema interface and provides immutable operations.
 type BooleanSchema struct {
 	config BooleanSchemaConfig
 }
 
 // Ensure BooleanSchema implements the API interfaces at compile time
-var _ api.Schema = (*BooleanSchema)(nil)
-var _ api.BooleanSchema = (*BooleanSchema)(nil)
-var _ api.Accepter = (*BooleanSchema)(nil)
+var _ core.Schema = (*BooleanSchema)(nil)
+var _ core.BooleanSchema = (*BooleanSchema)(nil)
+var _ core.Accepter = (*BooleanSchema)(nil)
 
 // NewBooleanSchema creates a new BooleanSchema with the given configuration.
 func NewBooleanSchema(config BooleanSchemaConfig) *BooleanSchema {
@@ -32,17 +32,17 @@ func NewBooleanSchema(config BooleanSchemaConfig) *BooleanSchema {
 }
 
 // Type returns the schema type constant.
-func (b *BooleanSchema) Type() api.SchemaType {
-	return api.TypeBoolean
+func (b *BooleanSchema) Type() core.SchemaType {
+	return core.TypeBoolean
 }
 
 // Metadata returns the schema metadata.
-func (b *BooleanSchema) Metadata() api.SchemaMetadata {
+func (b *BooleanSchema) Metadata() core.SchemaMetadata {
 	return b.config.Metadata
 }
 
 // Clone returns a deep copy of the BooleanSchema.
-func (b *BooleanSchema) Clone() api.Schema {
+func (b *BooleanSchema) Clone() core.Schema {
 	newConfig := b.config
 
 	// Deep copy metadata examples and tags
@@ -75,10 +75,10 @@ func (b *BooleanSchema) CaseInsensitive() bool {
 }
 
 // Validate validates a value against the boolean schema.
-func (b *BooleanSchema) Validate(value any) api.ValidationResult {
+func (b *BooleanSchema) Validate(value any) core.ValidationResult {
 	// Direct boolean validation
 	if _, ok := value.(bool); ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid:  true,
 			Errors: nil,
 		}
@@ -90,7 +90,7 @@ func (b *BooleanSchema) Validate(value any) api.ValidationResult {
 			convertedVal, err := b.convertStringToBool(strVal)
 			if err == nil {
 				// Store the converted value for potential use
-				return api.ValidationResult{
+				return core.ValidationResult{
 					Valid:  true,
 					Errors: nil,
 					Metadata: map[string]any{
@@ -100,9 +100,9 @@ func (b *BooleanSchema) Validate(value any) api.ValidationResult {
 				}
 			}
 			// If conversion failed, return specific error
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Invalid boolean string format",
 					Code:       "invalid_boolean_string",
@@ -120,9 +120,9 @@ func (b *BooleanSchema) Validate(value any) api.ValidationResult {
 		expectedTypes = "boolean or string (true/false/1/0)"
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid: false,
-		Errors: []api.ValidationError{{
+		Errors: []core.ValidationError{{
 			Path:       "",
 			Message:    "Expected boolean",
 			Code:       "type_mismatch",
@@ -208,6 +208,6 @@ func (b *BooleanSchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern for schema traversal.
-func (b *BooleanSchema) Accept(visitor api.SchemaVisitor) error {
+func (b *BooleanSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitBoolean(b)
 }

@@ -2,10 +2,12 @@ package registry
 
 import (
 	"context"
-	"defs.dev/schema/schemas"
 	"testing"
 
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
+	"defs.dev/schema/portal"
+	"defs.dev/schema/schemas"
 )
 
 // TestFunctionRegistry tests the basic functionality of the function registry
@@ -246,20 +248,19 @@ func TestFunctionRegistryClone(t *testing.T) {
 
 type MockFunction struct {
 	name   string
-	schema api.FunctionSchema
+	schema core.FunctionSchema
 }
 
-func (f *MockFunction) Call(ctx context.Context, params api.FunctionInput) (api.FunctionOutput, error) {
-	return &FunctionOutputValue{
-		value: map[string]any{
-			"function": f.name,
-			"input":    params.ToMap(),
-			"result":   "mock_result",
-		},
-	}, nil
+func (f *MockFunction) Call(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
+	result := map[string]any{
+		"function": f.name,
+		"input":    params.ToMap(),
+		"result":   "mock_result",
+	}
+	return portal.NewFunctionData(result), nil
 }
 
-func (f *MockFunction) Schema() api.FunctionSchema {
+func (f *MockFunction) Schema() core.FunctionSchema {
 	return f.schema
 }
 
@@ -277,7 +278,7 @@ func (f *MockTypedFunction) CallTyped(ctx context.Context, input any, output any
 }
 
 // Helper function to create a mock function schema
-func createMockFunctionSchema() api.FunctionSchema {
+func createMockFunctionSchema() core.FunctionSchema {
 	inputs := schemas.NewArgSchemas()
 	outputs := schemas.NewArgSchemas()
 

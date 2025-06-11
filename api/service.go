@@ -1,10 +1,8 @@
 package api
 
-// Service represents a service with multiple methods.
+import "defs.dev/schema/api/core"
+
+// Service defines the interface for service implementations.
 type Service interface {
-	Name() string
-	Description() string
-	Schema() ServiceSchema
-	Methods() []string
-	GetMethod(name string) (Function, bool)
+	Schema() core.ServiceSchema
 }

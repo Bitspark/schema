@@ -5,29 +5,29 @@ import (
 	"reflect"
 	"strings"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // FunctionConfig holds the configuration for building a Function.
 type FunctionConfig struct {
-	Metadata api.SchemaMetadata
+	Metadata core.SchemaMetadata
 }
 
 // ArgSchema represents a named argument with its schema and description.
 // This is used for both function inputs and outputs to provide rich metadata.
 type ArgSchema struct {
-	name        string     `json:"name"`
-	description string     `json:"description,omitempty"`
-	schema      api.Schema `json:"schema"`
-	optional    bool       `json:"optional,omitempty"`
-	constraints []string   `json:"constraints,omitempty"`
+	name        string      `json:"name"`
+	description string      `json:"description,omitempty"`
+	schema      core.Schema `json:"schema"`
+	optional    bool        `json:"optional,omitempty"`
+	constraints []string    `json:"constraints,omitempty"`
 }
 
 // Ensure ArgSchema implements the API interface at compile time
-var _ api.ArgSchema = (*ArgSchema)(nil)
+var _ core.ArgSchema = (*ArgSchema)(nil)
 
 // NewArgSchema creates a new ArgSchema with the given parameters.
-func NewArgSchema(name string, schema api.Schema) ArgSchema {
+func NewArgSchema(name string, schema core.Schema) ArgSchema {
 	return ArgSchema{
 		name:   name,
 		schema: schema,
@@ -35,7 +35,7 @@ func NewArgSchema(name string, schema api.Schema) ArgSchema {
 }
 
 // NewArgSchemaWithOptions creates a new ArgSchema with all options.
-func NewArgSchemaWithOptions(name string, schema api.Schema, description string, optional bool, constraints []string) ArgSchema {
+func NewArgSchemaWithOptions(name string, schema core.Schema, description string, optional bool, constraints []string) ArgSchema {
 	return ArgSchema{
 		name:        name,
 		description: description,
@@ -46,9 +46,9 @@ func NewArgSchemaWithOptions(name string, schema api.Schema, description string,
 }
 
 // API interface implementation for ArgSchema
-func (a *ArgSchema) Accept(visitor api.SchemaVisitor) error {
+func (a *ArgSchema) Accept(visitor core.SchemaVisitor) error {
 	// ArgSchema delegates to its underlying schema
-	if accepter, ok := a.schema.(api.Accepter); ok {
+	if accepter, ok := a.schema.(core.Accepter); ok {
 		return accepter.Accept(visitor)
 	}
 	return nil
@@ -56,7 +56,7 @@ func (a *ArgSchema) Accept(visitor api.SchemaVisitor) error {
 
 func (a *ArgSchema) Name() string          { return a.name }
 func (a *ArgSchema) Description() string   { return a.description }
-func (a *ArgSchema) Schema() api.Schema    { return a.schema }
+func (a *ArgSchema) Schema() core.Schema   { return a.schema }
 func (a *ArgSchema) Optional() bool        { return a.optional }
 func (a *ArgSchema) Constraints() []string { return append([]string(nil), a.constraints...) }
 
@@ -64,13 +64,13 @@ func (a *ArgSchema) Constraints() []string { return append([]string(nil), a.cons
 type ArgSchemas struct {
 	args                  []ArgSchema `json:"args"`
 	allowAdditional       bool        `json:"allowAdditional,omitempty"`
-	additionalSchema      api.Schema  `json:"additionalSchema,omitempty"`
+	additionalSchema      core.Schema `json:"additionalSchema,omitempty"`
 	collectionName        string      `json:"collectionName,omitempty"`
 	collectionDescription string      `json:"collectionDescription,omitempty"`
 }
 
 // Ensure ArgSchemas implements the API interface at compile time
-var _ api.ArgSchemas = (*ArgSchemas)(nil)
+var _ core.ArgSchemas = (*ArgSchemas)(nil)
 
 // NewArgSchemas creates a new ArgSchemas with the given arguments.
 func NewArgSchemas() ArgSchemas {
@@ -105,7 +105,7 @@ func (a *ArgSchemas) SetCollectionMetadata(name, description string) {
 }
 
 // SetAdditionalSchema sets the schema for additional arguments.
-func (a *ArgSchemas) SetAdditionalSchema(schema api.Schema) {
+func (a *ArgSchemas) SetAdditionalSchema(schema core.Schema) {
 	a.additionalSchema = schema
 }
 
@@ -135,7 +135,7 @@ func (a *ArgSchemas) AddConstraintByName(name string, constraint string) {
 }
 
 // API interface implementation for ArgSchemas
-func (a *ArgSchemas) Accept(visitor api.SchemaVisitor) error {
+func (a *ArgSchemas) Accept(visitor core.SchemaVisitor) error {
 	// Visit each arg schema
 	for _, arg := range a.args {
 		if err := arg.Accept(visitor); err != nil {
@@ -145,8 +145,8 @@ func (a *ArgSchemas) Accept(visitor api.SchemaVisitor) error {
 	return nil
 }
 
-func (a *ArgSchemas) Args() []api.ArgSchema {
-	args := make([]api.ArgSchema, len(a.args))
+func (a *ArgSchemas) Args() []core.ArgSchema {
+	args := make([]core.ArgSchema, len(a.args))
 	for i, arg := range a.args {
 		args[i] = &arg
 	}
@@ -154,13 +154,13 @@ func (a *ArgSchemas) Args() []api.ArgSchema {
 }
 
 func (a *ArgSchemas) AllowAdditional() bool         { return a.allowAdditional }
-func (a *ArgSchemas) AdditionalSchema() api.Schema  { return a.additionalSchema }
+func (a *ArgSchemas) AdditionalSchema() core.Schema { return a.additionalSchema }
 func (a *ArgSchemas) CollectionName() string        { return a.collectionName }
 func (a *ArgSchemas) CollectionDescription() string { return a.collectionDescription }
 
-// ToMap converts ArgSchemas to a map[string]api.Schema for compatibility.
-func (args ArgSchemas) ToMap() map[string]api.Schema {
-	result := make(map[string]api.Schema)
+// ToMap converts ArgSchemas to a map[string]core.Schema for compatibility.
+func (args ArgSchemas) ToMap() map[string]core.Schema {
+	result := make(map[string]core.Schema)
 	for _, arg := range args.args {
 		result[arg.Name()] = arg.Schema()
 	}
@@ -201,10 +201,10 @@ func (args ArgSchemas) Get(name string) (*ArgSchema, bool) {
 // It validates function inputs, outputs, and error schemas, supporting both
 // structural validation and runtime type checking.
 type FunctionSchema struct {
-	metadata          api.SchemaMetadata
+	metadata          core.SchemaMetadata
 	inputs            ArgSchemas
 	outputs           ArgSchemas
-	errors            api.Schema
+	errors            core.Schema
 	additionalInputs  bool
 	additionalOutputs bool
 	examples          []map[string]any
@@ -215,12 +215,12 @@ type FunctionSchema struct {
 }
 
 // FunctionValidationRule defines custom validation logic for function schemas
-type FunctionValidationRule func(inputs map[string]any, functionSchema *FunctionSchema) *api.ValidationError
+type FunctionValidationRule func(inputs map[string]any, functionSchema *FunctionSchema) *core.ValidationError
 
 // NewFunctionSchema creates a new FunctionSchema with the provided inputs and outputs.
 func NewFunctionSchema(inputs ArgSchemas, outputs ArgSchemas) *FunctionSchema {
 	return &FunctionSchema{
-		metadata:          api.SchemaMetadata{},
+		metadata:          core.SchemaMetadata{},
 		inputs:            inputs,
 		outputs:           outputs,
 		additionalInputs:  false,
@@ -234,15 +234,15 @@ func NewFunctionSchema(inputs ArgSchemas, outputs ArgSchemas) *FunctionSchema {
 
 // Core Schema interface implementation
 
-func (s *FunctionSchema) Type() api.SchemaType {
-	return api.TypeFunction
+func (s *FunctionSchema) Type() core.SchemaType {
+	return core.TypeFunction
 }
 
-func (s *FunctionSchema) Metadata() api.SchemaMetadata {
+func (s *FunctionSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
 }
 
-func (s *FunctionSchema) Validate(value any) api.ValidationResult {
+func (s *FunctionSchema) Validate(value any) core.ValidationResult {
 	// Functions can validate in several contexts:
 	// 1. Function call inputs (map[string]any)
 	// 2. Function definition/signature validation
@@ -257,9 +257,9 @@ func (s *FunctionSchema) Validate(value any) api.ValidationResult {
 			return s.validateInputs(inputs)
 		}
 
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    fmt.Sprintf("function input must be a map or struct, got %T", value),
 				Code:       "invalid_function_input_type",
@@ -273,15 +273,15 @@ func (s *FunctionSchema) Validate(value any) api.ValidationResult {
 }
 
 // validateInputs validates function input parameters
-func (s *FunctionSchema) validateInputs(inputs map[string]any) api.ValidationResult {
-	var errors []api.ValidationError
+func (s *FunctionSchema) validateInputs(inputs map[string]any) core.ValidationResult {
+	var errors []core.ValidationError
 
 	// Validate each provided input against its schema
 	for name, value := range inputs {
 		inputSchema, exists := s.inputs.ToMap()[name]
 		if !exists {
 			if !s.additionalInputs {
-				errors = append(errors, api.ValidationError{
+				errors = append(errors, core.ValidationError{
 					Path:       name,
 					Message:    fmt.Sprintf("unexpected input '%s'", name),
 					Code:       "unexpected_input",
@@ -304,7 +304,7 @@ func (s *FunctionSchema) validateInputs(inputs map[string]any) api.ValidationRes
 					path = fmt.Sprintf("%s.%s", name, err.Path)
 				}
 
-				errors = append(errors, api.ValidationError{
+				errors = append(errors, core.ValidationError{
 					Path:       path,
 					Message:    fmt.Sprintf("input '%s': %s", name, err.Message),
 					Code:       err.Code,
@@ -336,7 +336,7 @@ func (s *FunctionSchema) validateInputs(inputs map[string]any) api.ValidationRes
 		}
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 		Metadata: map[string]any{
@@ -348,11 +348,11 @@ func (s *FunctionSchema) validateInputs(inputs map[string]any) api.ValidationRes
 }
 
 // validateConstraint validates individual input constraints
-func (s *FunctionSchema) validateConstraint(inputName string, value any, constraint string) *api.ValidationError {
+func (s *FunctionSchema) validateConstraint(inputName string, value any, constraint string) *core.ValidationError {
 	switch constraint {
 	case "non_empty":
 		if s.isEmpty(value) {
-			return &api.ValidationError{
+			return &core.ValidationError{
 				Path:       inputName,
 				Message:    fmt.Sprintf("input '%s' cannot be empty", inputName),
 				Code:       "empty_input_value",
@@ -365,7 +365,7 @@ func (s *FunctionSchema) validateConstraint(inputName string, value any, constra
 	case "unique":
 		// This would require comparison with other function calls - skip for now
 	default:
-		return &api.ValidationError{
+		return &core.ValidationError{
 			Path:       inputName,
 			Message:    fmt.Sprintf("unknown constraint '%s' for input '%s'", constraint, inputName),
 			Code:       "unknown_constraint",
@@ -533,7 +533,7 @@ func (s *FunctionSchema) GenerateExample() any {
 	return example
 }
 
-func (s *FunctionSchema) Clone() api.Schema {
+func (s *FunctionSchema) Clone() core.Schema {
 	// Deep clone inputs
 	clonedInputs := ArgSchemas{
 		args:                  make([]ArgSchema, len(s.inputs.args)),
@@ -576,7 +576,7 @@ func (s *FunctionSchema) Clone() api.Schema {
 	}
 
 	// Clone metadata
-	clonedMetadata := api.SchemaMetadata{
+	clonedMetadata := core.SchemaMetadata{
 		Name:        s.metadata.Name,
 		Description: s.metadata.Description,
 		Examples:    append([]any(nil), s.metadata.Examples...),
@@ -607,15 +607,15 @@ func (s *FunctionSchema) Clone() api.Schema {
 
 // FunctionSchema interface implementation (API compliance)
 
-func (s *FunctionSchema) Inputs() api.ArgSchemas {
+func (s *FunctionSchema) Inputs() core.ArgSchemas {
 	return &s.inputs
 }
 
-func (s *FunctionSchema) Outputs() api.ArgSchemas {
+func (s *FunctionSchema) Outputs() core.ArgSchemas {
 	return &s.outputs
 }
 
-func (s *FunctionSchema) Errors() api.Schema {
+func (s *FunctionSchema) Errors() core.Schema {
 	return s.errors
 }
 
@@ -629,35 +629,35 @@ func (s *FunctionSchema) RequiredOutputs() []string {
 
 // Visitor pattern support
 
-func (s *FunctionSchema) Accept(visitor api.SchemaVisitor) error {
+func (s *FunctionSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitFunction(s)
 }
 
 // Additional utility methods
 
 // WithMetadata creates a new FunctionSchema with updated metadata
-func (s *FunctionSchema) WithMetadata(metadata api.SchemaMetadata) *FunctionSchema {
+func (s *FunctionSchema) WithMetadata(metadata core.SchemaMetadata) *FunctionSchema {
 	clone := s.Clone().(*FunctionSchema)
 	clone.metadata = metadata
 	return clone
 }
 
 // WithInput adds or updates an input parameter
-func (s *FunctionSchema) WithInput(name string, schema api.Schema) *FunctionSchema {
+func (s *FunctionSchema) WithInput(name string, schema core.Schema) *FunctionSchema {
 	clone := s.Clone().(*FunctionSchema)
 	clone.inputs.args = append(clone.inputs.args, ArgSchema{name: name, schema: schema})
 	return clone
 }
 
 // WithOutput adds or updates an output parameter
-func (s *FunctionSchema) WithOutput(name string, schema api.Schema) *FunctionSchema {
+func (s *FunctionSchema) WithOutput(name string, schema core.Schema) *FunctionSchema {
 	clone := s.Clone().(*FunctionSchema)
 	clone.outputs.args = append(clone.outputs.args, ArgSchema{name: name, schema: schema})
 	return clone
 }
 
 // WithError sets the error schema
-func (s *FunctionSchema) WithError(schema api.Schema) *FunctionSchema {
+func (s *FunctionSchema) WithError(schema core.Schema) *FunctionSchema {
 	clone := s.Clone().(*FunctionSchema)
 	clone.errors = schema
 	return clone
@@ -741,15 +741,15 @@ func (s *FunctionSchema) AllowNilError() bool {
 // Validation helpers
 
 // ValidateOutput validates a function's output value
-func (s *FunctionSchema) ValidateOutput(value any) api.ValidationResult {
+func (s *FunctionSchema) ValidateOutput(value any) core.ValidationResult {
 	if len(s.outputs.args) == 0 {
 		if value == nil {
-			return api.ValidationResult{Valid: true}
+			return core.ValidationResult{Valid: true}
 		}
 		if !s.additionalOutputs {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "output",
 					Message:    "function output is not defined in schema",
 					Code:       "undefined_output",
@@ -778,19 +778,19 @@ func (s *FunctionSchema) ValidateOutput(value any) api.ValidationResult {
 		return result
 	}
 
-	return api.ValidationResult{Valid: true}
+	return core.ValidationResult{Valid: true}
 }
 
 // ValidateError validates a function's error value
-func (s *FunctionSchema) ValidateError(value any) api.ValidationResult {
+func (s *FunctionSchema) ValidateError(value any) core.ValidationResult {
 	if s.errors == nil {
 		if value == nil {
-			return api.ValidationResult{Valid: true}
+			return core.ValidationResult{Valid: true}
 		}
 		if !s.allowNilError {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "error",
 					Message:    "function error is not defined in schema",
 					Code:       "undefined_error",
@@ -819,7 +819,7 @@ func (s *FunctionSchema) ValidateError(value any) api.ValidationResult {
 		return result
 	}
 
-	return api.ValidationResult{Valid: true}
+	return core.ValidationResult{Valid: true}
 }
 
 // String representation for debugging

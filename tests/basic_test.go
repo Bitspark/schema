@@ -1,32 +1,32 @@
 package tests
 
 import (
-	"defs.dev/schema"
 	"testing"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
+	"defs.dev/schema/builders"
 )
 
 func TestStringSchemaBasic(t *testing.T) {
 	// Create a string schema
-	schema := schema.NewString().
+	schema := builders.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Description("Test string").
 		Build()
 
 	// Verify it implements the correct interfaces
-	if _, ok := schema.(api.Schema); !ok {
-		t.Error("StringSchema should implement api.Schema")
+	if _, ok := schema.(core.Schema); !ok {
+		t.Error("StringSchema should implement core.Schema")
 	}
 
-	if _, ok := schema.(api.StringSchema); !ok {
-		t.Error("StringSchema should implement api.StringSchema")
+	if _, ok := schema.(core.StringSchema); !ok {
+		t.Error("StringSchema should implement core.StringSchema")
 	}
 
 	// Test basic properties
-	if schema.Type() != api.TypeString {
-		t.Errorf("Expected type %s, got %s", api.TypeString, schema.Type())
+	if schema.Type() != core.TypeString {
+		t.Errorf("Expected type %s, got %s", core.TypeString, schema.Type())
 	}
 
 	if schema.Metadata().Description != "Test string" {
@@ -44,7 +44,7 @@ func TestStringSchemaBasic(t *testing.T) {
 }
 
 func TestStringSchemaValidation(t *testing.T) {
-	schema := schema.NewString().
+	schema := builders.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Build()
@@ -78,7 +78,7 @@ func TestStringSchemaValidation(t *testing.T) {
 }
 
 func TestStringSchemaPattern(t *testing.T) {
-	schema := schema.NewString().
+	schema := builders.NewStringSchema().
 		Pattern(`^[a-z]+$`).
 		Build()
 
@@ -96,7 +96,7 @@ func TestStringSchemaPattern(t *testing.T) {
 }
 
 func TestStringSchemaEmail(t *testing.T) {
-	schema := schema.NewString().Email().Build()
+	schema := builders.NewStringSchema().Email().Build()
 
 	// Test valid email
 	result := schema.Validate("user@example.com")
@@ -112,7 +112,7 @@ func TestStringSchemaEmail(t *testing.T) {
 }
 
 func TestStringSchemaEnum(t *testing.T) {
-	schema := schema.NewString().
+	schema := builders.NewStringSchema().
 		Enum("red", "green", "blue").
 		Build()
 
@@ -130,7 +130,7 @@ func TestStringSchemaEnum(t *testing.T) {
 }
 
 func TestStringSchemaImmutability(t *testing.T) {
-	builder1 := schema.NewString().MinLength(3)
+	builder1 := builders.NewStringSchema().MinLength(3)
 	builder2 := builder1.MaxLength(10)
 
 	schema1 := builder1.Build()
@@ -156,7 +156,7 @@ func TestStringSchemaImmutability(t *testing.T) {
 }
 
 func TestStringSchemaJSONSchema(t *testing.T) {
-	schema := schema.NewString().
+	schema := builders.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Pattern("^[a-z]+$").

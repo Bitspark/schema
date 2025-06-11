@@ -4,27 +4,27 @@ import (
 	"fmt"
 	"math"
 
-	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // IntegerSchemaConfig holds the configuration for building an IntegerSchema.
 type IntegerSchemaConfig struct {
-	Metadata   api.SchemaMetadata
+	Metadata   core.SchemaMetadata
 	Minimum    *int64
 	Maximum    *int64
 	DefaultVal *int64
 }
 
 // IntegerSchema is a clean, API-first implementation of integer schema validation.
-// It implements api.IntegerSchema interface and provides immutable operations.
+// It implements core.IntegerSchema interface and provides immutable operations.
 type IntegerSchema struct {
 	config IntegerSchemaConfig
 }
 
 // Ensure IntegerSchema implements the API interfaces at compile time
-var _ api.Schema = (*IntegerSchema)(nil)
-var _ api.IntegerSchema = (*IntegerSchema)(nil)
-var _ api.Accepter = (*IntegerSchema)(nil)
+var _ core.Schema = (*IntegerSchema)(nil)
+var _ core.IntegerSchema = (*IntegerSchema)(nil)
+var _ core.Accepter = (*IntegerSchema)(nil)
 
 // NewIntegerSchema creates a new IntegerSchema with the given configuration.
 func NewIntegerSchema(config IntegerSchemaConfig) *IntegerSchema {
@@ -32,17 +32,17 @@ func NewIntegerSchema(config IntegerSchemaConfig) *IntegerSchema {
 }
 
 // Type returns the schema type constant.
-func (i *IntegerSchema) Type() api.SchemaType {
-	return api.TypeInteger
+func (i *IntegerSchema) Type() core.SchemaType {
+	return core.TypeInteger
 }
 
 // Metadata returns the schema metadata.
-func (i *IntegerSchema) Metadata() api.SchemaMetadata {
+func (i *IntegerSchema) Metadata() core.SchemaMetadata {
 	return i.config.Metadata
 }
 
 // Clone returns a deep copy of the IntegerSchema.
-func (i *IntegerSchema) Clone() api.Schema {
+func (i *IntegerSchema) Clone() core.Schema {
 	newConfig := i.config
 
 	// Deep copy metadata examples and tags
@@ -75,7 +75,7 @@ func (i *IntegerSchema) DefaultValue() *int64 {
 }
 
 // Validate validates a value against the integer schema.
-func (i *IntegerSchema) Validate(value any) api.ValidationResult {
+func (i *IntegerSchema) Validate(value any) core.ValidationResult {
 	// Handle different integer types and convert to int64
 	var intVal int64
 	var ok bool
@@ -99,9 +99,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 	case uint64:
 		// Check for overflow when converting uint64 to int64
 		if v > math.MaxInt64 {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Integer value too large for int64",
 					Code:       "overflow",
@@ -116,9 +116,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 	case uint:
 		// Check for overflow when converting uint to int64
 		if uint64(v) > math.MaxInt64 {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Integer value too large for int64",
 					Code:       "overflow",
@@ -142,9 +142,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 	case float64:
 		// Allow integers represented as floats, but only if they're whole numbers
 		if v != math.Trunc(v) {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Expected integer, got decimal number",
 					Code:       "not_integer",
@@ -156,9 +156,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 		}
 		// Check for overflow
 		if v > math.MaxInt64 || v < math.MinInt64 {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Integer value out of range for int64",
 					Code:       "overflow",
@@ -174,9 +174,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 		// Same logic as float64
 		f64Val := float64(v)
 		if f64Val != math.Trunc(f64Val) {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Expected integer, got decimal number",
 					Code:       "not_integer",
@@ -187,9 +187,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 			}
 		}
 		if f64Val > math.MaxInt64 || f64Val < math.MinInt64 {
-			return api.ValidationResult{
+			return core.ValidationResult{
 				Valid: false,
-				Errors: []api.ValidationError{{
+				Errors: []core.ValidationError{{
 					Path:       "",
 					Message:    "Integer value out of range for int64",
 					Code:       "overflow",
@@ -206,9 +206,9 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 	}
 
 	if !ok {
-		return api.ValidationResult{
+		return core.ValidationResult{
 			Valid: false,
-			Errors: []api.ValidationError{{
+			Errors: []core.ValidationError{{
 				Path:       "",
 				Message:    "Expected integer",
 				Code:       "type_mismatch",
@@ -219,11 +219,11 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 		}
 	}
 
-	var errors []api.ValidationError
+	var errors []core.ValidationError
 
 	// Minimum validation
 	if i.config.Minimum != nil && intVal < *i.config.Minimum {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Integer too small (minimum %d)", *i.config.Minimum),
 			Code:       "minimum",
@@ -235,7 +235,7 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 
 	// Maximum validation
 	if i.config.Maximum != nil && intVal > *i.config.Maximum {
-		errors = append(errors, api.ValidationError{
+		errors = append(errors, core.ValidationError{
 			Path:       "",
 			Message:    fmt.Sprintf("Integer too large (maximum %d)", *i.config.Maximum),
 			Code:       "maximum",
@@ -245,7 +245,7 @@ func (i *IntegerSchema) Validate(value any) api.ValidationResult {
 		})
 	}
 
-	return api.ValidationResult{
+	return core.ValidationResult{
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
@@ -329,6 +329,6 @@ func (i *IntegerSchema) GenerateExample() any {
 }
 
 // Accept implements the visitor pattern for schema traversal.
-func (i *IntegerSchema) Accept(visitor api.SchemaVisitor) error {
+func (i *IntegerSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitInteger(i)
 }

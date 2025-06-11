@@ -1,6 +1,6 @@
-// Package api defines the core interfaces and types for the schema system.
+// Package core defines the core interfaces and types for the schema system.
 // This package contains only interfaces and types, no implementations.
-package api
+package core
 
 // Schema is the core interface that all schema types must implement.
 // It provides validation, JSON Schema generation, metadata handling, and example generation.
