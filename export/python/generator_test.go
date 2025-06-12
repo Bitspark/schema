@@ -18,9 +18,6 @@ type mockSchema struct {
 }
 
 func (s *mockSchema) Type() core.SchemaType { return s.schemaType }
-func (s *mockSchema) Validate(value any) core.ValidationResult {
-	return core.ValidationResult{Valid: true}
-}
 func (s *mockSchema) ToJSONSchema() map[string]any {
 	return map[string]any{"type": string(s.schemaType)}
 }

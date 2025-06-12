@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/validation"
 )
 
 // Registry defines the base interface for all registry types with common operations.
@@ -34,7 +35,7 @@ type FunctionRegistry interface {
 	Unregister(name string) error
 
 	// Function validation
-	Validate(name string, input any) core.ValidationResult
+	Validate(name string, input any) validation.ValidationResult
 
 	// Function execution
 	Call(ctx context.Context, name string, params FunctionData) (FunctionData, error)
@@ -61,7 +62,7 @@ type ServiceRegistry interface {
 
 	// Service execution
 	CallServiceMethod(ctx context.Context, serviceName, methodName string, params map[string]any) (any, error)
-	ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult
+	ValidateServiceMethod(serviceName, methodName string, input any) validation.ValidationResult
 
 	// Access to underlying function registry for service methods
 	GetFunctionRegistry() FunctionRegistry

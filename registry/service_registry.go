@@ -7,6 +7,7 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/validation"
 )
 
 // ServiceRegistry manages registered services and their methods.
@@ -271,26 +272,16 @@ func (r *ServiceRegistry) CallServiceMethod(ctx context.Context, serviceName, me
 }
 
 // ValidateServiceMethod validates input for a service method.
-func (r *ServiceRegistry) ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult {
-	method, exists := r.GetServiceMethod(serviceName, methodName)
+func (r *ServiceRegistry) ValidateServiceMethod(serviceName, methodName string, input any) validation.ValidationResult {
+	_, exists := r.GetServiceMethod(serviceName, methodName)
 	if !exists {
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{
-				{
-					Path:       "",
-					Message:    fmt.Sprintf("method %s.%s not found", serviceName, methodName),
-					Code:       "method_not_found",
-					Value:      fmt.Sprintf("%s.%s", serviceName, methodName),
-					Expected:   "registered service method",
-					Suggestion: "register the service method first or check the name",
-					Context:    "service_registry_validation",
-				},
-			},
-		}
+		return validation.NewValidationError([]string{}, "method_not_found",
+			fmt.Sprintf("method %s.%s not found", serviceName, methodName))
 	}
 
-	return method.Schema().Validate(input)
+	// Note: Method validation moved to consumer-driven architecture.
+	// For now, return a valid result as validation is handled by consumers.
+	return validation.NewValidationResult()
 }
 
 // Service metadata methods

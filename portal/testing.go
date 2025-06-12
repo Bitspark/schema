@@ -9,6 +9,7 @@ import (
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/registry"
+	"defs.dev/schema/validation"
 )
 
 // TestingPortalImpl implements api.TestingPortal
@@ -205,7 +206,7 @@ func (p *TestingPortalImpl) Unregister(name string) error {
 	return p.funcRegistry.Unregister(name)
 }
 
-func (p *TestingPortalImpl) Validate(name string, input any) core.ValidationResult {
+func (p *TestingPortalImpl) Validate(name string, input any) validation.ValidationResult {
 	return p.funcRegistry.Validate(name, input)
 }
 
@@ -255,7 +256,7 @@ func (p *TestingPortalImpl) CallServiceMethod(ctx context.Context, serviceName, 
 	return p.serviceRegistry.CallServiceMethod(ctx, serviceName, methodName, params)
 }
 
-func (p *TestingPortalImpl) ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult {
+func (p *TestingPortalImpl) ValidateServiceMethod(serviceName, methodName string, input any) validation.ValidationResult {
 	return p.serviceRegistry.ValidateServiceMethod(serviceName, methodName, input)
 }
 

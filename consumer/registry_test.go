@@ -12,11 +12,10 @@ type mockSchema struct {
 	annotations []core.Annotation
 }
 
-func (m *mockSchema) Type() core.SchemaType                    { return m.schemaType }
-func (m *mockSchema) Annotations() []core.Annotation           { return m.annotations }
-func (m *mockSchema) Metadata() core.SchemaMetadata            { return core.SchemaMetadata{} }
-func (m *mockSchema) Clone() core.Schema                       { return m }
-func (m *mockSchema) Validate(value any) core.ValidationResult { return core.ValidationResult{} }
+func (m *mockSchema) Type() core.SchemaType          { return m.schemaType }
+func (m *mockSchema) Annotations() []core.Annotation { return m.annotations }
+func (m *mockSchema) Metadata() core.SchemaMetadata  { return core.SchemaMetadata{} }
+func (m *mockSchema) Clone() core.Schema             { return m }
 
 // Mock annotation for testing
 type mockAnnotation struct {

@@ -2,7 +2,6 @@ package schemas
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"defs.dev/schema/api/core"
@@ -200,6 +199,9 @@ func (args ArgSchemas) Get(name string) (*ArgSchema, bool) {
 // FunctionSchema represents a function signature as a first-class schema type.
 // It validates function inputs, outputs, and error schemas, supporting both
 // structural validation and runtime type checking.
+//
+// Note: Function validation is handled by the consumer-driven architecture.
+// Use schema/consumer.Registry.ProcessValueWithPurpose("validation", schema, value) for validation.
 type FunctionSchema struct {
 	metadata          core.SchemaMetadata
 	annotations       []core.Annotation
@@ -210,13 +212,7 @@ type FunctionSchema struct {
 	additionalOutputs bool
 	examples          []map[string]any
 	allowNilError     bool
-	inputConstraints  map[string][]string
-	outputConstraints map[string][]string
-	validationRules   []FunctionValidationRule
 }
-
-// FunctionValidationRule defines custom validation logic for function schemas
-type FunctionValidationRule func(inputs map[string]any, functionSchema *FunctionSchema) *core.ValidationError
 
 // NewFunctionSchema creates a new FunctionSchema with the provided inputs and outputs.
 func NewFunctionSchema(inputs ArgSchemas, outputs ArgSchemas) *FunctionSchema {
@@ -227,9 +223,6 @@ func NewFunctionSchema(inputs ArgSchemas, outputs ArgSchemas) *FunctionSchema {
 		additionalInputs:  false,
 		additionalOutputs: false,
 		examples:          []map[string]any{},
-		inputConstraints:  make(map[string][]string),
-		outputConstraints: make(map[string][]string),
-		validationRules:   []FunctionValidationRule{},
 	}
 }
 
@@ -252,219 +245,8 @@ func (s *FunctionSchema) Annotations() []core.Annotation {
 	return result
 }
 
-func (s *FunctionSchema) Validate(value any) core.ValidationResult {
-	// Functions can validate in several contexts:
-	// 1. Function call inputs (map[string]any)
-	// 2. Function definition/signature validation
-	// 3. Function execution context
-
-	switch v := value.(type) {
-	case map[string]any:
-		return s.validateInputs(v)
-	default:
-		// Try to convert structs to maps for validation
-		if inputs, err := s.convertToInputMap(value); err == nil {
-			return s.validateInputs(inputs)
-		}
-
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{{
-				Path:       "",
-				Message:    fmt.Sprintf("function input must be a map or struct, got %T", value),
-				Code:       "invalid_function_input_type",
-				Value:      value,
-				Expected:   "map[string]any or struct",
-				Suggestion: "provide function inputs as key-value pairs",
-				Context:    "function_input_validation",
-			}},
-		}
-	}
-}
-
-// validateInputs validates function input parameters
-func (s *FunctionSchema) validateInputs(inputs map[string]any) core.ValidationResult {
-	var errors []core.ValidationError
-
-	// Check that all required inputs are present
-	requiredInputs := s.inputs.RequiredNames()
-	for _, requiredName := range requiredInputs {
-		if _, exists := inputs[requiredName]; !exists {
-			errors = append(errors, core.ValidationError{
-				Path:       requiredName,
-				Message:    fmt.Sprintf("required input '%s' is missing", requiredName),
-				Code:       "missing_required_input",
-				Value:      nil,
-				Expected:   fmt.Sprintf("value for required input '%s'", requiredName),
-				Suggestion: fmt.Sprintf("provide a value for required input '%s'", requiredName),
-				Context:    "function_input_validation",
-			})
-		}
-	}
-
-	// Validate each provided input against its schema
-	for name, value := range inputs {
-		inputSchema, exists := s.inputs.ToMap()[name]
-		if !exists {
-			if !s.additionalInputs {
-				errors = append(errors, core.ValidationError{
-					Path:       name,
-					Message:    fmt.Sprintf("unexpected input '%s'", name),
-					Code:       "unexpected_input",
-					Value:      value,
-					Expected:   fmt.Sprintf("one of: %s", strings.Join(s.inputs.Names(), ", ")),
-					Suggestion: fmt.Sprintf("remove '%s' or add it to the function schema", name),
-					Context:    "function_input_validation",
-				})
-			}
-			continue
-		}
-
-		// Validate input value against its schema
-		result := inputSchema.Validate(value)
-		if !result.Valid {
-			for _, err := range result.Errors {
-				// Prefix path with input name
-				path := name
-				if err.Path != "" {
-					path = fmt.Sprintf("%s.%s", name, err.Path)
-				}
-
-				errors = append(errors, core.ValidationError{
-					Path:       path,
-					Message:    fmt.Sprintf("input '%s': %s", name, err.Message),
-					Code:       err.Code,
-					Value:      err.Value,
-					Expected:   err.Expected,
-					Suggestion: err.Suggestion,
-					Context:    "function_input_validation",
-				})
-			}
-		}
-	}
-
-	// Apply custom validation rules
-	for _, rule := range s.validationRules {
-		if err := rule(inputs, s); err != nil {
-			errors = append(errors, *err)
-		}
-	}
-
-	// Check input constraints
-	for inputName, constraints := range s.inputConstraints {
-		value, exists := inputs[inputName]
-		if exists {
-			for _, constraint := range constraints {
-				if err := s.validateConstraint(inputName, value, constraint); err != nil {
-					errors = append(errors, *err)
-				}
-			}
-		}
-	}
-
-	return core.ValidationResult{
-		Valid:  len(errors) == 0,
-		Errors: errors,
-		Metadata: map[string]any{
-			"function_name":  s.metadata.Name,
-			"inputs_count":   len(inputs),
-			"required_count": len(s.inputs.RequiredNames()),
-		},
-	}
-}
-
-// validateConstraint validates individual input constraints
-func (s *FunctionSchema) validateConstraint(inputName string, value any, constraint string) *core.ValidationError {
-	switch constraint {
-	case "non_empty":
-		if s.isEmpty(value) {
-			return &core.ValidationError{
-				Path:       inputName,
-				Message:    fmt.Sprintf("input '%s' cannot be empty", inputName),
-				Code:       "empty_input_value",
-				Value:      value,
-				Expected:   "non-empty value",
-				Suggestion: fmt.Sprintf("provide a non-empty value for '%s'", inputName),
-				Context:    "function_constraint_validation",
-			}
-		}
-	case "unique":
-		// This would require comparison with other function calls - skip for now
-	default:
-		return &core.ValidationError{
-			Path:       inputName,
-			Message:    fmt.Sprintf("unknown constraint '%s' for input '%s'", constraint, inputName),
-			Code:       "unknown_constraint",
-			Expected:   "valid constraint type",
-			Suggestion: "use supported constraints like 'non_empty'",
-			Context:    "function_constraint_validation",
-		}
-	}
-	return nil
-}
-
-// isEmpty checks if a value is considered empty
-func (s *FunctionSchema) isEmpty(value any) bool {
-	if value == nil {
-		return true
-	}
-
-	switch v := value.(type) {
-	case string:
-		return strings.TrimSpace(v) == ""
-	case []any:
-		return len(v) == 0
-	case map[string]any:
-		return len(v) == 0
-	default:
-		rv := reflect.ValueOf(value)
-		switch rv.Kind() {
-		case reflect.Slice, reflect.Array, reflect.Map, reflect.Chan:
-			return rv.Len() == 0
-		case reflect.Ptr, reflect.Interface:
-			return rv.IsNil()
-		}
-	}
-	return false
-}
-
-// convertToInputMap converts structs to input maps using reflection
-func (s *FunctionSchema) convertToInputMap(value any) (map[string]any, error) {
-	rv := reflect.ValueOf(value)
-	if rv.Kind() == reflect.Ptr {
-		rv = rv.Elem()
-	}
-
-	if rv.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("cannot convert %T to input map", value)
-	}
-
-	result := make(map[string]any)
-	rt := rv.Type()
-
-	for i := 0; i < rv.NumField(); i++ {
-		field := rt.Field(i)
-		fieldValue := rv.Field(i)
-
-		// Skip unexported fields
-		if !fieldValue.CanInterface() {
-			continue
-		}
-
-		// Get field name from JSON tag or use field name
-		fieldName := field.Name
-		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
-			parts := strings.Split(jsonTag, ",")
-			if parts[0] != "" && parts[0] != "-" {
-				fieldName = parts[0]
-			}
-		}
-
-		result[fieldName] = fieldValue.Interface()
-	}
-
-	return result, nil
-}
+// Note: Validation moved to consumer-driven architecture.
+// Use schema/consumer.Registry.ProcessValueWithPurpose("validation", schema, value) instead.
 
 func (s *FunctionSchema) Clone() core.Schema {
 	// Deep clone inputs
@@ -486,17 +268,6 @@ func (s *FunctionSchema) Clone() core.Schema {
 		collectionDescription: s.outputs.collectionDescription,
 	}
 	copy(clonedOutputs.args, s.outputs.args)
-
-	// Deep clone constraints - remove these since they're now in ArgSchema
-	clonedInputConstraints := make(map[string][]string)
-	for k, v := range s.inputConstraints {
-		clonedInputConstraints[k] = append([]string(nil), v...)
-	}
-
-	clonedOutputConstraints := make(map[string][]string)
-	for k, v := range s.outputConstraints {
-		clonedOutputConstraints[k] = append([]string(nil), v...)
-	}
 
 	// Deep clone examples
 	clonedExamples := make([]map[string]any, len(s.examples))
@@ -532,9 +303,6 @@ func (s *FunctionSchema) Clone() core.Schema {
 		additionalOutputs: s.additionalOutputs,
 		examples:          clonedExamples,
 		allowNilError:     s.allowNilError,
-		inputConstraints:  clonedInputConstraints,
-		outputConstraints: clonedOutputConstraints,
-		validationRules:   append([]FunctionValidationRule(nil), s.validationRules...),
 	}
 }
 
@@ -617,20 +385,6 @@ func (s *FunctionSchema) WithExample(example map[string]any) *FunctionSchema {
 	return clone
 }
 
-// WithConstraint adds a constraint to an input parameter
-func (s *FunctionSchema) WithConstraint(inputName string, constraint string) *FunctionSchema {
-	clone := s.Clone().(*FunctionSchema)
-	clone.inputConstraints[inputName] = append(clone.inputConstraints[inputName], constraint)
-	return clone
-}
-
-// WithValidationRule adds a custom validation rule
-func (s *FunctionSchema) WithValidationRule(rule FunctionValidationRule) *FunctionSchema {
-	clone := s.Clone().(*FunctionSchema)
-	clone.validationRules = append(clone.validationRules, rule)
-	return clone
-}
-
 // Introspection methods
 
 // AdditionalInputs returns whether additional inputs are allowed
@@ -648,124 +402,26 @@ func (s *FunctionSchema) Examples() []map[string]any {
 	return append([]map[string]any(nil), s.examples...)
 }
 
-// InputConstraints returns input parameter constraints
-func (s *FunctionSchema) InputConstraints() map[string][]string {
-	constraints := make(map[string][]string)
-	for k, v := range s.inputConstraints {
-		constraints[k] = append([]string(nil), v...)
-	}
-	return constraints
-}
-
-// OutputConstraints returns output parameter constraints
-func (s *FunctionSchema) OutputConstraints() map[string][]string {
-	constraints := make(map[string][]string)
-	for k, v := range s.outputConstraints {
-		constraints[k] = append([]string(nil), v...)
-	}
-	return constraints
-}
-
 // AllowNilError returns whether nil error schema is allowed
 func (s *FunctionSchema) AllowNilError() bool {
 	return s.allowNilError
 }
 
-// Validation helpers
-
-// ValidateOutput validates a function's output value
-func (s *FunctionSchema) ValidateOutput(value any) core.ValidationResult {
-	if len(s.outputs.args) == 0 {
-		if value == nil {
-			return core.ValidationResult{Valid: true}
-		}
-		if !s.additionalOutputs {
-			return core.ValidationResult{
-				Valid: false,
-				Errors: []core.ValidationError{{
-					Path:       "output",
-					Message:    "function output is not defined in schema",
-					Code:       "undefined_output",
-					Value:      value,
-					Expected:   "nil (no output expected)",
-					Suggestion: "ensure function does not return a value or define output schema",
-					Context:    "function_output_validation",
-				}},
-			}
-		}
-	}
-
-	for _, output := range s.outputs.args {
-		result := output.schema.Validate(value)
-		if !result.Valid {
-			// Prefix errors with output context
-			for i := range result.Errors {
-				result.Errors[i].Context = "function_output_validation"
-				if result.Errors[i].Path == "" {
-					result.Errors[i].Path = "output"
-				} else {
-					result.Errors[i].Path = fmt.Sprintf("output.%s", result.Errors[i].Path)
-				}
-			}
-		}
-		return result
-	}
-
-	return core.ValidationResult{Valid: true}
-}
-
-// ValidateError validates a function's error value
-func (s *FunctionSchema) ValidateError(value any) core.ValidationResult {
-	if s.errors == nil {
-		if value == nil {
-			return core.ValidationResult{Valid: true}
-		}
-		if !s.allowNilError {
-			return core.ValidationResult{
-				Valid: false,
-				Errors: []core.ValidationError{{
-					Path:       "error",
-					Message:    "function error is not defined in schema",
-					Code:       "undefined_error",
-					Value:      value,
-					Expected:   "nil (no error expected)",
-					Suggestion: "ensure function does not return an error or define error schema",
-					Context:    "function_error_validation",
-				}},
-			}
-		}
-	}
-
-	if s.errors != nil {
-		result := s.errors.Validate(value)
-		if !result.Valid {
-			// Prefix errors with error context
-			for i := range result.Errors {
-				result.Errors[i].Context = "function_error_validation"
-				if result.Errors[i].Path == "" {
-					result.Errors[i].Path = "error"
-				} else {
-					result.Errors[i].Path = fmt.Sprintf("error.%s", result.Errors[i].Path)
-				}
-			}
-		}
-		return result
-	}
-
-	return core.ValidationResult{Valid: true}
-}
-
 // String representation for debugging
 func (s *FunctionSchema) String() string {
-	inputNames := make([]string, 0, len(s.inputs.args))
-	for name := range s.inputs.ToMap() {
-		inputNames = append(inputNames, name)
-	}
+	inputNames := s.inputs.Names()
+	outputNames := s.outputs.Names()
 
 	name := s.metadata.Name
 	if name == "" {
 		name = "anonymous"
 	}
 
-	return fmt.Sprintf("FunctionSchema(%s: inputs=%v, required=%v)", name, inputNames, s.inputs.RequiredNames())
+	return fmt.Sprintf("FunctionSchema(%s: inputs=[%s] outputs=[%s])",
+		name,
+		strings.Join(inputNames, ", "),
+		strings.Join(outputNames, ", "))
 }
+
+// Note: All validation functionality has been moved to the consumer-driven architecture.
+// Use schema/consumer.Registry for validation, formatting, and other processing needs.

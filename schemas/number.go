@@ -1,9 +1,6 @@
 package schemas
 
 import (
-	"fmt"
-	"math"
-
 	"defs.dev/schema/api/core"
 )
 
@@ -85,109 +82,8 @@ func (n *NumberSchema) DefaultValue() *float64 {
 	return n.config.DefaultVal
 }
 
-// Validate validates a value against the number schema.
-func (n *NumberSchema) Validate(value any) core.ValidationResult {
-	// Handle different numeric types
-	var num float64
-	var ok bool
-
-	switch v := value.(type) {
-	case float64:
-		num = v
-		ok = true
-	case float32:
-		num = float64(v)
-		ok = true
-	case int:
-		num = float64(v)
-		ok = true
-	case int32:
-		num = float64(v)
-		ok = true
-	case int64:
-		num = float64(v)
-		ok = true
-	case uint:
-		num = float64(v)
-		ok = true
-	case uint32:
-		num = float64(v)
-		ok = true
-	case uint64:
-		num = float64(v)
-		ok = true
-	default:
-		ok = false
-	}
-
-	if !ok {
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{{
-				Path:       "",
-				Message:    "Expected number",
-				Code:       "type_mismatch",
-				Value:      value,
-				Expected:   "number",
-				Suggestion: "Provide a numeric value",
-			}},
-		}
-	}
-
-	var errors []core.ValidationError
-
-	// Check for special float values
-	if math.IsNaN(num) {
-		errors = append(errors, core.ValidationError{
-			Path:       "",
-			Message:    "NaN (Not a Number) is not allowed",
-			Code:       "invalid_number",
-			Value:      num,
-			Expected:   "finite number",
-			Suggestion: "Provide a finite numeric value",
-		})
-	}
-
-	if math.IsInf(num, 0) {
-		errors = append(errors, core.ValidationError{
-			Path:       "",
-			Message:    "Infinite values are not allowed",
-			Code:       "invalid_number",
-			Value:      num,
-			Expected:   "finite number",
-			Suggestion: "Provide a finite numeric value",
-		})
-	}
-
-	// Minimum validation
-	if n.config.Minimum != nil && num < *n.config.Minimum {
-		errors = append(errors, core.ValidationError{
-			Path:       "",
-			Message:    fmt.Sprintf("Number too small (minimum %g)", *n.config.Minimum),
-			Code:       "minimum",
-			Value:      num,
-			Expected:   fmt.Sprintf("≥ %g", *n.config.Minimum),
-			Suggestion: fmt.Sprintf("Provide a number greater than or equal to %g", *n.config.Minimum),
-		})
-	}
-
-	// Maximum validation
-	if n.config.Maximum != nil && num > *n.config.Maximum {
-		errors = append(errors, core.ValidationError{
-			Path:       "",
-			Message:    fmt.Sprintf("Number too large (maximum %g)", *n.config.Maximum),
-			Code:       "maximum",
-			Value:      num,
-			Expected:   fmt.Sprintf("≤ %g", *n.config.Maximum),
-			Suggestion: fmt.Sprintf("Provide a number less than or equal to %g", *n.config.Maximum),
-		})
-	}
-
-	return core.ValidationResult{
-		Valid:  len(errors) == 0,
-		Errors: errors,
-	}
-}
+// Note: Validation moved to consumer-driven architecture.
+// Use schema/consumer.Registry.ProcessValueWithPurpose("validation", schema, value) instead.
 
 // GenerateExample generates an example value for the number schema.
 func (n *NumberSchema) GenerateExample() any {

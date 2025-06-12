@@ -10,13 +10,12 @@ import (
 
 // FunctionSchemaBuilder implements core.FunctionSchemaBuilder for creating function schemas.
 type FunctionSchemaBuilder struct {
-	inputs          schemas.ArgSchemas
-	outputs         schemas.ArgSchemas
-	errors          core.Schema
-	examples        []map[string]any
-	allowNilError   bool
-	validationRules []schemas.FunctionValidationRule
-	metadata        core.SchemaMetadata
+	inputs        schemas.ArgSchemas
+	outputs       schemas.ArgSchemas
+	errors        core.Schema
+	examples      []map[string]any
+	allowNilError bool
+	metadata      core.SchemaMetadata
 }
 
 // Ensure FunctionBuilder implements the API interface at compile time
@@ -27,11 +26,10 @@ var _ core.MetadataBuilder[core.FunctionSchemaBuilder] = (*FunctionSchemaBuilder
 // NewFunctionSchema creates a new FunctionBuilder.
 func NewFunctionSchema() *FunctionSchemaBuilder {
 	return &FunctionSchemaBuilder{
-		inputs:          schemas.NewArgSchemas(),
-		outputs:         schemas.NewArgSchemas(),
-		examples:        []map[string]any{},
-		validationRules: []schemas.FunctionValidationRule{},
-		metadata:        core.SchemaMetadata{},
+		inputs:   schemas.NewArgSchemas(),
+		outputs:  schemas.NewArgSchemas(),
+		examples: []map[string]any{},
+		metadata: core.SchemaMetadata{},
 	}
 }
 
@@ -188,12 +186,6 @@ func (b *FunctionSchemaBuilder) NonEmptyInput(inputName string) *FunctionSchemaB
 	return b
 }
 
-// ValidationRule adds a custom validation rule
-func (b *FunctionSchemaBuilder) ValidationRule(rule schemas.FunctionValidationRule) *FunctionSchemaBuilder {
-	b.validationRules = append(b.validationRules, rule)
-	return b
-}
-
 // Domain-specific function examples
 
 // APIEndpoint creates a function schema for an API endpoint
@@ -287,10 +279,6 @@ func (b *FunctionSchemaBuilder) Build() core.FunctionSchema {
 
 	for _, example := range b.examples {
 		schema = schema.WithExample(example)
-	}
-
-	for _, rule := range b.validationRules {
-		schema = schema.WithValidationRule(rule)
 	}
 
 	return schema.WithMetadata(b.metadata)

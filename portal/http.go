@@ -12,6 +12,7 @@ import (
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/registry"
+	"defs.dev/schema/validation"
 )
 
 // HTTPPortal implements the api.HTTPPortal interface for HTTP-based function execution.
@@ -528,13 +529,16 @@ func (h *HTTPPortal) extractServiceName(path string) string {
 }
 
 func (h *HTTPPortal) validateInput(input api.FunctionData, schema core.FunctionSchema) error {
-	// Validate input using the function schema
-	result := schema.Validate(input.Value())
+	// Use consumer-driven validation
+	result := validation.ValidateValue(schema, input.Value())
 	if !result.Valid {
-		// Convert validation errors to a single error message
 		var errorMessages []string
-		for _, err := range result.Errors {
-			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+		for _, issue := range result.Errors {
+			pathStr := strings.Join(issue.Path, ".")
+			if pathStr == "" {
+				pathStr = "root"
+			}
+			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
 		}
 		return fmt.Errorf("input validation failed: %s", strings.Join(errorMessages, "; "))
 	}
@@ -542,21 +546,19 @@ func (h *HTTPPortal) validateInput(input api.FunctionData, schema core.FunctionS
 }
 
 func (h *HTTPPortal) validateOutput(output api.FunctionData, schema core.FunctionSchema) error {
-	// Cast to concrete type to access ValidateOutput method
-	if concreteSchema, ok := schema.(interface {
-		ValidateOutput(any) core.ValidationResult
-	}); ok {
-		result := concreteSchema.ValidateOutput(output.Value())
-		if !result.Valid {
-			// Convert validation errors to a single error message
-			var errorMessages []string
-			for _, err := range result.Errors {
-				errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+	// Use consumer-driven validation for output
+	result := validation.ValidateValue(schema, output.Value())
+	if !result.Valid {
+		var errorMessages []string
+		for _, issue := range result.Errors {
+			pathStr := strings.Join(issue.Path, ".")
+			if pathStr == "" {
+				pathStr = "root"
 			}
-			return fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
+			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
 		}
+		return fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
 	}
-	// If schema doesn't support output validation, skip it
 	return nil
 }
 

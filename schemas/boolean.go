@@ -85,64 +85,8 @@ func (b *BooleanSchema) CaseInsensitive() bool {
 	return b.config.CaseInsensitive
 }
 
-// Validate validates a value against the boolean schema.
-func (b *BooleanSchema) Validate(value any) core.ValidationResult {
-	// Direct boolean validation
-	if _, ok := value.(bool); ok {
-		return core.ValidationResult{
-			Valid:  true,
-			Errors: nil,
-		}
-	}
-
-	// String conversion if allowed
-	if b.config.AllowStringConv {
-		if strVal, ok := value.(string); ok {
-			convertedVal, err := b.convertStringToBool(strVal)
-			if err == nil {
-				// Store the converted value for potential use
-				return core.ValidationResult{
-					Valid:  true,
-					Errors: nil,
-					Metadata: map[string]any{
-						"converted_value": convertedVal,
-						"original_value":  strVal,
-					},
-				}
-			}
-			// If conversion failed, return specific error
-			return core.ValidationResult{
-				Valid: false,
-				Errors: []core.ValidationError{{
-					Path:       "",
-					Message:    "Invalid boolean string format",
-					Code:       "invalid_boolean_string",
-					Value:      value,
-					Expected:   "true, false, 1, or 0",
-					Suggestion: "Use 'true', 'false', '1', or '0'",
-				}},
-			}
-		}
-	}
-
-	// Type mismatch error
-	expectedTypes := "boolean"
-	if b.config.AllowStringConv {
-		expectedTypes = "boolean or string (true/false/1/0)"
-	}
-
-	return core.ValidationResult{
-		Valid: false,
-		Errors: []core.ValidationError{{
-			Path:       "",
-			Message:    "Expected boolean",
-			Code:       "type_mismatch",
-			Value:      value,
-			Expected:   expectedTypes,
-			Suggestion: "Provide a boolean value (true or false)",
-		}},
-	}
-}
+// Note: Validation moved to consumer-driven architecture.
+// Use schema/consumer.Registry.ProcessValueWithPurpose("validation", schema, value) instead.
 
 // convertStringToBool converts a string to boolean using various formats.
 func (b *BooleanSchema) convertStringToBool(str string) (bool, error) {

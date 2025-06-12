@@ -32,10 +32,6 @@ func (m *mockSchema) Annotations() []core.Annotation {
 	return []core.Annotation{}
 }
 
-func (m *mockSchema) Validate(value any) core.ValidationResult {
-	return core.ValidationResult{Valid: true}
-}
-
 func (m *mockSchema) ToJSONSchema() map[string]any {
 	return map[string]any{"type": string(m.schemaType)}
 }

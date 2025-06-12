@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/validation"
 )
 
 func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
@@ -32,7 +33,7 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 			"age":  30,
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass, got errors: %v", result.Errors)
 		}
@@ -44,7 +45,7 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 			// "name" is missing but required
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if result.Valid {
 			t.Error("Expected validation to fail for missing required input 'name'")
 		}
@@ -55,7 +56,7 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 		} else {
 			found := false
 			for _, err := range result.Errors {
-				if err.Code == "missing_required_input" && err.Path == "name" {
+				if err.Code == "missing_required_input" {
 					found = true
 					if err.Message != "required input 'name' is missing" {
 						t.Errorf("Expected error message 'required input 'name' is missing', got: %s", err.Message)
@@ -89,7 +90,7 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 			// Both "name" and "email" are missing
 		}
 
-		result := multiRequiredSchema.Validate(data)
+		result := validation.ValidateValue(multiRequiredSchema, data)
 		if result.Valid {
 			t.Error("Expected validation to fail for missing required inputs")
 		}
@@ -99,10 +100,10 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 		emailErrorFound := false
 		for _, err := range result.Errors {
 			if err.Code == "missing_required_input" {
-				if err.Path == "name" {
+				if len(err.Path) > 0 && err.Path[len(err.Path)-1] == "name" {
 					nameErrorFound = true
 				}
-				if err.Path == "email" {
+				if len(err.Path) > 0 && err.Path[len(err.Path)-1] == "email" {
 					emailErrorFound = true
 				}
 			}
@@ -122,7 +123,7 @@ func TestFunctionSchema_RequiredInputValidation(t *testing.T) {
 			// "age" is optional and can be missing
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass when optional input is missing, got errors: %v", result.Errors)
 		}

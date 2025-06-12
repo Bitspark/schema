@@ -2,7 +2,6 @@ package schemas
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"defs.dev/schema/api/core"
@@ -39,11 +38,6 @@ func (s *ServiceMethodSchema) Metadata() core.SchemaMetadata {
 
 func (s *ServiceMethodSchema) Annotations() []core.Annotation {
 	return []core.Annotation{}
-}
-
-func (s *ServiceMethodSchema) Validate(value any) core.ValidationResult {
-	// Delegate validation to the underlying function schema
-	return s.function.Validate(value)
 }
 
 func (s *ServiceMethodSchema) Clone() core.Schema {
@@ -104,146 +98,6 @@ func (s *ServiceSchema) Metadata() core.SchemaMetadata {
 // Annotations returns the annotations of the schema.
 func (s *ServiceSchema) Annotations() []core.Annotation {
 	return []core.Annotation{}
-}
-
-func (s *ServiceSchema) Validate(value any) core.ValidationResult {
-	// Service schema validation could validate:
-	// 1. Service instance conformity
-	// 2. Method availability
-	// 3. Service contract compliance
-
-	switch v := value.(type) {
-	case map[string]any:
-		return s.validateServiceData(v)
-	default:
-		// Try reflection-based validation for struct instances
-		return s.validateServiceStruct(value)
-	}
-}
-
-// validateServiceData validates service data as a map
-func (s *ServiceSchema) validateServiceData(data map[string]any) core.ValidationResult {
-	var errors []core.ValidationError
-
-	// Check if all required methods are represented
-	methodMap := make(map[string]bool)
-	for _, method := range s.methods {
-		methodMap[method.name] = false
-	}
-
-	// Mark methods as found and validate their data
-	for key, value := range data {
-		if _, exists := methodMap[key]; exists {
-			methodMap[key] = true
-			// Could validate method-specific data here
-			_ = value
-		}
-	}
-
-	// Check for missing required methods
-	for methodName, found := range methodMap {
-		if !found {
-			errors = append(errors, core.ValidationError{
-				Path:       methodName,
-				Message:    fmt.Sprintf("required service method '%s' not found", methodName),
-				Code:       "missing_service_method",
-				Expected:   fmt.Sprintf("method '%s' implementation", methodName),
-				Suggestion: fmt.Sprintf("implement method '%s' in the service", methodName),
-				Context:    "service_validation",
-			})
-		}
-	}
-
-	return core.ValidationResult{
-		Valid:  len(errors) == 0,
-		Errors: errors,
-		Metadata: map[string]any{
-			"service_name":   s.name,
-			"method_count":   len(s.methods),
-			"validated_type": "service_data",
-		},
-	}
-}
-
-// validateServiceStruct validates a service struct using reflection
-func (s *ServiceSchema) validateServiceStruct(instance any) core.ValidationResult {
-	if instance == nil {
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{{
-				Path:       "",
-				Message:    "service instance cannot be nil",
-				Code:       "nil_service_instance",
-				Expected:   "non-nil service instance",
-				Suggestion: "provide a valid service instance",
-				Context:    "service_validation",
-			}},
-		}
-	}
-
-	var errors []core.ValidationError
-	instanceType := reflect.TypeOf(instance)
-	instanceValue := reflect.ValueOf(instance)
-
-	// Handle pointer to struct
-	if instanceType.Kind() == reflect.Ptr {
-		if instanceValue.IsNil() {
-			return core.ValidationResult{
-				Valid: false,
-				Errors: []core.ValidationError{{
-					Path:       "",
-					Message:    "service instance pointer is nil",
-					Code:       "nil_service_pointer",
-					Expected:   "non-nil service pointer",
-					Suggestion: "provide a valid service instance",
-					Context:    "service_validation",
-				}},
-			}
-		}
-		instanceType = instanceType.Elem()
-		instanceValue = instanceValue.Elem()
-	}
-
-	if instanceType.Kind() != reflect.Struct {
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{{
-				Path:       "",
-				Message:    fmt.Sprintf("service instance must be a struct, got %T", instance),
-				Code:       "invalid_service_type",
-				Value:      instance,
-				Expected:   "struct instance",
-				Suggestion: "provide a struct instance that implements the service",
-				Context:    "service_validation",
-			}},
-		}
-	}
-
-	// Check if all service methods are available on the struct
-	for _, methodSchema := range s.methods {
-		_, found := instanceType.MethodByName(methodSchema.name)
-		if !found {
-			errors = append(errors, core.ValidationError{
-				Path:       methodSchema.name,
-				Message:    fmt.Sprintf("service method '%s' not found on struct", methodSchema.name),
-				Code:       "missing_service_method",
-				Expected:   fmt.Sprintf("method '%s' on struct", methodSchema.name),
-				Suggestion: fmt.Sprintf("implement method '%s' on the service struct", methodSchema.name),
-				Context:    "service_validation",
-			})
-		}
-	}
-
-	return core.ValidationResult{
-		Valid:  len(errors) == 0,
-		Errors: errors,
-		Metadata: map[string]any{
-			"service_name":   s.name,
-			"service_type":   instanceType.Name(),
-			"method_count":   len(s.methods),
-			"validated_type": "service_struct",
-		},
-	}
 }
 
 func (s *ServiceSchema) Clone() core.Schema {

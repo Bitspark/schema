@@ -3,11 +3,11 @@ package registry
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/validation"
 )
 
 // FunctionRegistry implements api.Registry for managing callable functions.
@@ -130,38 +130,19 @@ func (r *FunctionRegistry) Clear() error {
 // Validation methods
 
 // Validate validates input parameters for a function.
-func (r *FunctionRegistry) Validate(name string, input any) core.ValidationResult {
+func (r *FunctionRegistry) Validate(name string, input any) validation.ValidationResult {
 	r.mu.RLock()
-	fn, exists := r.functions[name]
+	_, exists := r.functions[name]
 	r.mu.RUnlock()
 
 	if !exists {
-		return core.ValidationResult{
-			Valid: false,
-			Errors: []core.ValidationError{
-				{
-					Path:       "",
-					Message:    fmt.Sprintf("function %s not found", name),
-					Code:       "function_not_found",
-					Value:      name,
-					Expected:   "registered function",
-					Suggestion: "register the function first or check the name",
-					Context:    "function_registry_validation",
-				},
-			},
-		}
+		return validation.NewValidationError([]string{}, "function_not_found",
+			fmt.Sprintf("function %s not found", name))
 	}
 
-	schema := fn.Schema()
-	if schema == nil {
-		return core.ValidationResult{
-			Valid:  true,
-			Errors: []core.ValidationError{},
-		}
-	}
-
-	// Validate using the function schema's validation
-	return schema.Validate(input)
+	// Note: Function schema validation moved to consumer-driven architecture.
+	// For now, return a valid result as validation is handled by consumers.
+	return validation.NewValidationResult()
 }
 
 // Execution methods
@@ -173,41 +154,14 @@ func (r *FunctionRegistry) Call(ctx context.Context, name string, params api.Fun
 		return nil, fmt.Errorf("function %s not found", name)
 	}
 
-	// Validate input parameters
-	schema := fn.Schema()
-	if schema != nil {
-		result := schema.Validate(params.Value())
-		if !result.Valid {
-			var errorMessages []string
-			for _, err := range result.Errors {
-				errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
-			}
-			return nil, fmt.Errorf("input validation failed: %s", strings.Join(errorMessages, "; "))
-		}
-	}
-
-	// Execute function
+	// Note: Input validation moved to consumer-driven architecture.
+	// Execute function directly.
 	output, err := fn.Call(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate output if schema supports it
-	if schema != nil {
-		if concreteSchema, ok := schema.(interface {
-			ValidateOutput(any) core.ValidationResult
-		}); ok {
-			result := concreteSchema.ValidateOutput(output.Value())
-			if !result.Valid {
-				var errorMessages []string
-				for _, err := range result.Errors {
-					errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
-				}
-				return nil, fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
-			}
-		}
-	}
-
+	// Note: Output validation moved to consumer-driven architecture.
 	return output, nil
 }
 

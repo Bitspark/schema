@@ -8,6 +8,7 @@ import (
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/registry"
+	"defs.dev/schema/validation"
 )
 
 // LocalPortalImpl implements api.LocalPortal for in-process function execution
@@ -193,7 +194,7 @@ func (p *LocalPortalImpl) Unregister(name string) error {
 	return nil
 }
 
-func (p *LocalPortalImpl) Validate(name string, input any) core.ValidationResult {
+func (p *LocalPortalImpl) Validate(name string, input any) validation.ValidationResult {
 	return p.funcRegistry.Validate(name, input)
 }
 
@@ -261,7 +262,7 @@ func (p *LocalPortalImpl) CallServiceMethod(ctx context.Context, serviceName, me
 	return p.serviceRegistry.CallServiceMethod(ctx, serviceName, methodName, params)
 }
 
-func (p *LocalPortalImpl) ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult {
+func (p *LocalPortalImpl) ValidateServiceMethod(serviceName, methodName string, input any) validation.ValidationResult {
 	return p.serviceRegistry.ValidateServiceMethod(serviceName, methodName, input)
 }
 

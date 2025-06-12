@@ -3,13 +3,8 @@
 package core
 
 // Schema is the core interface that all schema types must implement.
-// It provides validation, metadata handling, and example generation.
+// It provides metadata handling and structural information.
 type Schema interface {
-	// Validate values a value for schema compliance.
-	//
-	// Deprecated: Validate will be removed eventually (use validator consumers instead).
-	Validate(value any) ValidationResult
-
 	// Type is the schema type.
 	Type() SchemaType
 
