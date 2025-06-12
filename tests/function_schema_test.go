@@ -230,11 +230,25 @@ func TestFunctionSchemaValidation(t *testing.T) {
 		}
 
 		result := schema.Validate(data)
-		// NOTE: Current implementation doesn't validate missing required inputs
-		// This is a limitation that should be addressed in the future
-		// For now, we just check that validation runs without panicking
-		_ = result
-		t.Skip("Current implementation doesn't validate missing required inputs - this is a known limitation")
+		if result.Valid {
+			t.Error("Expected validation to fail for missing required input 'name'")
+		}
+
+		// Check that we get the correct error
+		if len(result.Errors) == 0 {
+			t.Error("Expected validation errors for missing required input")
+		} else {
+			found := false
+			for _, err := range result.Errors {
+				if err.Code == "missing_required_input" && err.Path == "name" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected missing_required_input error for 'name', got errors: %v", result.Errors)
+			}
+		}
 	})
 
 	t.Run("Invalid input type", func(t *testing.T) {

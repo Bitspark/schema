@@ -276,6 +276,22 @@ func (s *FunctionSchema) Validate(value any) core.ValidationResult {
 func (s *FunctionSchema) validateInputs(inputs map[string]any) core.ValidationResult {
 	var errors []core.ValidationError
 
+	// Check that all required inputs are present
+	requiredInputs := s.inputs.RequiredNames()
+	for _, requiredName := range requiredInputs {
+		if _, exists := inputs[requiredName]; !exists {
+			errors = append(errors, core.ValidationError{
+				Path:       requiredName,
+				Message:    fmt.Sprintf("required input '%s' is missing", requiredName),
+				Code:       "missing_required_input",
+				Value:      nil,
+				Expected:   fmt.Sprintf("value for required input '%s'", requiredName),
+				Suggestion: fmt.Sprintf("provide a value for required input '%s'", requiredName),
+				Context:    "function_input_validation",
+			})
+		}
+	}
+
 	// Validate each provided input against its schema
 	for name, value := range inputs {
 		inputSchema, exists := s.inputs.ToMap()[name]
@@ -438,15 +454,6 @@ func (s *FunctionSchema) convertToInputMap(value any) (map[string]any, error) {
 	}
 
 	return result, nil
-}
-
-// getInputNames returns a list of all input parameter names
-func (s *FunctionSchema) getInputNames() []string {
-	names := make([]string, 0, len(s.inputs.args))
-	for name := range s.inputs.ToMap() {
-		names = append(names, name)
-	}
-	return names
 }
 
 func (s *FunctionSchema) GenerateExample() any {
