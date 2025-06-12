@@ -244,8 +244,8 @@ func TestObjectSchemaConstraints(t *testing.T) {
 			Property("age", builders.NewNumberSchema().Build()).
 			Build()
 
-		// Note: MinProperties/MaxProperties might not be implemented yet
-		// This test would need to be adjusted based on actual implementation
+			// Note: MinProperties/MaxProperties might not be implemented yet
+			// This test would need to be adjusted based on actual implementation
 
 		tests := []struct {
 			name      string
