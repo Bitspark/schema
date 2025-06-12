@@ -407,7 +407,7 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 		AdditionalProperties(false).
 		Build()
 
-	jsonSchema := schema.ToJSONSchema()
+	jsonSchema := toJSONSchema(schema)
 
 	// Check basic properties
 	if jsonSchema["type"] != "object" {
@@ -433,9 +433,15 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 	}
 
 	// Check required array
-	required, ok := jsonSchema["required"].([]string)
+	requiredInterface, ok := jsonSchema["required"].([]any)
 	if !ok {
-		t.Fatal("Expected required to be a string array")
+		t.Fatal("Expected required to be an array")
+	}
+
+	// Convert to string array
+	required := make([]string, len(requiredInterface))
+	for i, v := range requiredInterface {
+		required[i] = v.(string)
 	}
 
 	if len(required) != 1 || required[0] != "name" {

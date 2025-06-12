@@ -1,11 +1,29 @@
 package tests
 
 import (
+	"encoding/json"
 	"testing"
 
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/builders"
+	jsonexport "defs.dev/schema/export/json"
 )
+
+// Helper function to generate JSON Schema using the export system
+func toJSONSchema(schema core.Schema) map[string]any {
+	generator := jsonexport.NewGenerator()
+	jsonBytes, err := generator.Generate(schema)
+	if err != nil {
+		panic(err)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(jsonBytes, &result); err != nil {
+		panic(err)
+	}
+
+	return result
+}
 
 func TestStringSchemaBasic(t *testing.T) {
 	// Create a string schema
@@ -18,10 +36,6 @@ func TestStringSchemaBasic(t *testing.T) {
 	// Verify it implements the correct interfaces
 	if _, ok := schema.(core.Schema); !ok {
 		t.Error("StringSchema should implement core.Schema")
-	}
-
-	if _, ok := schema.(core.StringSchema); !ok {
-		t.Error("StringSchema should implement core.StringSchema")
 	}
 
 	// Test basic properties
@@ -164,18 +178,18 @@ func TestStringSchemaJSONSchema(t *testing.T) {
 		Example("hello").
 		Build()
 
-	jsonSchema := schema.ToJSONSchema()
+	jsonSchema := toJSONSchema(schema)
 
 	// Check basic properties
 	if jsonSchema["type"] != "string" {
 		t.Errorf("Expected type 'string', got %v", jsonSchema["type"])
 	}
 
-	if jsonSchema["minLength"] != 3 {
+	if jsonSchema["minLength"] != float64(3) {
 		t.Errorf("Expected minLength 3, got %v", jsonSchema["minLength"])
 	}
 
-	if jsonSchema["maxLength"] != 10 {
+	if jsonSchema["maxLength"] != float64(10) {
 		t.Errorf("Expected maxLength 10, got %v", jsonSchema["maxLength"])
 	}
 
@@ -186,4 +200,70 @@ func TestStringSchemaJSONSchema(t *testing.T) {
 	if jsonSchema["description"] != "Test string" {
 		t.Errorf("Expected description 'Test string', got %v", jsonSchema["description"])
 	}
+}
+
+func TestGoModSchema(t *testing.T) {
+	// Structural validation - syntax and basic constraints
+	goModSchema := builders.NewObject().
+		Property("module", builders.NewStringSchema().Pattern(`^[a-zA-Z0-9\-\.\/]+$`).Build()).
+		Property("go", builders.NewStringSchema().Pattern(`^\d+\.\d+$`).Build()).
+		Property("require", builders.NewArraySchema().Items(
+			builders.NewObjectSchema().
+				Property("module", builders.NewStringSchema().Build()).
+				Property("version", builders.NewStringSchema().Build()).
+				Build(),
+		).Build()).
+		Required("module", "go").
+		Build()
+
+	// Verify it implements the correct interfaces
+	if _, ok := goModSchema.(core.Schema); !ok {
+		t.Error("GoModSchema should implement core.Schema")
+	}
+
+	// Test basic properties
+	if goModSchema.Type() != core.TypeObject {
+		t.Errorf("Expected type %s, got %s", core.TypeObject, goModSchema.Type())
+	}
+
+	if goModSchema.Metadata().Description != "" {
+		t.Errorf("Expected description '', got '%s'", goModSchema.Metadata().Description)
+	}
+
+	// Test required properties
+	if required := goModSchema.Required(); len(required) != 2 || !contains(required, "module") || !contains(required, "go") {
+		t.Errorf("Expected required properties 'module' and 'go', got %v", required)
+	}
+
+	// Test property types
+	properties := goModSchema.Properties()
+	if module, ok := properties["module"].(core.StringSchema); !ok {
+		t.Error("Expected 'module' to be a StringSchema")
+	} else {
+		if module.Pattern() != `^[a-zA-Z0-9\-\.\/]+$` {
+			t.Errorf("Expected 'module' pattern '^[a-zA-Z0-9\\-\\.\\/]+$', got %v", module.Pattern())
+		}
+	}
+	if g, ok := properties["go"].(core.StringSchema); !ok {
+		t.Error("Expected 'go' to be a StringSchema")
+	} else {
+		if g.Pattern() != `^\d+\.\d+$` {
+			t.Errorf("Expected 'go' pattern '^\\d+\\.\\d+$', got %v", g.Pattern())
+		}
+	}
+
+	// Test require property types
+	require := goModSchema.Required()
+	if len(require) != 2 || !contains(require, "module") || !contains(require, "go") {
+		t.Errorf("Expected require properties 'module' and 'go', got %v", require)
+	}
+}
+
+func contains(slice []string, item string) bool {
+	for _, i := range slice {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }

@@ -1085,7 +1085,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 	}
 
 	// Test JSON Schema generation for complex schemas
-	jsonSchema := complexNestedSchema.ToJSONSchema()
+	jsonSchema := toJSONSchema(complexNestedSchema)
 	if jsonSchema["type"] != "object" {
 		t.Errorf("Expected JSON schema type 'object', got %v", jsonSchema["type"])
 	}

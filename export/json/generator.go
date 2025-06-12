@@ -295,3 +295,155 @@ func (g *Generator) addCommonMetadata(jsonSchema map[string]any, s core.Schema) 
 		jsonSchema["examples"] = metadata.Examples
 	}
 }
+
+// VisitFunction generates JSON Schema for function types.
+func (g *Generator) VisitFunction(s core.FunctionSchema) error {
+	jsonSchema := map[string]any{
+		"type":       "object",
+		"x-function": true, // Mark as function schema
+	}
+
+	// Generate properties from function inputs
+	inputs := s.Inputs()
+	if inputs != nil {
+		properties := make(map[string]any)
+
+		// Convert each input argument to a property
+		for _, arg := range inputs.Args() {
+			argGenerator := NewGenerator(
+				WithSchemaURI(""), // Don't add $schema to nested schemas
+			)
+			argJSON, err := argGenerator.Generate(arg.Schema())
+			if err != nil {
+				return fmt.Errorf("failed to generate input %s: %w", arg.Name(), err)
+			}
+
+			var argSchema any
+			if err := json.Unmarshal([]byte(argJSON), &argSchema); err != nil {
+				return fmt.Errorf("failed to parse input %s schema: %w", arg.Name(), err)
+			}
+			properties[arg.Name()] = argSchema
+		}
+
+		if len(properties) > 0 {
+			jsonSchema["properties"] = properties
+		}
+
+		// Add required inputs
+		requiredInputs := s.RequiredInputs()
+		if len(requiredInputs) > 0 {
+			jsonSchema["required"] = requiredInputs
+		}
+
+		// Check if additional inputs are allowed (use inputs.AllowAdditional())
+		if !inputs.AllowAdditional() {
+			jsonSchema["additionalProperties"] = false
+		}
+	}
+
+	// Add function-specific metadata
+	outputs := s.Outputs()
+	if outputs != nil && len(outputs.Args()) > 0 {
+		outputMap := make(map[string]any)
+		for _, arg := range outputs.Args() {
+			outputMap[arg.Name()] = map[string]any{
+				"type": string(arg.Schema().Type()),
+			}
+		}
+		jsonSchema["x-returns"] = outputMap
+	}
+
+	// Add error schema if present
+	if errorSchema := s.Errors(); errorSchema != nil {
+		errorGenerator := NewGenerator(
+			WithSchemaURI(""), // Don't add $schema to nested schemas
+		)
+		errorJSON, err := errorGenerator.Generate(errorSchema)
+		if err != nil {
+			return fmt.Errorf("failed to generate error schema: %w", err)
+		}
+
+		var errorSchemaJSON any
+		if err := json.Unmarshal([]byte(errorJSON), &errorSchemaJSON); err != nil {
+			return fmt.Errorf("failed to parse error schema: %w", err)
+		}
+		jsonSchema["x-errors"] = errorSchemaJSON
+	}
+
+	// Try to get examples if the concrete type supports it
+	// We'll use the schema's metadata examples as a fallback
+	metadata := s.Metadata()
+	if len(metadata.Examples) > 0 {
+		jsonSchema["x-input-examples"] = metadata.Examples
+	}
+
+	g.addCommonMetadata(jsonSchema, s)
+	g.result = jsonSchema
+	return nil
+}
+
+// VisitService generates JSON Schema for service types.
+func (g *Generator) VisitService(s core.ServiceSchema) error {
+	jsonSchema := map[string]any{
+		"type":      "object",
+		"x-service": true, // Mark as service schema
+	}
+
+	// Add service metadata
+	if s.Name() != "" {
+		jsonSchema["title"] = s.Name()
+	}
+
+	// Generate properties for each service method
+	properties := make(map[string]any)
+	methodNames := make([]string, 0)
+
+	for _, method := range s.Methods() {
+		methodGenerator := NewGenerator(
+			WithSchemaURI(""), // Don't add $schema to nested schemas
+		)
+
+		// Generate schema for the method's function
+		methodJSON, err := methodGenerator.Generate(method.Function())
+		if err != nil {
+			return fmt.Errorf("failed to generate method %s: %w", method.Name(), err)
+		}
+
+		var methodSchema any
+		if err := json.Unmarshal([]byte(methodJSON), &methodSchema); err != nil {
+			return fmt.Errorf("failed to parse method %s schema: %w", method.Name(), err)
+		}
+
+		// Add method-specific metadata
+		if methodMap, ok := methodSchema.(map[string]any); ok {
+			methodMap["x-method-name"] = method.Name()
+		}
+
+		properties[method.Name()] = methodSchema
+		methodNames = append(methodNames, method.Name())
+	}
+
+	if len(properties) > 0 {
+		jsonSchema["properties"] = properties
+	}
+
+	// Add service-specific metadata
+	jsonSchema["x-methods"] = methodNames
+
+	g.addCommonMetadata(jsonSchema, s)
+	g.result = jsonSchema
+	return nil
+}
+
+// VisitUnion generates JSON Schema for union types (placeholder).
+func (g *Generator) VisitUnion(s core.UnionSchema) error {
+	// Union schemas are not yet fully implemented in the core system
+	// This is a placeholder for future implementation
+	jsonSchema := map[string]any{
+		"anyOf": []any{}, // Empty anyOf for now
+	}
+
+	g.addCommonMetadata(jsonSchema, s)
+	g.result = jsonSchema
+	return nil
+}

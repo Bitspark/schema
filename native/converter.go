@@ -315,7 +315,7 @@ func (c *DefaultTypeConverter) convertStruct(t reflect.Type, annotations []annot
 
 		for _, ann := range fieldAnnotations {
 			if ann.Name() == "json" {
-				if jsonData, ok := ann.Value().(map[string]interface{}); ok {
+				if jsonData, ok := ann.Value().(map[string]any); ok {
 					if name, ok := jsonData["name"].(string); ok {
 						if name == "-" {
 							shouldIgnore = true

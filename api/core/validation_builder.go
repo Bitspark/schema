@@ -76,12 +76,36 @@ type FileValidationSchemaBuilder interface {
 	ContentValidator(name string, config Schema) FileValidationSchemaBuilder
 
 	// Build file validation schema
-	Build() FileValidationSchema
+	BuildFile() FileValidationSchema
 }
 
 // DirectoryValidationSchemaBuilder builds directory validation schemas
 type DirectoryValidationSchemaBuilder interface {
-	ValidationSchemaBuilder
+	// Basic properties
+	Name(name string) DirectoryValidationSchemaBuilder
+	Description(description string) DirectoryValidationSchemaBuilder
+	Version(version string) DirectoryValidationSchemaBuilder
+
+	// Pattern matching
+	Pattern(pattern string) DirectoryValidationSchemaBuilder
+	Patterns(patterns ...string) DirectoryValidationSchemaBuilder
+
+	// Validator configuration
+	Validator(name string, config Schema) DirectoryValidationSchemaBuilder
+	RequiredValidator(name string, config Schema) DirectoryValidationSchemaBuilder
+	OptionalValidator(name string, config Schema) DirectoryValidationSchemaBuilder
+
+	// Inheritance
+	Extends(parent string) DirectoryValidationSchemaBuilder
+	Inherits(parents ...string) DirectoryValidationSchemaBuilder
+
+	// Configuration schema
+	ConfigSchema(schema Schema) DirectoryValidationSchemaBuilder
+
+	// Metadata
+	Tag(tag string) DirectoryValidationSchemaBuilder
+	Tags(tags ...string) DirectoryValidationSchemaBuilder
+	Property(key, value string) DirectoryValidationSchemaBuilder
 
 	// Required structure
 	RequiredFile(name string, schema FileValidationSchema) DirectoryValidationSchemaBuilder
@@ -102,12 +126,36 @@ type DirectoryValidationSchemaBuilder interface {
 	OrganizationValidator(name string, config Schema) DirectoryValidationSchemaBuilder
 
 	// Build directory validation schema
-	Build() DirectoryValidationSchema
+	BuildDirectory() DirectoryValidationSchema
 }
 
 // NodeValidationSchemaBuilder builds node validation schemas
 type NodeValidationSchemaBuilder interface {
-	ValidationSchemaBuilder
+	// Basic properties
+	Name(name string) NodeValidationSchemaBuilder
+	Description(description string) NodeValidationSchemaBuilder
+	Version(version string) NodeValidationSchemaBuilder
+
+	// Pattern matching
+	Pattern(pattern string) NodeValidationSchemaBuilder
+	Patterns(patterns ...string) NodeValidationSchemaBuilder
+
+	// Validator configuration
+	Validator(name string, config Schema) NodeValidationSchemaBuilder
+	RequiredValidator(name string, config Schema) NodeValidationSchemaBuilder
+	OptionalValidator(name string, config Schema) NodeValidationSchemaBuilder
+
+	// Inheritance
+	Extends(parent string) NodeValidationSchemaBuilder
+	Inherits(parents ...string) NodeValidationSchemaBuilder
+
+	// Configuration schema
+	ConfigSchema(schema Schema) NodeValidationSchemaBuilder
+
+	// Metadata
+	Tag(tag string) NodeValidationSchemaBuilder
+	Tags(tags ...string) NodeValidationSchemaBuilder
+	Property(key, value string) NodeValidationSchemaBuilder
 
 	// File and directory schemas
 	FileSchema(schema FileValidationSchema) NodeValidationSchemaBuilder
@@ -132,5 +180,5 @@ type NodeValidationSchemaBuilder interface {
 	ConsistencyValidator(name string, config Schema) NodeValidationSchemaBuilder
 
 	// Build node validation schema
-	Build() NodeValidationSchema
+	BuildNode() NodeValidationSchema
 }

@@ -251,45 +251,6 @@ func (i *IntegerSchema) Validate(value any) core.ValidationResult {
 	}
 }
 
-// ToJSONSchema generates a JSON Schema representation of the integer schema.
-func (i *IntegerSchema) ToJSONSchema() map[string]any {
-	jsonSchema := map[string]any{
-		"type": "integer",
-	}
-
-	// Add constraints
-	if i.config.Minimum != nil {
-		jsonSchema["minimum"] = *i.config.Minimum
-	}
-
-	if i.config.Maximum != nil {
-		jsonSchema["maximum"] = *i.config.Maximum
-	}
-
-	// Add metadata
-	if i.config.Metadata.Description != "" {
-		jsonSchema["description"] = i.config.Metadata.Description
-	}
-
-	if len(i.config.Metadata.Examples) > 0 {
-		if len(i.config.Metadata.Examples) == 1 {
-			jsonSchema["example"] = i.config.Metadata.Examples[0]
-		} else {
-			jsonSchema["examples"] = i.config.Metadata.Examples
-		}
-	}
-
-	if len(i.config.Metadata.Tags) > 0 {
-		jsonSchema["tags"] = i.config.Metadata.Tags
-	}
-
-	if i.config.DefaultVal != nil {
-		jsonSchema["default"] = *i.config.DefaultVal
-	}
-
-	return jsonSchema
-}
-
 // GenerateExample generates an example value for the integer schema.
 func (i *IntegerSchema) GenerateExample() any {
 	// Use provided examples if available

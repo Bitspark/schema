@@ -153,44 +153,6 @@ func (b *BooleanSchema) convertStringToBool(str string) (bool, error) {
 	return strconv.ParseBool(convertStr)
 }
 
-// ToJSONSchema generates a JSON Schema representation of the boolean schema.
-func (b *BooleanSchema) ToJSONSchema() map[string]any {
-	jsonSchema := map[string]any{
-		"type": "boolean",
-	}
-
-	// Add metadata
-	if b.config.Metadata.Description != "" {
-		jsonSchema["description"] = b.config.Metadata.Description
-	}
-
-	if len(b.config.Metadata.Examples) > 0 {
-		if len(b.config.Metadata.Examples) == 1 {
-			jsonSchema["example"] = b.config.Metadata.Examples[0]
-		} else {
-			jsonSchema["examples"] = b.config.Metadata.Examples
-		}
-	}
-
-	if len(b.config.Metadata.Tags) > 0 {
-		jsonSchema["tags"] = b.config.Metadata.Tags
-	}
-
-	if b.config.DefaultVal != nil {
-		jsonSchema["default"] = *b.config.DefaultVal
-	}
-
-	// Add custom properties for string conversion support
-	if b.config.AllowStringConv {
-		jsonSchema["x-allow-string-conversion"] = true
-		if b.config.CaseInsensitive {
-			jsonSchema["x-case-insensitive"] = true
-		}
-	}
-
-	return jsonSchema
-}
-
 // GenerateExample generates an example value for the boolean schema.
 func (b *BooleanSchema) GenerateExample() any {
 	// Use provided examples if available

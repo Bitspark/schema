@@ -323,7 +323,7 @@ for name, gen := range generators {
 ### Dynamic Configuration
 
 ```go
-func createGenerator(config map[string]interface{}) export.Generator {
+func createGenerator(config map[string]any) export.Generator {
     var options []typescript.Option
     
     if style, ok := config["outputStyle"].(string); ok {
@@ -342,7 +342,7 @@ func createGenerator(config map[string]interface{}) export.Generator {
 }
 
 // Usage
-config := map[string]interface{}{
+config := map[string]any{
     "outputStyle":       "interface",
     "namingConvention":  "PascalCase",
     "strictMode":        true,

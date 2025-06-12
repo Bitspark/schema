@@ -42,18 +42,6 @@ func (s *ServiceMethodSchema) Validate(value any) core.ValidationResult {
 	return s.function.Validate(value)
 }
 
-func (s *ServiceMethodSchema) ToJSONSchema() map[string]any {
-	schema := s.function.ToJSONSchema()
-	// Add service method specific metadata
-	if s.name != "" {
-		schema["x-method-name"] = s.name
-	}
-	if s.metadata.Description != "" {
-		schema["description"] = s.metadata.Description
-	}
-	return schema
-}
-
 func (s *ServiceMethodSchema) GenerateExample() any {
 	return s.function.GenerateExample()
 }
@@ -251,41 +239,6 @@ func (s *ServiceSchema) validateServiceStruct(instance any) core.ValidationResul
 			"validated_type": "service_struct",
 		},
 	}
-}
-
-func (s *ServiceSchema) ToJSONSchema() map[string]any {
-	schema := map[string]any{
-		"type":       "object",
-		"x-service":  true,
-		"properties": make(map[string]any),
-	}
-
-	// Add service metadata
-	if s.name != "" {
-		schema["title"] = s.name
-	}
-	if s.metadata.Description != "" {
-		schema["description"] = s.metadata.Description
-	}
-
-	// Add methods as properties
-	properties := schema["properties"].(map[string]any)
-	for _, method := range s.methods {
-		properties[method.name] = method.ToJSONSchema()
-	}
-
-	// Add service-specific metadata
-	methodNames := make([]string, len(s.methods))
-	for i, method := range s.methods {
-		methodNames[i] = method.name
-	}
-	schema["x-methods"] = methodNames
-
-	if len(s.metadata.Tags) > 0 {
-		schema["x-tags"] = s.metadata.Tags
-	}
-
-	return schema
 }
 
 func (s *ServiceSchema) GenerateExample() any {

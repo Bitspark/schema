@@ -3,13 +3,10 @@
 package core
 
 // Schema is the core interface that all schema types must implement.
-// It provides validation, JSON Schema generation, metadata handling, and example generation.
+// It provides validation, metadata handling, and example generation.
 type Schema interface {
 	// Validation
 	Validate(value any) ValidationResult
-
-	// JSON Schema generation
-	ToJSONSchema() map[string]any
 
 	// Type
 	Type() SchemaType

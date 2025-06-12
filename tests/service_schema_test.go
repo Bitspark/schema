@@ -330,7 +330,7 @@ func TestServiceSchemaJSONSchema(t *testing.T) {
 		Method("simple", simpleFunc).
 		Build()
 
-	jsonSchema := schema.ToJSONSchema()
+	jsonSchema := toJSONSchema(schema)
 
 	// Verify basic structure
 	if jsonSchema["type"] != "object" {

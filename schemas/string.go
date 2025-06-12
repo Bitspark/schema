@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"defs.dev/schema/annotation"
+	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 )
 
 // ValidatorRegistry interface to avoid import cycle
 type ValidatorRegistry interface {
-	ValidateWithAnnotations(value any, annotations []annotation.Annotation) ValidationResult
+	ValidateWithAnnotations(value any, annotations []api.Annotation) ValidationResult
 }
 
 // ValidationResult represents the result of validator-based validation.
@@ -61,7 +61,7 @@ type StringSchemaConfig struct {
 	Format            string
 	EnumValues        []string
 	DefaultVal        *string
-	Annotations       []annotation.Annotation
+	Annotations       []api.Annotation
 	ValidatorRegistry ValidatorRegistry
 }
 
@@ -114,7 +114,7 @@ func (s *StringSchema) Clone() core.Schema {
 
 	// Deep copy annotations
 	if s.config.Annotations != nil {
-		newConfig.Annotations = make([]annotation.Annotation, len(s.config.Annotations))
+		newConfig.Annotations = make([]api.Annotation, len(s.config.Annotations))
 		copy(newConfig.Annotations, s.config.Annotations)
 	}
 
@@ -160,11 +160,11 @@ func (s *StringSchema) DefaultValue() *string {
 }
 
 // Annotations returns the annotations for this schema.
-func (s *StringSchema) Annotations() []annotation.Annotation {
+func (s *StringSchema) Annotations() []api.Annotation {
 	if s.config.Annotations == nil {
 		return nil
 	}
-	result := make([]annotation.Annotation, len(s.config.Annotations))
+	result := make([]api.Annotation, len(s.config.Annotations))
 	copy(result, s.config.Annotations)
 	return result
 }
@@ -276,37 +276,6 @@ func (s *StringSchema) Validate(value any) core.ValidationResult {
 		Valid:  len(errors) == 0,
 		Errors: errors,
 	}
-}
-
-// ToJSONSchema converts the schema to JSON Schema format.
-func (s *StringSchema) ToJSONSchema() map[string]any {
-	schema := map[string]any{
-		"type": "string",
-	}
-
-	if s.config.MinLength != nil {
-		schema["minLength"] = *s.config.MinLength
-	}
-	if s.config.MaxLength != nil {
-		schema["maxLength"] = *s.config.MaxLength
-	}
-	if s.config.Pattern != nil {
-		schema["pattern"] = s.config.Pattern.String()
-	}
-	if s.config.Format != "" {
-		schema["format"] = s.config.Format
-	}
-	if len(s.config.EnumValues) > 0 {
-		schema["enum"] = s.config.EnumValues
-	}
-	if s.config.Metadata.Description != "" {
-		schema["description"] = s.config.Metadata.Description
-	}
-	if len(s.config.Metadata.Examples) > 0 {
-		schema["examples"] = s.config.Metadata.Examples
-	}
-
-	return schema
 }
 
 // GenerateExample generates an example value for the schema.

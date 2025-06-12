@@ -16,10 +16,10 @@ type GenerationContext struct {
 	IndentString string
 
 	// Options contains generator-specific options
-	Options map[string]interface{}
+	Options map[string]any
 
 	// Metadata contains generation metadata and state
-	Metadata map[string]interface{}
+	Metadata map[string]any
 
 	// Path tracks the current schema path for error reporting
 	Path []string
@@ -33,8 +33,8 @@ func NewGenerationContext() *GenerationContext {
 	return &GenerationContext{
 		IndentLevel:  0,
 		IndentString: "  ",
-		Options:      make(map[string]interface{}),
-		Metadata:     make(map[string]interface{}),
+		Options:      make(map[string]any),
+		Metadata:     make(map[string]any),
 		Path:         make([]string, 0),
 		Identifiers:  make(map[string]int),
 	}
@@ -45,8 +45,8 @@ func (c *GenerationContext) Clone() *GenerationContext {
 	clone := &GenerationContext{
 		IndentLevel:  c.IndentLevel,
 		IndentString: c.IndentString,
-		Options:      make(map[string]interface{}),
-		Metadata:     make(map[string]interface{}),
+		Options:      make(map[string]any),
+		Metadata:     make(map[string]any),
 		Path:         make([]string, len(c.Path)),
 		Identifiers:  make(map[string]int),
 	}
@@ -147,12 +147,12 @@ func (c *GenerationContext) WithPath(element string, fn func()) {
 // Option methods
 
 // SetOption sets a generation option.
-func (c *GenerationContext) SetOption(key string, value interface{}) {
+func (c *GenerationContext) SetOption(key string, value any) {
 	c.Options[key] = value
 }
 
 // GetOption gets a generation option.
-func (c *GenerationContext) GetOption(key string) (interface{}, bool) {
+func (c *GenerationContext) GetOption(key string) (any, bool) {
 	value, exists := c.Options[key]
 	return value, exists
 }
@@ -190,12 +190,12 @@ func (c *GenerationContext) GetOptionInt(key string, defaultValue int) int {
 // Metadata methods
 
 // SetMetadata sets generation metadata.
-func (c *GenerationContext) SetMetadata(key string, value interface{}) {
+func (c *GenerationContext) SetMetadata(key string, value any) {
 	c.Metadata[key] = value
 }
 
 // GetMetadata gets generation metadata.
-func (c *GenerationContext) GetMetadata(key string) (interface{}, bool) {
+func (c *GenerationContext) GetMetadata(key string) (any, bool) {
 	value, exists := c.Metadata[key]
 	return value, exists
 }

@@ -199,15 +199,16 @@ func TestArraySchema(t *testing.T) {
 			Example([]any{"item1", "item2"}).
 			Build()
 
-		jsonSchema := schema.ToJSONSchema()
+		jsonSchema := toJSONSchema(schema)
 
 		if jsonSchema["type"] != "array" {
 			t.Errorf("Expected type 'array', got %v", jsonSchema["type"])
 		}
-		if jsonSchema["minItems"] != 1 {
+
+		if jsonSchema["minItems"] != float64(1) {
 			t.Errorf("Expected minItems 1, got %v", jsonSchema["minItems"])
 		}
-		if jsonSchema["maxItems"] != 10 {
+		if jsonSchema["maxItems"] != float64(10) {
 			t.Errorf("Expected maxItems 10, got %v", jsonSchema["maxItems"])
 		}
 		if jsonSchema["uniqueItems"] != true {

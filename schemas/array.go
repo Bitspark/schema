@@ -268,59 +268,6 @@ func (a *ArraySchema) getUniqueKey(item any) any {
 	}
 }
 
-// ToJSONSchema generates a JSON Schema representation of the array schema.
-func (a *ArraySchema) ToJSONSchema() map[string]any {
-	jsonSchema := map[string]any{
-		"type": "array",
-	}
-
-	// Add constraints
-	if a.config.MinItems != nil {
-		jsonSchema["minItems"] = *a.config.MinItems
-	}
-
-	if a.config.MaxItems != nil {
-		jsonSchema["maxItems"] = *a.config.MaxItems
-	}
-
-	if a.config.UniqueItems {
-		jsonSchema["uniqueItems"] = true
-	}
-
-	// Add item schema
-	if a.config.ItemSchema != nil {
-		jsonSchema["items"] = a.config.ItemSchema.ToJSONSchema()
-	}
-
-	// Add contains schema
-	if a.config.ContainsSchema != nil {
-		jsonSchema["contains"] = a.config.ContainsSchema.ToJSONSchema()
-	}
-
-	// Add metadata
-	if a.config.Metadata.Description != "" {
-		jsonSchema["description"] = a.config.Metadata.Description
-	}
-
-	if len(a.config.Metadata.Examples) > 0 {
-		if len(a.config.Metadata.Examples) == 1 {
-			jsonSchema["example"] = a.config.Metadata.Examples[0]
-		} else {
-			jsonSchema["examples"] = a.config.Metadata.Examples
-		}
-	}
-
-	if len(a.config.Metadata.Tags) > 0 {
-		jsonSchema["tags"] = a.config.Metadata.Tags
-	}
-
-	if a.config.DefaultVal != nil {
-		jsonSchema["default"] = a.config.DefaultVal
-	}
-
-	return jsonSchema
-}
-
 // GenerateExample generates an example value for the array schema.
 func (a *ArraySchema) GenerateExample() any {
 	// Use provided examples if available

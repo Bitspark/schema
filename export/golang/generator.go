@@ -225,7 +225,7 @@ func (g *Generator) generateStringStruct(schema core.StringSchema, typeName stri
 		Name:         "Value",
 		Type:         g.typeMapper.MapSchemaType(core.TypeString),
 		OriginalName: "value",
-		Required:     true,
+		Required:     false,
 		Description:  metadata.Description,
 		Examples:     metadata.Examples,
 		JSONTag:      g.typeMapper.FormatJSONTag("value"),
@@ -249,7 +249,7 @@ func (g *Generator) generateIntegerStruct(schema core.IntegerSchema, typeName st
 		Name:         "Value",
 		Type:         g.typeMapper.MapSchemaType(core.TypeInteger),
 		OriginalName: "value",
-		Required:     true,
+		Required:     false,
 		Description:  metadata.Description,
 		Examples:     metadata.Examples,
 		JSONTag:      g.typeMapper.FormatJSONTag("value"),
@@ -273,7 +273,7 @@ func (g *Generator) generateBooleanStruct(schema core.BooleanSchema, typeName st
 		Name:         "Value",
 		Type:         g.typeMapper.MapSchemaType(core.TypeBoolean),
 		OriginalName: "value",
-		Required:     true,
+		Required:     false,
 		Description:  metadata.Description,
 		Examples:     metadata.Examples,
 		JSONTag:      g.typeMapper.FormatJSONTag("value"),
@@ -288,7 +288,7 @@ func (g *Generator) generateArrayStruct(schema core.ArraySchema, typeName string
 	metadata := schema.Metadata()
 
 	// Determine element type
-	elementType := "interface{}"
+	elementType := "any"
 	if itemSchema := schema.ItemSchema(); itemSchema != nil {
 		elementType = g.getSchemaTypeName(itemSchema)
 	}
@@ -461,7 +461,7 @@ func (g *Generator) generateArrayTypeAlias(schema core.ArraySchema, typeName str
 	metadata := schema.Metadata()
 
 	// Determine element type
-	elementType := "interface{}"
+	elementType := "any"
 	if itemSchema := schema.ItemSchema(); itemSchema != nil {
 		elementType = g.getSchemaTypeName(itemSchema)
 	}
@@ -560,7 +560,7 @@ func (g *Generator) generateArrayInterface(schema core.ArraySchema, typeName str
 	metadata := schema.Metadata()
 
 	// Determine element type
-	elementType := "interface{}"
+	elementType := "any"
 	if itemSchema := schema.ItemSchema(); itemSchema != nil {
 		elementType = g.getSchemaTypeName(itemSchema)
 	}
@@ -906,7 +906,7 @@ func (g *Generator) generateNumberStruct(schema core.NumberSchema, typeName stri
 		Name:         "Value",
 		Type:         g.typeMapper.MapSchemaType(core.TypeNumber),
 		OriginalName: "value",
-		Required:     true,
+		Required:     false,
 		Description:  metadata.Description,
 		Examples:     metadata.Examples,
 		JSONTag:      g.typeMapper.FormatJSONTag("value"),

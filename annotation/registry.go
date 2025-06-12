@@ -25,7 +25,7 @@ func NewRegistry() AnnotationRegistry {
 
 // Type management implementation
 
-func (r *registryImpl) RegisterType(name string, schema core.Schema, opts ...TypeOption) error {
+func (r *registryImpl) RegisterType(name string, schema core.Schema, opts ...AnnotationTypeOption) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -35,8 +35,8 @@ func (r *registryImpl) RegisterType(name string, schema core.Schema, opts ...Typ
 	}
 
 	// Apply options to build configuration
-	config := &typeConfig{
-		metadata: AnnotationMetadata{
+	config := &AnnotationTypeConfig{
+		Metadata: AnnotationMetadata{
 			Name: name,
 		},
 	}
@@ -49,7 +49,7 @@ func (r *registryImpl) RegisterType(name string, schema core.Schema, opts ...Typ
 	annotationType := &annotationTypeImpl{
 		name:     name,
 		schema:   schema,
-		metadata: config.metadata,
+		metadata: config.Metadata,
 		registry: r,
 	}
 
@@ -103,7 +103,7 @@ func (r *registryImpl) CreateWithMetadata(name string, value any, metadata Annot
 	return annotationType.CreateWithMetadata(value, metadata)
 }
 
-func (r *registryImpl) Validate(annotation Annotation) ValidationResult {
+func (r *registryImpl) Validate(annotation Annotation) AnnotationValidationResult {
 	// Validate the annotation against its type schema
 	return annotation.Validate()
 }
@@ -122,9 +122,9 @@ func (r *registryImpl) CreateMany(annotations map[string]any) ([]Annotation, err
 	return result, nil
 }
 
-func (r *registryImpl) ValidateMany(annotations []Annotation) ValidationResult {
-	var allErrors []ValidationError
-	var allWarnings []ValidationWarning
+func (r *registryImpl) ValidateMany(annotations []Annotation) AnnotationValidationResult {
+	var allErrors []AnnotationValidationError
+	var allWarnings []AnnotationValidationWarning
 
 	for _, annotation := range annotations {
 		result := r.Validate(annotation)
@@ -134,7 +134,7 @@ func (r *registryImpl) ValidateMany(annotations []Annotation) ValidationResult {
 		allWarnings = append(allWarnings, result.Warnings...)
 	}
 
-	return ValidationResult{
+	return AnnotationValidationResult{
 		Valid:    len(allErrors) == 0,
 		Errors:   allErrors,
 		Warnings: allWarnings,
@@ -227,13 +227,13 @@ func (at *annotationTypeImpl) CreateWithMetadata(value any, metadata AnnotationM
 	}, nil
 }
 
-func (at *annotationTypeImpl) ValidateValue(value any) ValidationResult {
+func (at *annotationTypeImpl) ValidateValue(value any) AnnotationValidationResult {
 	coreResult := at.schema.Validate(value)
 
-	// Convert core.ValidationResult to annotation.ValidationResult
-	errors := make([]ValidationError, len(coreResult.Errors))
+	// Convert core.ValidationResult to annotation.AnnotationValidationResult
+	errors := make([]AnnotationValidationError, len(coreResult.Errors))
 	for i, err := range coreResult.Errors {
-		errors[i] = ValidationError{
+		errors[i] = AnnotationValidationError{
 			Path:     err.Path,
 			Message:  err.Message,
 			Code:     err.Code,
@@ -243,7 +243,7 @@ func (at *annotationTypeImpl) ValidateValue(value any) ValidationResult {
 		}
 	}
 
-	return ValidationResult{
+	return AnnotationValidationResult{
 		Valid:    coreResult.Valid,
 		Errors:   errors,
 		Metadata: coreResult.Metadata,
@@ -279,7 +279,7 @@ func (a *typedAnnotationImpl) Metadata() AnnotationMetadata {
 	return a.metadata
 }
 
-func (a *typedAnnotationImpl) Validate() ValidationResult {
+func (a *typedAnnotationImpl) Validate() AnnotationValidationResult {
 	return a.annotationType.ValidateValue(a.value)
 }
 
@@ -288,7 +288,6 @@ func (a *typedAnnotationImpl) ToMap() map[string]any {
 		"name":       a.name,
 		"value":      a.value,
 		"metadata":   a.metadata,
-		"schema":     a.schema.ToJSONSchema(),
 		"validators": a.metadata.Validators,
 	}
 }
@@ -321,7 +320,7 @@ func (a *flexibleAnnotationImpl) Metadata() AnnotationMetadata {
 	return a.metadata
 }
 
-func (a *flexibleAnnotationImpl) Validate() ValidationResult {
+func (a *flexibleAnnotationImpl) Validate() AnnotationValidationResult {
 	// Flexible annotations are always valid
 	return ValidResult()
 }

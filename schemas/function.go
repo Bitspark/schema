@@ -449,64 +449,6 @@ func (s *FunctionSchema) getInputNames() []string {
 	return names
 }
 
-func (s *FunctionSchema) ToJSONSchema() map[string]any {
-	// Function schemas are represented as objects with input properties
-	properties := make(map[string]any)
-	for name, inputSchema := range s.inputs.ToMap() {
-		properties[name] = inputSchema.ToJSONSchema()
-	}
-
-	schema := map[string]any{
-		"type":       "object",
-		"properties": properties,
-		"x-function": true, // Mark as function schema
-	}
-
-	if len(s.inputs.RequiredNames()) > 0 {
-		schema["required"] = s.inputs.RequiredNames()
-	}
-
-	if !s.additionalInputs {
-		schema["additionalProperties"] = false
-	}
-
-	// Add metadata
-	if s.metadata.Description != "" {
-		schema["description"] = s.metadata.Description
-	}
-
-	if s.metadata.Name != "" {
-		schema["title"] = s.metadata.Name
-	}
-
-	if len(s.metadata.Examples) > 0 {
-		schema["examples"] = s.metadata.Examples
-	}
-
-	if len(s.metadata.Tags) > 0 {
-		schema["tags"] = s.metadata.Tags
-	}
-
-	// Add function-specific metadata
-	if len(s.outputs.args) > 0 {
-		schema["x-returns"] = s.outputs.ToMap()
-	}
-
-	if s.errors != nil {
-		schema["x-errors"] = s.errors.ToJSONSchema()
-	}
-
-	if len(s.examples) > 0 {
-		schema["x-input-examples"] = s.examples
-	}
-
-	if len(s.inputConstraints) > 0 {
-		schema["x-input-constraints"] = s.inputConstraints
-	}
-
-	return schema
-}
-
 func (s *FunctionSchema) GenerateExample() any {
 	// If we have explicit examples, return the first one
 	if len(s.examples) > 0 {

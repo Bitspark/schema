@@ -541,7 +541,7 @@ func (v *MaxLengthValidator) ConfigureFromAnnotations(annotations []annotation.A
 // MinValidator validates minimum numeric values.
 type MinValidator struct {
 	BaseValidator
-	min interface{} // int, int64, float64
+	min any // int, int64, float64
 }
 
 func NewMinValidator() *MinValidator {
@@ -605,7 +605,7 @@ func (v *MinValidator) ConfigureFromAnnotations(annotations []annotation.Annotat
 // MaxValidator validates maximum numeric values.
 type MaxValidator struct {
 	BaseValidator
-	max interface{}
+	max any
 }
 
 func NewMaxValidator() *MaxValidator {
@@ -669,8 +669,8 @@ func (v *MaxValidator) ConfigureFromAnnotations(annotations []annotation.Annotat
 // RangeValidator validates numeric ranges.
 type RangeValidator struct {
 	BaseValidator
-	min interface{}
-	max interface{}
+	min any
+	max any
 }
 
 func NewRangeValidator() *RangeValidator {
@@ -696,7 +696,7 @@ func (v *RangeValidator) Validate(value any) ValidationResult {
 func (v *RangeValidator) ValidateWithAnnotations(value any, annotations []annotation.Annotation) ValidationResult {
 	for _, ann := range annotations {
 		if ann.Name() == "range" {
-			rangeValue, ok := ann.Value().(map[string]interface{})
+			rangeValue, ok := ann.Value().(map[string]any)
 			if !ok {
 				return InvalidResult(NewValidationError(v.name, ErrorCodeTypeError, "range value must be an object with min and max properties"))
 			}
@@ -740,7 +740,7 @@ func (v *RangeValidator) validateRange(value, minValue, maxValue any) Validation
 func (v *RangeValidator) ConfigureFromAnnotations(annotations []annotation.Annotation) error {
 	for _, ann := range annotations {
 		if ann.Name() == "range" {
-			rangeValue, ok := ann.Value().(map[string]interface{})
+			rangeValue, ok := ann.Value().(map[string]any)
 			if !ok {
 				return fmt.Errorf("range value must be an object with min and max properties")
 			}
@@ -940,7 +940,7 @@ func (v *UniqueItemsValidator) validateUniqueItems(value any) ValidationResult {
 		return InvalidResult(NewValidationError(v.name, ErrorCodeTypeError, "value must be an array or slice"))
 	}
 
-	seen := make(map[interface{}]bool)
+	seen := make(map[any]bool)
 	for i := 0; i < rv.Len(); i++ {
 		item := rv.Index(i).Interface()
 		if seen[item] {

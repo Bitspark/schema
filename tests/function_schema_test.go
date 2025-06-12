@@ -287,7 +287,7 @@ func TestFunctionSchemaJSONSchema(t *testing.T) {
 		Output("greeting", builders.NewStringSchema().Build()).
 		Build()
 
-	jsonSchema := schema.ToJSONSchema()
+	jsonSchema := toJSONSchema(schema)
 
 	// Verify basic structure
 	if jsonSchema["type"] != "object" {

@@ -178,45 +178,6 @@ func (n *NumberSchema) Validate(value any) core.ValidationResult {
 	}
 }
 
-// ToJSONSchema generates a JSON Schema representation of the number schema.
-func (n *NumberSchema) ToJSONSchema() map[string]any {
-	jsonSchema := map[string]any{
-		"type": "number",
-	}
-
-	// Add constraints
-	if n.config.Minimum != nil {
-		jsonSchema["minimum"] = *n.config.Minimum
-	}
-
-	if n.config.Maximum != nil {
-		jsonSchema["maximum"] = *n.config.Maximum
-	}
-
-	// Add metadata
-	if n.config.Metadata.Description != "" {
-		jsonSchema["description"] = n.config.Metadata.Description
-	}
-
-	if len(n.config.Metadata.Examples) > 0 {
-		if len(n.config.Metadata.Examples) == 1 {
-			jsonSchema["example"] = n.config.Metadata.Examples[0]
-		} else {
-			jsonSchema["examples"] = n.config.Metadata.Examples
-		}
-	}
-
-	if len(n.config.Metadata.Tags) > 0 {
-		jsonSchema["tags"] = n.config.Metadata.Tags
-	}
-
-	if n.config.DefaultVal != nil {
-		jsonSchema["default"] = *n.config.DefaultVal
-	}
-
-	return jsonSchema
-}
-
 // GenerateExample generates an example value for the number schema.
 func (n *NumberSchema) GenerateExample() any {
 	// Use provided examples if available

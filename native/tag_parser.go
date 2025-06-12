@@ -152,7 +152,7 @@ func (p *DefaultTagParser) parseJSONTag(value string) (annotation.Annotation, er
 	}
 
 	// Create annotation with json metadata
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"name":      jsonName,
 		"omitempty": omitempty,
 	}
@@ -272,10 +272,10 @@ func (p *DefaultTagParser) parseDescriptionTag(value string) (annotation.Annotat
 func (p *DefaultTagParser) parseExampleTag(value string) (annotation.Annotation, error) {
 	// Try to parse as appropriate type
 	if parsed, err := parseAnyValue(value); err == nil {
-		return p.annotationRegistry.Create("examples", []interface{}{parsed})
+		return p.annotationRegistry.Create("examples", []any{parsed})
 	}
 	// Fall back to string
-	return p.annotationRegistry.Create("examples", []interface{}{value})
+	return p.annotationRegistry.Create("examples", []any{value})
 }
 
 func (p *DefaultTagParser) parseDeprecatedTag(value string) (annotation.Annotation, error) {
@@ -305,7 +305,7 @@ func (p *DefaultTagParser) parseTagsTag(value string) (annotation.Annotation, er
 
 // Helper functions for parsing values
 
-func parseNumericValue(value string) (interface{}, error) {
+func parseNumericValue(value string) (any, error) {
 	// Try integer first
 	if intVal, err := strconv.Atoi(value); err == nil {
 		return intVal, nil
@@ -319,7 +319,7 @@ func parseNumericValue(value string) (interface{}, error) {
 	return nil, fmt.Errorf("not a valid numeric value: %s", value)
 }
 
-func parseAnyValue(value string) (interface{}, error) {
+func parseAnyValue(value string) (any, error) {
 	// Try boolean
 	if boolVal, err := strconv.ParseBool(value); err == nil {
 		return boolVal, nil

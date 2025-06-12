@@ -143,62 +143,6 @@ func TestAnnotationRegistry_BulkOperations(t *testing.T) {
 	}
 }
 
-func TestBuiltinAnnotations(t *testing.T) {
-	registry := NewRegistry()
-
-	// Register built-in annotation types
-	err := RegisterBuiltinTypes(registry)
-	if err != nil {
-		t.Fatalf("Failed to register built-in types: %v", err)
-	}
-
-	// Test that all expected built-in types are registered
-	expectedTypes := []string{
-		"format", "pattern", "minLength", "maxLength",
-		"min", "max", "range",
-		"minItems", "maxItems", "uniqueItems",
-		"required", "validators",
-		"description", "examples", "default", "enum",
-	}
-
-	registeredTypes := registry.ListTypes()
-	typeSet := make(map[string]bool)
-	for _, t := range registeredTypes {
-		typeSet[t] = true
-	}
-
-	for _, expectedType := range expectedTypes {
-		if !typeSet[expectedType] {
-			t.Errorf("Expected built-in type '%s' not found in registry", expectedType)
-		}
-	}
-
-	// Test creating annotations with built-in types
-	testCases := []struct {
-		name  string
-		value any
-	}{
-		{"format", "email"},
-		{"minLength", 5},
-		{"pattern", "^[a-zA-Z0-9]+$"},
-		{"required", true},
-		{"description", "Test field"},
-	}
-
-	for _, tc := range testCases {
-		annotation, err := registry.Create(tc.name, tc.value)
-		if err != nil {
-			t.Errorf("Failed to create annotation '%s': %v", tc.name, err)
-			continue
-		}
-
-		result := annotation.Validate()
-		if !result.Valid {
-			t.Errorf("Built-in annotation '%s' should validate: %v", tc.name, result.Errors)
-		}
-	}
-}
-
 func TestAnnotationTypeOptions(t *testing.T) {
 	registry := NewRegistry()
 

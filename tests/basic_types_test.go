@@ -4,7 +4,10 @@ import (
 	"math"
 	"testing"
 
+	json2 "encoding/json"
+
 	"defs.dev/schema/builders"
+	"defs.dev/schema/export/json"
 )
 
 func TestNumberSchema(t *testing.T) {
@@ -81,7 +84,22 @@ func TestNumberSchema(t *testing.T) {
 			Example(42.0).
 			Build()
 
-		jsonSchema := schema.ToJSONSchema()
+		gen, err := json.NewJSONGenerator()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		jsonSchemaBytes, err := gen.Generate(schema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		} else {
+			t.Logf("JSON Schema: %v", jsonSchemaBytes)
+		}
+
+		var jsonSchema map[string]any
+		err = json2.Unmarshal(jsonSchemaBytes, &jsonSchema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 
 		if jsonSchema["type"] != "number" {
 			t.Errorf("Expected type 'number', got %v", jsonSchema["type"])
@@ -173,15 +191,30 @@ func TestIntegerSchema(t *testing.T) {
 			Example(int64(42)).
 			Build()
 
-		jsonSchema := schema.ToJSONSchema()
+		gen, err := json.NewJSONGenerator()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		jsonSchemaBytes, err := gen.Generate(schema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		} else {
+			t.Logf("JSON Schema: %v", jsonSchemaBytes)
+		}
+
+		var jsonSchema map[string]any
+		err = json2.Unmarshal(jsonSchemaBytes, &jsonSchema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 
 		if jsonSchema["type"] != "integer" {
 			t.Errorf("Expected type 'integer', got %v", jsonSchema["type"])
 		}
-		if jsonSchema["minimum"] != int64(1) {
+		if jsonSchema["minimum"] != float64(1) {
 			t.Errorf("Expected minimum 1, got %v", jsonSchema["minimum"])
 		}
-		if jsonSchema["maximum"] != int64(100) {
+		if jsonSchema["maximum"] != float64(100) {
 			t.Errorf("Expected maximum 100, got %v", jsonSchema["maximum"])
 		}
 	})
@@ -250,7 +283,20 @@ func TestBooleanSchema(t *testing.T) {
 			Example(true).
 			Build()
 
-		jsonSchema := schema.ToJSONSchema()
+		gen, err := json.NewJSONGenerator()
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		jsonSchemaBytes, err := gen.Generate(schema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+
+		var jsonSchema map[string]any
+		err = json2.Unmarshal(jsonSchemaBytes, &jsonSchema)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
 
 		if jsonSchema["type"] != "boolean" {
 			t.Errorf("Expected type 'boolean', got %v", jsonSchema["type"])

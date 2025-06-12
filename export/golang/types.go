@@ -39,11 +39,11 @@ func (tm *TypeMapper) MapSchemaType(schemaType core.SchemaType) string {
 	case core.TypeBoolean:
 		return "bool"
 	case core.TypeArray:
-		return "[]interface{}" // Will be specialized based on item type
+		return "[]any" // Will be specialized based on item type
 	case core.TypeObject:
-		return "interface{}" // Will be specialized to struct
+		return "any" // Will be specialized to struct
 	default:
-		return "interface{}"
+		return "any"
 	}
 }
 
