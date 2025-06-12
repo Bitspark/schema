@@ -59,17 +59,11 @@ type FunctionPortal interface {
 }
 
 // LocalPortal defines the interface for local (in-process) function execution.
+// It combines portal functionality with registry interfaces for local storage.
 type LocalPortal interface {
 	FunctionPortal
-
-	// ListFunctions returns all registered local functions
-	ListFunctions() []string
-
-	// GetFunction returns a local function by name
-	GetFunction(name string) (Function, bool)
-
-	// RemoveFunction removes a function from the local registry
-	RemoveFunction(name string) error
+	FunctionRegistry // Local portals ARE function registries
+	ServiceRegistry  // Local portals ARE service registries
 }
 
 // NetworkPortal defines the interface for network-based portals.
@@ -87,6 +81,12 @@ type NetworkPortal interface {
 
 	// BaseURL returns the base URL for this portal
 	BaseURL() string
+
+	// GetFunctionRegistry returns the underlying function registry (updated to new interface)
+	GetFunctionRegistry() FunctionRegistry
+
+	// GetServiceRegistry returns the underlying service registry (updated to new interface)
+	GetServiceRegistry() ServiceRegistry
 }
 
 // HTTPPortal defines the interface for HTTP-based function portals.
@@ -121,10 +121,14 @@ type WebSocketPortal interface {
 }
 
 // TestingPortal defines the interface for testing/mock portals.
+// It combines portal functionality with registry interfaces for testing.
 type TestingPortal interface {
 	FunctionPortal
+	FunctionRegistry // Testing portals ARE function registries for mocks
+	ServiceRegistry  // Testing portals ARE service registries for mocks
 
-	// Mock registers a mock function for testing
+	// Testing-specific functionality
+	// Mock registers a mock function for testing (extends FunctionRegistry.Register)
 	Mock(function Function) Address
 
 	// Verify verifies that expected calls were made
@@ -149,6 +153,8 @@ type FunctionCall struct {
 
 // PortalRegistry manages multiple portals and provides unified access.
 type PortalRegistry interface {
+	Registry // Base registry functionality
+
 	// RegisterPortal registers a portal for specific schemes
 	RegisterPortal(schemes []string, portal FunctionPortal) error
 
@@ -161,8 +167,8 @@ type PortalRegistry interface {
 	// ListPortals returns all registered portals
 	ListPortals() map[string]FunctionPortal
 
-	// Close closes all registered portals
-	Close() error
+	// UnregisterPortal removes a portal
+	UnregisterPortal(schemes []string) error
 }
 
 // AddressBuilder provides a fluent interface for building addresses.
@@ -178,12 +184,33 @@ type AddressBuilder interface {
 }
 
 // ServicePortal defines the interface for service execution portals.
+// This is now just an alias for FunctionPortal since services are handled through FunctionPortal.
 type ServicePortal interface {
 	FunctionPortal
 }
 
 // Portal defines a generic interface for function execution portals.
-type Portal[D any] interface {
+// This is now just an alias for FunctionPortal.
+type Portal interface {
 	FunctionPortal
-	ServicePortal
+}
+
+// PortalFactory provides a factory for creating different types of portals.
+type PortalFactory interface {
+	Factory // Extends the base factory
+
+	// CreateLocalPortal creates a local portal with embedded registries
+	CreateLocalPortal() LocalPortal
+
+	// CreateHTTPPortal creates an HTTP portal
+	CreateHTTPPortal(baseURL string) HTTPPortal
+
+	// CreateWebSocketPortal creates a WebSocket portal
+	CreateWebSocketPortal(baseURL string) WebSocketPortal
+
+	// CreateTestingPortal creates a testing portal with mock capabilities
+	CreateTestingPortal() TestingPortal
+
+	// CreatePortalRegistry creates a portal registry
+	CreatePortalRegistry() PortalRegistry
 }

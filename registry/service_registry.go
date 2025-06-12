@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"defs.dev/schema/portal"
-
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 )
@@ -15,31 +13,47 @@ import (
 // It provides service discovery, method registration, and service lifecycle management.
 type ServiceRegistry struct {
 	mu           sync.RWMutex
-	services     map[string]*RegisteredService
+	services     map[string]*registeredServiceImpl
 	funcRegistry *FunctionRegistry // Embedded function registry for methods
 }
 
-// RegisteredService represents a service with its methods and metadata.
-type RegisteredService struct {
-	Schema       core.ServiceSchema
-	Instance     any // The actual service instance (if available)
-	Methods      map[string]api.Function
-	Metadata     ServiceMetadata
-	RegisteredAt int64
+// Ensure ServiceRegistry implements the API interface at compile time
+var _ api.ServiceRegistry = (*ServiceRegistry)(nil)
+
+// registeredServiceImpl is the concrete implementation of api.RegisteredService
+type registeredServiceImpl struct {
+	schema       core.ServiceSchema
+	instance     any // The actual service instance (if available)
+	methods      map[string]api.Function
+	metadata     api.ServiceMetadata
+	registeredAt int64
 }
 
-// ServiceMetadata holds service-level metadata.
-type ServiceMetadata struct {
-	Version     string
-	Tags        []string
-	Description string
-	Owner       string
+// Implement api.RegisteredService interface
+func (r *registeredServiceImpl) Schema() core.ServiceSchema {
+	return r.schema
+}
+
+func (r *registeredServiceImpl) Instance() any {
+	return r.instance
+}
+
+func (r *registeredServiceImpl) Methods() map[string]api.Function {
+	return r.methods
+}
+
+func (r *registeredServiceImpl) Metadata() api.ServiceMetadata {
+	return r.metadata
+}
+
+func (r *registeredServiceImpl) RegisteredAt() int64 {
+	return r.registeredAt
 }
 
 // NewServiceRegistry creates a new service registry.
 func NewServiceRegistry() *ServiceRegistry {
 	return &ServiceRegistry{
-		services:     make(map[string]*RegisteredService),
+		services:     make(map[string]*registeredServiceImpl),
 		funcRegistry: NewFunctionRegistry(),
 	}
 }
@@ -58,11 +72,11 @@ func (r *ServiceRegistry) RegisterService(name string, schema core.ServiceSchema
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	service := &RegisteredService{
-		Schema:       schema,
-		Methods:      make(map[string]api.Function),
-		Metadata:     ServiceMetadata{Version: "1.0.0", Tags: []string{}, Description: fmt.Sprintf("Service %s", name)},
-		RegisteredAt: getCurrentTimestamp(),
+	service := &registeredServiceImpl{
+		schema:       schema,
+		methods:      make(map[string]api.Function),
+		metadata:     api.ServiceMetadata{Version: "1.0.0", Tags: []string{}, Description: fmt.Sprintf("Service %s", name)},
+		registeredAt: getCurrentTimestamp(),
 	}
 
 	r.services[name] = service
@@ -78,7 +92,7 @@ func (r *ServiceRegistry) RegisterService(name string, schema core.ServiceSchema
 			registry:    r,
 		}
 		r.funcRegistry.Register(methodName, fn)
-		service.Methods[methodSchema.Name()] = fn
+		service.methods[methodSchema.Name()] = fn
 	}
 
 	return nil
@@ -94,7 +108,7 @@ func (r *ServiceRegistry) RegisterServiceWithInstance(name string, schema core.S
 	defer r.mu.Unlock()
 
 	if service, exists := r.services[name]; exists {
-		service.Instance = instance
+		service.instance = instance
 	}
 
 	return nil
@@ -103,12 +117,15 @@ func (r *ServiceRegistry) RegisterServiceWithInstance(name string, schema core.S
 // Service discovery methods
 
 // GetService retrieves a service by name.
-func (r *ServiceRegistry) GetService(name string) (*RegisteredService, bool) {
+func (r *ServiceRegistry) GetService(name string) (api.RegisteredService, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	service, exists := r.services[name]
-	return service, exists
+	if !exists {
+		return nil, false
+	}
+	return service, true
 }
 
 // GetServiceMethod retrieves a specific method from a service.
@@ -121,7 +138,7 @@ func (r *ServiceRegistry) GetServiceMethod(serviceName, methodName string) (api.
 		return nil, false
 	}
 
-	method, exists := service.Methods[methodName]
+	method, exists := service.methods[methodName]
 	return method, exists
 }
 
@@ -147,8 +164,8 @@ func (r *ServiceRegistry) ListServiceMethods(serviceName string) []string {
 		return []string{}
 	}
 
-	methods := make([]string, 0, len(service.Methods))
-	for methodName := range service.Methods {
+	methods := make([]string, 0, len(service.methods))
+	for methodName := range service.methods {
 		methods = append(methods, methodName)
 	}
 	return methods
@@ -161,7 +178,7 @@ func (r *ServiceRegistry) ListAllMethods() []string {
 
 	var methods []string
 	for serviceName, service := range r.services {
-		for methodName := range service.Methods {
+		for methodName := range service.methods {
 			methods = append(methods, fmt.Sprintf("%s.%s", serviceName, methodName))
 		}
 	}
@@ -181,7 +198,7 @@ func (r *ServiceRegistry) UnregisterService(name string) error {
 	}
 
 	// Unregister all service methods from function registry
-	for methodName := range service.Methods {
+	for methodName := range service.methods {
 		fullMethodName := fmt.Sprintf("%s.%s", name, methodName)
 		r.funcRegistry.Unregister(fullMethodName)
 	}
@@ -197,14 +214,41 @@ func (r *ServiceRegistry) ClearServices() error {
 
 	// Unregister all service methods from function registry
 	for serviceName, service := range r.services {
-		for methodName := range service.Methods {
+		for methodName := range service.methods {
 			fullMethodName := fmt.Sprintf("%s.%s", serviceName, methodName)
 			r.funcRegistry.Unregister(fullMethodName)
 		}
 	}
 
-	r.services = make(map[string]*RegisteredService)
+	r.services = make(map[string]*registeredServiceImpl)
 	return nil
+}
+
+// Base Registry interface implementation
+
+// List returns all registered service names (same as ListServices).
+func (r *ServiceRegistry) List() []string {
+	return r.ListServices()
+}
+
+// Count returns the number of registered services.
+func (r *ServiceRegistry) Count() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.services)
+}
+
+// Exists checks if a service is registered.
+func (r *ServiceRegistry) Exists(name string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	_, exists := r.services[name]
+	return exists
+}
+
+// Clear removes all services (same as ClearServices).
+func (r *ServiceRegistry) Clear() error {
+	return r.ClearServices()
 }
 
 // Service execution methods
@@ -217,7 +261,7 @@ func (r *ServiceRegistry) CallServiceMethod(ctx context.Context, serviceName, me
 	}
 
 	// Convert to FunctionData
-	data := portal.NewFunctionData(params)
+	data := api.NewFunctionData(params)
 	result, err := method.Call(ctx, data)
 	if err != nil {
 		return nil, err
@@ -252,20 +296,20 @@ func (r *ServiceRegistry) ValidateServiceMethod(serviceName, methodName string, 
 // Service metadata methods
 
 // GetServiceMetadata returns metadata for a service.
-func (r *ServiceRegistry) GetServiceMetadata(name string) (ServiceMetadata, bool) {
+func (r *ServiceRegistry) GetServiceMetadata(name string) (api.ServiceMetadata, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	service, exists := r.services[name]
 	if !exists {
-		return ServiceMetadata{}, false
+		return api.ServiceMetadata{}, false
 	}
 
-	return service.Metadata, true
+	return service.metadata, true
 }
 
 // SetServiceMetadata updates metadata for a service.
-func (r *ServiceRegistry) SetServiceMetadata(name string, metadata ServiceMetadata) error {
+func (r *ServiceRegistry) SetServiceMetadata(name string, metadata api.ServiceMetadata) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -274,7 +318,7 @@ func (r *ServiceRegistry) SetServiceMetadata(name string, metadata ServiceMetada
 		return fmt.Errorf("service %s not found", name)
 	}
 
-	service.Metadata = metadata
+	service.metadata = metadata
 	return nil
 }
 
@@ -285,7 +329,7 @@ func (r *ServiceRegistry) ListServicesByTag(tag string) []string {
 
 	var services []string
 	for name, service := range r.services {
-		for _, t := range service.Metadata.Tags {
+		for _, t := range service.metadata.Tags {
 			if t == tag {
 				services = append(services, name)
 				break
@@ -297,8 +341,10 @@ func (r *ServiceRegistry) ListServicesByTag(tag string) []string {
 
 // Integration with function registry
 
-// GetFunctionRegistry returns the embedded function registry.
-func (r *ServiceRegistry) GetFunctionRegistry() *FunctionRegistry {
+// GetFunctionRegistry returns the underlying function registry.
+func (r *ServiceRegistry) GetFunctionRegistry() api.FunctionRegistry {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.funcRegistry
 }
 
@@ -323,13 +369,13 @@ func (f *ServiceMethodFunction) Call(ctx context.Context, params api.FunctionDat
 		return nil, fmt.Errorf("service %s not found", f.serviceName)
 	}
 
-	if service.Instance == nil {
+	if service.instance == nil {
 		return nil, fmt.Errorf("service %s has no registered instance", f.serviceName)
 	}
 
 	// This would need reflection to call the actual method on the service instance
 	// For now, return a placeholder response
-	return portal.NewFunctionDataValue(map[string]any{
+	return api.NewFunctionDataValue(map[string]any{
 		"service": f.serviceName,
 		"method":  f.methodName,
 		"message": fmt.Sprintf("Called %s.%s", f.serviceName, f.methodName),
@@ -346,14 +392,6 @@ func (f *ServiceMethodFunction) Name() string {
 
 // Statistics and introspection methods
 
-// ServiceCount returns the total number of registered services.
-func (r *ServiceRegistry) ServiceCount() int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	return len(r.services)
-}
-
 // MethodCount returns the total number of registered methods across all services.
 func (r *ServiceRegistry) MethodCount() int {
 	r.mu.RLock()
@@ -361,30 +399,7 @@ func (r *ServiceRegistry) MethodCount() int {
 
 	count := 0
 	for _, service := range r.services {
-		count += len(service.Methods)
+		count += len(service.methods)
 	}
 	return count
-}
-
-// ServiceExists checks if a service is registered.
-func (r *ServiceRegistry) ServiceExists(name string) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	_, exists := r.services[name]
-	return exists
-}
-
-// MethodExists checks if a specific method exists on a service.
-func (r *ServiceRegistry) MethodExists(serviceName, methodName string) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	service, exists := r.services[serviceName]
-	if !exists {
-		return false
-	}
-
-	_, exists = service.Methods[methodName]
-	return exists
 }

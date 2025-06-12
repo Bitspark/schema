@@ -170,7 +170,12 @@ func TestIntegration_MultiPortalServiceRegistration(t *testing.T) {
 
 	// Create a complex calculation service
 	calculatorService := &TestCalculatorService{
-		name: "CalculatorService",
+		name:      "CalculatorService",
+		isRunning: false,
+		status: api.ServiceStatus{
+			State:   api.ServiceStateStopped,
+			Healthy: false,
+		},
 		schema: builders.NewServiceSchema().
 			Name("CalculatorService").
 			Description("Advanced mathematical operations service").
@@ -320,7 +325,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 				}
 			}
 
-			return portal.NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"isValid": len(errors) == 0,
 				"errors":  errors,
 			}), nil
@@ -368,7 +373,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 				}
 			}
 
-			return portal.NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"transformedData": map[string]any{
 					"processedItems": processedItems,
 					"summary": map[string]any{
@@ -405,7 +410,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 				totalProcessedValue += itemMap["processedValue"].(float64)
 			}
 
-			return portal.NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"aggregation": map[string]any{
 					"totalProcessedValue": totalProcessedValue,
 					"itemCount":           len(processedItems),
@@ -469,7 +474,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 		t.Fatalf("Failed to resolve validate function: %v", err)
 	}
 
-	validateResult, err := validateFunc.Call(ctx, portal.NewFunctionData(map[string]any{"data": testData}))
+	validateResult, err := validateFunc.Call(ctx, api.NewFunctionData(map[string]any{"data": testData}))
 	if err != nil {
 		t.Fatalf("Failed to call validate function: %v", err)
 	}
@@ -486,7 +491,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 		t.Fatalf("Failed to resolve transform function: %v", err)
 	}
 
-	transformResult, err := transformFunc.Call(ctx, portal.NewFunctionData(map[string]any{"data": testData}))
+	transformResult, err := transformFunc.Call(ctx, api.NewFunctionData(map[string]any{"data": testData}))
 	if err != nil {
 		t.Fatalf("Failed to call transform function: %v", err)
 	}
@@ -505,7 +510,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 		t.Fatalf("Failed to resolve aggregate function: %v", err)
 	}
 
-	aggregateResult, err := aggregateFuncResolved.Call(ctx, portal.NewFunctionData(map[string]any{"transformedData": transformedData}))
+	aggregateResult, err := aggregateFuncResolved.Call(ctx, api.NewFunctionData(map[string]any{"transformedData": transformedData}))
 	if err != nil {
 		t.Fatalf("Failed to call aggregate function: %v", err)
 	}
@@ -598,7 +603,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	}
 
 	// Set service metadata separately
-	err = serviceRegistry.SetServiceMetadata("AnalyticsService", registry.ServiceMetadata{
+	err = serviceRegistry.SetServiceMetadata("AnalyticsService", api.ServiceMetadata{
 		Version:     "1.0.0",
 		Tags:        []string{"analytics", "reporting", "data"},
 		Description: "Comprehensive analytics service for data processing",
@@ -635,7 +640,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 					}
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"isValid":          len(errors) == 0,
 					"validationErrors": errors,
 				}), nil
@@ -664,7 +669,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 					formatted = ts.Format("2006-01-02 15:04:05")
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"formatted": formatted,
 				}), nil
 			},
@@ -692,7 +697,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 				// Simple hash simulation
 				hash := fmt.Sprintf("%s-hash-of-%s", alg, data.(string)[:min(10, len(data.(string)))])
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"hash":      hash,
 					"algorithm": alg,
 				}), nil
@@ -790,7 +795,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	}
 
 	// Test registry statistics
-	serviceStats := serviceRegistry.ServiceCount()
+	serviceStats := serviceRegistry.Count()
 	functionStats := funcRegistry.Count()
 
 	if serviceStats != 1 {
@@ -1109,14 +1114,81 @@ func min(a, b int) int {
 // Test helper types
 
 type TestCalculatorService struct {
-	name   string
-	schema core.ServiceSchema
+	name      string
+	schema    core.ServiceSchema
+	isRunning bool
+	status    api.ServiceStatus
+}
+
+// Implement the enhanced Service interface
+
+func (s *TestCalculatorService) CallMethod(ctx context.Context, methodName string, params api.FunctionData) (api.FunctionData, error) {
+	if !s.isRunning {
+		return nil, fmt.Errorf("service %s is not running", s.name)
+	}
+
+	function, exists := s.GetFunction(methodName)
+	if !exists {
+		return nil, fmt.Errorf("method %s not found on service %s", methodName, s.name)
+	}
+
+	return function.Call(ctx, params)
 }
 
 func (s *TestCalculatorService) Schema() core.ServiceSchema {
 	return s.schema
 }
 
+func (s *TestCalculatorService) Name() string {
+	return s.name
+}
+
+func (s *TestCalculatorService) Start(ctx context.Context) error {
+	if s.isRunning {
+		return fmt.Errorf("service %s is already running", s.name)
+	}
+	s.isRunning = true
+	now := time.Now()
+	s.status = api.ServiceStatus{
+		State:     api.ServiceStateRunning,
+		StartedAt: &now,
+		Healthy:   true,
+	}
+	return nil
+}
+
+func (s *TestCalculatorService) Stop(ctx context.Context) error {
+	if !s.isRunning {
+		return fmt.Errorf("service %s is not running", s.name)
+	}
+	s.isRunning = false
+	now := time.Now()
+	s.status = api.ServiceStatus{
+		State:     api.ServiceStateStopped,
+		StoppedAt: &now,
+		Healthy:   false,
+	}
+	return nil
+}
+
+func (s *TestCalculatorService) Status(ctx context.Context) (api.ServiceStatus, error) {
+	return s.status, nil
+}
+
+func (s *TestCalculatorService) IsRunning() bool {
+	return s.isRunning
+}
+
+func (s *TestCalculatorService) HasMethod(methodName string) bool {
+	_, exists := s.GetFunction(methodName)
+	return exists
+}
+
+func (s *TestCalculatorService) MethodNames() []string {
+	return []string{"add", "multiply", "factorial"}
+}
+
+// Legacy method for backward compatibility
 func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 	switch name {
 	case "add":
@@ -1133,7 +1205,7 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 				a, _ := params.Get("a")
 				b, _ := params.Get("b")
 				result := a.(float64) + b.(float64)
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		}, true
 	case "multiply":
@@ -1150,7 +1222,7 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 				a, _ := params.Get("a")
 				b, _ := params.Get("b")
 				result := a.(float64) * b.(float64)
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		}, true
 	case "factorial":
@@ -1169,7 +1241,7 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 				for i := 2; i <= num; i++ {
 					result *= i
 				}
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		}, true
 	}

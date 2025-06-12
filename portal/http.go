@@ -10,11 +10,16 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/registry"
 )
 
 // HTTPPortal implements the api.HTTPPortal interface for HTTP-based function execution.
 type HTTPPortal struct {
 	mu sync.RWMutex
+
+	// Use embedded registries for consistency
+	funcRegistry    api.FunctionRegistry
+	serviceRegistry api.ServiceRegistry
 
 	// Configuration
 	config *HTTPConfig
@@ -24,7 +29,7 @@ type HTTPPortal struct {
 	mux        *http.ServeMux
 	middleware []Middleware
 
-	// Function registry
+	// Legacy direct storage (kept for WebSocket-specific patterns)
 	functions map[string]api.Function
 	schemas   map[string]core.FunctionSchema
 
@@ -93,10 +98,12 @@ func NewHTTPPortal(config *HTTPConfig) *HTTPPortal {
 	mux := http.NewServeMux()
 
 	portal := &HTTPPortal{
-		config:    config,
-		mux:       mux,
-		functions: make(map[string]api.Function),
-		schemas:   make(map[string]core.FunctionSchema),
+		funcRegistry:    registry.NewFunctionRegistry(),
+		serviceRegistry: registry.NewServiceRegistry(),
+		config:          config,
+		mux:             mux,
+		functions:       make(map[string]api.Function),
+		schemas:         make(map[string]core.FunctionSchema),
 		client: &http.Client{
 			Timeout: config.ClientTimeout,
 		},
@@ -154,7 +161,13 @@ func (h *HTTPPortal) Apply(ctx context.Context, function api.Function) (api.Addr
 		return nil, fmt.Errorf("function %s already registered", name)
 	}
 
-	// Register function directly
+	// Register with underlying function registry
+	err := h.funcRegistry.Register(name, function)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register function: %w", err)
+	}
+
+	// Also register function directly for HTTP-specific access patterns
 	h.functions[name] = function
 	h.schemas[name] = function.Schema()
 
@@ -177,6 +190,12 @@ func (h *HTTPPortal) ApplyService(ctx context.Context, service api.Service) (api
 	defer h.mu.Unlock()
 
 	name := service.Schema().Name()
+
+	// Register with underlying service registry
+	err := h.serviceRegistry.RegisterService(name, service.Schema())
+	if err != nil {
+		return nil, fmt.Errorf("failed to register service: %w", err)
+	}
 
 	// Register service methods as individual functions
 	methods := service.Schema().Methods()
@@ -222,12 +241,7 @@ func (h *HTTPPortal) ResolveFunction(ctx context.Context, address api.Address) (
 	}
 
 	// For remote functions, create HTTP client function
-	return &RemoteFunction{
-		name:    h.extractFunctionName(address.Path()),
-		schema:  nil, // Would need to fetch schema from remote
-		address: address,
-		portal:  h,
-	}, nil
+	return api.NewRemoteFunction(h.extractFunctionName(address.Path()), nil, address, h), nil
 }
 
 // ResolveService resolves an HTTP address to a service.
@@ -237,10 +251,7 @@ func (h *HTTPPortal) ResolveService(ctx context.Context, address api.Address) (a
 	}
 
 	// Create HTTP client service
-	return &ServiceImpl{
-		name:   h.extractServiceName(address.Path()),
-		schema: nil, // Would need to fetch schema from remote
-	}, nil
+	return api.NewService(h.extractServiceName(address.Path()), nil), nil
 }
 
 // GenerateAddress creates a new HTTP address.
@@ -355,10 +366,7 @@ func (h *HTTPPortal) EnableCORS(origins []string) {
 
 // Close closes the HTTP portal.
 func (h *HTTPPortal) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	return h.Stop(ctx)
+	return h.Stop(context.Background())
 }
 
 // Health returns the health status of the portal.
@@ -371,6 +379,16 @@ func (h *HTTPPortal) Health(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// GetFunctionRegistry returns the underlying function registry
+func (h *HTTPPortal) GetFunctionRegistry() api.FunctionRegistry {
+	return h.funcRegistry
+}
+
+// GetServiceRegistry returns the underlying service registry
+func (h *HTTPPortal) GetServiceRegistry() api.ServiceRegistry {
+	return h.serviceRegistry
 }
 
 // Private helper methods
@@ -441,7 +459,7 @@ func (h *HTTPPortal) handleFunctionCall(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Create function input
-	input := NewFunctionData(requestData)
+	input := api.NewFunctionData(requestData)
 
 	// Validate input if schema is available
 	if hasSchema {

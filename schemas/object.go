@@ -350,7 +350,7 @@ func (o *ObjectSchema) convertToMap(value any) (map[string]any, bool) {
 
 	switch rv.Kind() {
 	case reflect.Map:
-		// Handle other map types (map[string]interface{}, etc.)
+		// Handle other map types (map[string]any, etc.)
 		result := make(map[string]any)
 		for _, key := range rv.MapKeys() {
 			keyStr := fmt.Sprintf("%v", key.Interface())

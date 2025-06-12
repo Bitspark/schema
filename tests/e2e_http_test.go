@@ -47,7 +47,7 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 				a, _ := params.Get("a")
 				b, _ := params.Get("b")
 				result := a.(float64) + b.(float64)
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		},
 		{
@@ -83,7 +83,7 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 					processed = fmt.Sprintf("PROCESSED: %s", textStr)
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"processed": processed,
 					"length":    len(textStr),
 				}), nil
@@ -116,7 +116,7 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 					average = sum / float64(count)
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"sum":     sum,
 					"average": average,
 					"count":   count,
@@ -293,7 +293,7 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 				a, _ := params.Get("a")
 				b, _ := params.Get("b")
 				result := a.(float64) * b.(float64)
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		},
 		{
@@ -318,7 +318,7 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 					result *= baseVal
 				}
 
-				return portal.NewFunctionData(map[string]any{"result": result}), nil
+				return api.NewFunctionData(map[string]any{"result": result}), nil
 			},
 		},
 	}
@@ -344,7 +344,7 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 				}
 
 				formatted := fmt.Sprintf(formatStr, number.(float64))
-				return portal.NewFunctionData(map[string]any{"formatted": formatted}), nil
+				return api.NewFunctionData(map[string]any{"formatted": formatted}), nil
 			},
 		},
 		{
@@ -367,7 +367,7 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 				}
 				report += fmt.Sprintf("Total items: %d", len(dataArray))
 
-				return portal.NewFunctionData(map[string]any{"report": report}), nil
+				return api.NewFunctionData(map[string]any{"report": report}), nil
 			},
 		},
 	}
@@ -446,7 +446,7 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 				}
 				operationCount++
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"calculation_report": reportResult["report"],
 					"total_operations":   operationCount,
 				}), nil
@@ -596,7 +596,7 @@ func TestE2E_HTTPPortalLoadTesting(t *testing.T) {
 			result := fibonacci(nInt)
 			duration := time.Since(start).Milliseconds()
 
-			return portal.NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"result":         result,
 				"computed_in_ms": duration,
 			}), nil

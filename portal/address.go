@@ -3,6 +3,7 @@ package portal
 import (
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 
 	"defs.dev/schema/api"
@@ -114,8 +115,17 @@ func (a *AddressImpl) String() string {
 	// Query
 	if len(a.query) > 0 {
 		builder.WriteString("?")
+
+		// Sort keys for consistent output
+		keys := make([]string, 0, len(a.query))
+		for key := range a.query {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
 		first := true
-		for key, value := range a.query {
+		for _, key := range keys {
+			value := a.query[key]
 			if !first {
 				builder.WriteString("&")
 			}

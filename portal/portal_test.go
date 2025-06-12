@@ -98,7 +98,7 @@ func TestLocalPortal(t *testing.T) {
 			a, _ := params.Get("a")
 			b, _ := params.Get("b")
 			result := a.(float64) + b.(float64)
-			return NewFunctionData(map[string]any{"result": result}), nil
+			return api.NewFunctionData(map[string]any{"result": result}), nil
 		},
 	}
 
@@ -124,7 +124,7 @@ func TestLocalPortal(t *testing.T) {
 		}
 
 		// Test function call
-		params := NewFunctionData(map[string]any{
+		params := api.NewFunctionData(map[string]any{
 			"a": 10.0,
 			"b": 5.0,
 		})
@@ -153,8 +153,8 @@ func TestLocalPortal(t *testing.T) {
 			t.Errorf("Expected healthy portal, got error: %v", err)
 		}
 
-		// Test GetFunction by name
-		function, exists := portal.GetFunction("add")
+		// Test Get by name
+		function, exists := portal.Get("add")
 		if !exists {
 			t.Error("Expected to find function 'add'")
 		}
@@ -181,7 +181,7 @@ func TestTestingPortal(t *testing.T) {
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			input, _ := params.Get("input")
-			return NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"output": "mocked: " + input.(string),
 			}), nil
 		},
@@ -200,7 +200,7 @@ func TestTestingPortal(t *testing.T) {
 			t.Fatalf("Failed to resolve mock function: %v", err)
 		}
 
-		params := NewFunctionData(map[string]any{
+		params := api.NewFunctionData(map[string]any{
 			"input": "test",
 		})
 
@@ -283,7 +283,7 @@ func TestDefaultPortalRegistry(t *testing.T) {
 
 func TestFunctionInputOutput(t *testing.T) {
 	t.Run("FunctionData", func(t *testing.T) {
-		data := NewFunctionData(map[string]any{
+		data := api.NewFunctionData(map[string]any{
 			"a": 10.0,
 			"b": "test",
 			"c": true,
@@ -323,7 +323,7 @@ func TestFunctionInputOutput(t *testing.T) {
 	})
 
 	t.Run("FunctionDataValue", func(t *testing.T) {
-		data := NewFunctionDataValue("test result")
+		data := api.NewFunctionDataValue("test result")
 
 		if data.Value() != "test result" {
 			t.Errorf("Expected 'test result', got %v", data.Value())

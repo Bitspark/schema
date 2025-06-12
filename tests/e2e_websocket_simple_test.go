@@ -29,7 +29,7 @@ func TestE2E_WebSocketSimple(t *testing.T) {
 		WriteTimeout:   10 * time.Second,
 		ReadTimeout:    60 * time.Second,
 		MaxMessageSize: 512 * 1024,
-	})
+	}, nil, nil) // Use default registries
 
 	// Register a simple function
 	simpleFunc := &SimpleTestFunction{
@@ -42,7 +42,7 @@ func TestE2E_WebSocketSimple(t *testing.T) {
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			message, _ := params.Get("message")
-			return portal.NewFunctionData(map[string]any{
+			return api.NewFunctionData(map[string]any{
 				"echo": fmt.Sprintf("Echo: %s", message.(string)),
 			}), nil
 		},

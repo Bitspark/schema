@@ -63,7 +63,7 @@ func TestHTTPPortal_FunctionRegistration(t *testing.T) {
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			name, _ := params.Get("name")
-			return NewFunctionData(map[string]any{"result": fmt.Sprintf("Hello, %s!", name)}), nil
+			return api.NewFunctionData(map[string]any{"result": fmt.Sprintf("Hello, %s!", name)}), nil
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestHTTPPortal_ServiceRegistration(t *testing.T) {
 			Build(),
 		greetHandler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			name, _ := params.Get("name")
-			return NewFunctionData(map[string]any{"greeting": fmt.Sprintf("Hello, %s!", name)}), nil
+			return api.NewFunctionData(map[string]any{"greeting": fmt.Sprintf("Hello, %s!", name)}), nil
 		},
 	}
 
@@ -135,7 +135,7 @@ func TestHTTPPortal_FunctionResolution(t *testing.T) {
 		name:   "testFunc",
 		schema: builders.NewFunctionSchema().Name("testFunc").Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
-			return NewFunctionData(map[string]any{"result": "test result"}), nil
+			return api.NewFunctionData(map[string]any{"result": "test result"}), nil
 		},
 	}
 
@@ -184,7 +184,7 @@ func TestHTTPPortal_HTTPHandler(t *testing.T) {
 		schema: builders.NewFunctionSchema().Name("echo").Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			message, _ := params.Get("message")
-			return NewFunctionData(map[string]any{"echo": message}), nil
+			return api.NewFunctionData(map[string]any{"echo": message}), nil
 		},
 	}
 
@@ -462,6 +462,14 @@ func (s *TestService) Schema() core.ServiceSchema {
 	return s.schema
 }
 
+func (s *TestService) HasMethod(methodName string) bool {
+	return methodName == "greet"
+}
+
+func (s *TestService) CallMethod(ctx context.Context, methodName string, params api.FunctionData) (api.FunctionData, error) {
+	return s.greetHandler(ctx, params)
+}
+
 func (s *TestService) GetFunction(name string) (api.Function, bool) {
 	if name == "greet" {
 		return &HTTPTestFunction{
@@ -471,6 +479,40 @@ func (s *TestService) GetFunction(name string) (api.Function, bool) {
 		}, true
 	}
 	return nil, false
+}
+
+func (s *TestService) MethodNames() []string {
+	return []string{"greet"}
+}
+
+func (s *TestService) Description() string {
+	return "Test service"
+}
+
+func (s *TestService) Methods() []string {
+	return []string{"greet"}
+}
+
+func (s *TestService) GetMethod(name string) (api.Function, bool) {
+	return s.GetFunction(name)
+}
+
+func (s *TestService) Start(ctx context.Context) error {
+	return nil
+}
+
+func (s *TestService) Stop(ctx context.Context) error {
+	return nil
+}
+
+func (s *TestService) Status(ctx context.Context) (api.ServiceStatus, error) {
+	return api.ServiceStatus{
+		State: api.ServiceStateRunning,
+	}, nil
+}
+
+func (s *TestService) IsRunning() bool {
+	return true
 }
 
 type TestMiddleware struct {

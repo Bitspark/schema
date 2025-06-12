@@ -6,7 +6,6 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
-	"defs.dev/schema/portal"
 	"defs.dev/schema/schemas"
 )
 
@@ -257,7 +256,7 @@ func (f *MockFunction) Call(ctx context.Context, params api.FunctionData) (api.F
 		"input":    params.ToMap(),
 		"result":   "mock_result",
 	}
-	return portal.NewFunctionData(result), nil
+	return api.NewFunctionData(result), nil
 }
 
 func (f *MockFunction) Schema() core.FunctionSchema {

@@ -32,7 +32,7 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 		PongWait:       60 * time.Second,
 		MaxMessageSize: 1024 * 1024,
 	}
-	wsPortal := portal.NewWebSocketPortal(wsConfig)
+	wsPortal := portal.NewWebSocketPortal(wsConfig, nil, nil)
 
 	// Register streaming functions
 	streamingFunctions := []*E2ETestFunction{
@@ -65,7 +65,7 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 				// In a real implementation, this would stream multiple responses
 				time.Sleep(interval * time.Duration(endInt-startInt))
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"count":     endInt,
 					"timestamp": time.Now().Format(time.RFC3339),
 				}), nil
@@ -92,7 +92,7 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 
 				processedMessage := fmt.Sprintf("[%s]: %s", userID.(string), messageStr)
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"processed_message": processedMessage,
 					"word_count":        words,
 					"timestamp":         time.Now().Format(time.RFC3339),
@@ -257,7 +257,7 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 		PongWait:       60 * time.Second,
 		MaxMessageSize: 1024 * 1024,
 	}
-	wsPortal := portal.NewWebSocketPortal(wsConfig)
+	wsPortal := portal.NewWebSocketPortal(wsConfig, nil, nil)
 
 	// Register HTTP functions (stateless operations)
 	httpFunctions := []*E2ETestFunction{
@@ -286,7 +286,7 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 					errors = append(errors, "Email must contain @ symbol")
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"valid":  len(errors) == 0,
 					"errors": errors,
 				}), nil
@@ -325,7 +325,7 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 					transformed = dataMap
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"transformed": transformed,
 				}), nil
 			},
@@ -367,7 +367,7 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 					time.Sleep(100 * time.Millisecond)
 				}
 
-				return portal.NewFunctionData(map[string]any{
+				return api.NewFunctionData(map[string]any{
 					"notification_id": notificationID,
 					"sent_at":         time.Now().Format(time.RFC3339),
 				}), nil
@@ -499,10 +499,10 @@ func testWebSocketFunction(conn *websocket.Conn, request map[string]any) E2EWebS
 
 	// Read response
 	var response struct {
-		Type  string                 `json:"type"`
-		ID    string                 `json:"id"`
-		Data  map[string]interface{} `json:"data"`
-		Error string                 `json:"error"`
+		Type  string         `json:"type"`
+		ID    string         `json:"id"`
+		Data  map[string]any `json:"data"`
+		Error string         `json:"error"`
 	}
 
 	if err := conn.ReadJSON(&response); err != nil {

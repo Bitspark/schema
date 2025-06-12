@@ -8,10 +8,16 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/registry"
 )
 
 // TestingPortalImpl implements api.TestingPortal
 type TestingPortalImpl struct {
+	// Embed actual registries for storage
+	funcRegistry    api.FunctionRegistry
+	serviceRegistry api.ServiceRegistry
+
+	// Testing-specific fields
 	functions   map[string]api.Function
 	mocks       map[string]api.Function
 	callHistory []api.FunctionCall
@@ -19,13 +25,20 @@ type TestingPortalImpl struct {
 	idCounter   int64
 }
 
+// Ensure TestingPortalImpl implements all required interfaces at compile time
+var _ api.TestingPortal = (*TestingPortalImpl)(nil)
+var _ api.FunctionRegistry = (*TestingPortalImpl)(nil)
+var _ api.ServiceRegistry = (*TestingPortalImpl)(nil)
+
 // NewTestingPortal creates a new testing portal
 func NewTestingPortal() api.TestingPortal {
 	return &TestingPortalImpl{
-		functions:   make(map[string]api.Function),
-		mocks:       make(map[string]api.Function),
-		callHistory: make([]api.FunctionCall, 0),
-		idCounter:   0,
+		funcRegistry:    registry.NewFunctionRegistry(),
+		serviceRegistry: registry.NewServiceRegistry(),
+		functions:       make(map[string]api.Function),
+		mocks:           make(map[string]api.Function),
+		callHistory:     make([]api.FunctionCall, 0),
+		idCounter:       0,
 	}
 }
 
@@ -33,6 +46,12 @@ func NewTestingPortal() api.TestingPortal {
 func (p *TestingPortalImpl) Apply(ctx context.Context, function api.Function) (api.Address, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	// Register with underlying function registry
+	err := p.funcRegistry.Register(function.Name(), function)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register function: %w", err)
+	}
 
 	// Create wrapped function for recording
 	wrappedFunction := p.wrapFunctionForRecording(function)
@@ -44,6 +63,15 @@ func (p *TestingPortalImpl) Apply(ctx context.Context, function api.Function) (a
 
 // ApplyService registers service (basic implementation)
 func (p *TestingPortalImpl) ApplyService(ctx context.Context, service api.Service) (api.Address, error) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	// Register with underlying service registry
+	err := p.serviceRegistry.RegisterService(service.Schema().Name(), service.Schema())
+	if err != nil {
+		return nil, fmt.Errorf("failed to register service: %w", err)
+	}
+
 	address := p.generateServiceAddress(service.Schema().Name())
 	return address, nil
 }
@@ -90,6 +118,12 @@ func (p *TestingPortalImpl) Schemes() []string {
 func (p *TestingPortalImpl) Close() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	// Clear underlying registries
+	p.funcRegistry.Clear()
+	p.serviceRegistry.Clear()
+
+	// Clear testing-specific data
 	p.functions = make(map[string]api.Function)
 	p.mocks = make(map[string]api.Function)
 	p.callHistory = make([]api.FunctionCall, 0)
@@ -105,6 +139,9 @@ func (p *TestingPortalImpl) Health(ctx context.Context) error {
 func (p *TestingPortalImpl) Mock(function api.Function) api.Address {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	// Register with underlying function registry
+	p.funcRegistry.Register(function.Name(), function)
 
 	wrappedFunction := p.wrapFunctionForRecording(function)
 	address := p.generateMockAddress(function.Name())
@@ -123,6 +160,12 @@ func (p *TestingPortalImpl) Verify() error {
 func (p *TestingPortalImpl) Reset() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	// Clear underlying registries
+	p.funcRegistry.Clear()
+	p.serviceRegistry.Clear()
+
+	// Clear testing-specific data
 	p.mocks = make(map[string]api.Function)
 	p.callHistory = make([]api.FunctionCall, 0)
 }
@@ -134,6 +177,123 @@ func (p *TestingPortalImpl) CallHistory() []api.FunctionCall {
 	history := make([]api.FunctionCall, len(p.callHistory))
 	copy(history, p.callHistory)
 	return history
+}
+
+// FunctionRegistry interface implementation (delegated to embedded registry)
+
+func (p *TestingPortalImpl) Register(name string, fn api.Function) error {
+	return p.funcRegistry.Register(name, fn)
+}
+
+func (p *TestingPortalImpl) RegisterTyped(name string, fn api.Function) error {
+	return p.funcRegistry.RegisterTyped(name, fn)
+}
+
+func (p *TestingPortalImpl) Get(name string) (api.Function, bool) {
+	return p.funcRegistry.Get(name)
+}
+
+func (p *TestingPortalImpl) GetTyped(name string) (api.Function, bool) {
+	return p.funcRegistry.GetTyped(name)
+}
+
+func (p *TestingPortalImpl) ListWithSchemas() map[string]core.FunctionSchema {
+	return p.funcRegistry.ListWithSchemas()
+}
+
+func (p *TestingPortalImpl) Unregister(name string) error {
+	return p.funcRegistry.Unregister(name)
+}
+
+func (p *TestingPortalImpl) Validate(name string, input any) core.ValidationResult {
+	return p.funcRegistry.Validate(name, input)
+}
+
+func (p *TestingPortalImpl) Call(ctx context.Context, name string, params api.FunctionData) (api.FunctionData, error) {
+	return p.funcRegistry.Call(ctx, name, params)
+}
+
+func (p *TestingPortalImpl) CallTyped(ctx context.Context, name string, input any, output any) error {
+	return p.funcRegistry.CallTyped(ctx, name, input, output)
+}
+
+// ServiceRegistry interface implementation (delegated to embedded registry)
+
+func (p *TestingPortalImpl) RegisterService(name string, schema core.ServiceSchema) error {
+	return p.serviceRegistry.RegisterService(name, schema)
+}
+
+func (p *TestingPortalImpl) RegisterServiceWithInstance(name string, schema core.ServiceSchema, instance any) error {
+	return p.serviceRegistry.RegisterServiceWithInstance(name, schema, instance)
+}
+
+func (p *TestingPortalImpl) GetService(name string) (api.RegisteredService, bool) {
+	return p.serviceRegistry.GetService(name)
+}
+
+func (p *TestingPortalImpl) GetServiceMethod(serviceName, methodName string) (api.Function, bool) {
+	return p.serviceRegistry.GetServiceMethod(serviceName, methodName)
+}
+
+func (p *TestingPortalImpl) ListServices() []string {
+	return p.serviceRegistry.ListServices()
+}
+
+func (p *TestingPortalImpl) ListServiceMethods(serviceName string) []string {
+	return p.serviceRegistry.ListServiceMethods(serviceName)
+}
+
+func (p *TestingPortalImpl) ListAllMethods() []string {
+	return p.serviceRegistry.ListAllMethods()
+}
+
+func (p *TestingPortalImpl) UnregisterService(name string) error {
+	return p.serviceRegistry.UnregisterService(name)
+}
+
+func (p *TestingPortalImpl) CallServiceMethod(ctx context.Context, serviceName, methodName string, params map[string]any) (any, error) {
+	return p.serviceRegistry.CallServiceMethod(ctx, serviceName, methodName, params)
+}
+
+func (p *TestingPortalImpl) ValidateServiceMethod(serviceName, methodName string, input any) core.ValidationResult {
+	return p.serviceRegistry.ValidateServiceMethod(serviceName, methodName, input)
+}
+
+func (p *TestingPortalImpl) GetFunctionRegistry() api.FunctionRegistry {
+	return p.funcRegistry
+}
+
+// Base Registry interface implementation
+
+func (p *TestingPortalImpl) List() []string {
+	// Return combined list of functions and services
+	funcList := p.funcRegistry.List()
+	serviceList := p.serviceRegistry.List()
+
+	combined := make([]string, 0, len(funcList)+len(serviceList))
+	combined = append(combined, funcList...)
+	for _, service := range serviceList {
+		combined = append(combined, fmt.Sprintf("service:%s", service))
+	}
+
+	return combined
+}
+
+func (p *TestingPortalImpl) Count() int {
+	return p.funcRegistry.Count() + p.serviceRegistry.Count()
+}
+
+func (p *TestingPortalImpl) Exists(name string) bool {
+	return p.funcRegistry.Exists(name) || p.serviceRegistry.Exists(name)
+}
+
+func (p *TestingPortalImpl) Clear() error {
+	err1 := p.funcRegistry.Clear()
+	err2 := p.serviceRegistry.Clear()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 // Helper methods
@@ -216,12 +376,12 @@ func (p *TestingPortalImpl) wrapHandlerForRecording(name string, handler func(co
 		// Convert to FunctionData for recording
 		var inputData api.FunctionData
 		if input != nil {
-			inputData = NewFunctionData(input)
+			inputData = api.NewFunctionData(input)
 		}
 
 		var outputData api.FunctionData
 		if output != nil {
-			outputData = NewFunctionDataValue(output)
+			outputData = api.NewFunctionDataValue(output)
 		}
 
 		call := api.FunctionCall{

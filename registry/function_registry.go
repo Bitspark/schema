@@ -26,7 +26,7 @@ type FunctionMetadata struct {
 }
 
 // Ensure FunctionRegistry implements the API interface at compile time
-var _ api.Registry = (*FunctionRegistry)(nil)
+var _ api.FunctionRegistry = (*FunctionRegistry)(nil)
 
 // NewFunctionRegistry creates a new thread-safe function registry.
 func NewFunctionRegistry() *FunctionRegistry {

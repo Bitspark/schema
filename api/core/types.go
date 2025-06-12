@@ -44,6 +44,11 @@ const (
 	TypeParameter SchemaType = "parameter"
 	TypeFunction  SchemaType = "function"
 	TypeService   SchemaType = "service"
+
+	// Validation schema types for file system validation
+	TypeFileValidation      SchemaType = "file-validation"
+	TypeDirectoryValidation SchemaType = "directory-validation"
+	TypeNodeValidation      SchemaType = "node-validation"
 )
 
 // ValidationResult represents the result of validating a value against a schema.
@@ -67,8 +72,20 @@ type ValidationError struct {
 // SchemaMetadata contains descriptive information about a schema.
 type SchemaMetadata struct {
 	Name        string            `json:"name,omitempty"`
+	Version     string            `json:"version,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Examples    []any             `json:"examples,omitempty"`
 	Tags        []string          `json:"tags,omitempty"`
 	Properties  map[string]string `json:"properties,omitempty"`
+}
+
+func (m SchemaMetadata) ToMap() map[string]any {
+	return map[string]any{
+		"name":        m.Name,
+		"version":     m.Version,
+		"description": m.Description,
+		"examples":    m.Examples,
+		"tags":        m.Tags,
+		"properties":  m.Properties,
+	}
 }

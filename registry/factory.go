@@ -6,34 +6,55 @@ import (
 	"defs.dev/schema/api"
 )
 
-// Factory implements api.Factory for creating registries and other components.
-type Factory struct{}
+// DefaultFactory implements the api.Factory interface for creating registry components.
+type DefaultFactory struct{}
 
-// Ensure Factory implements the API interface at compile time
-var _ api.Factory = (*Factory)(nil)
+// Ensure DefaultFactory implements the Factory interface at compile time
+var _ api.Factory = (*DefaultFactory)(nil)
 
-// NewFactory creates a new factory instance.
-func NewFactory() *Factory {
-	return &Factory{}
+// NewDefaultFactory creates a new factory instance.
+func NewDefaultFactory() *DefaultFactory {
+	return &DefaultFactory{}
 }
 
-// CreateRegistry creates a new function registry.
-func (f *Factory) CreateRegistry() api.Registry {
+// CreateFunctionRegistry creates a new function registry instance.
+func (f *DefaultFactory) CreateFunctionRegistry() api.FunctionRegistry {
 	return NewFunctionRegistry()
 }
 
-// CreateConsumer creates a new function consumer.
-func (f *Factory) CreateConsumer() api.Consumer {
+// CreateServiceRegistry creates a new service registry instance.
+func (f *DefaultFactory) CreateServiceRegistry() api.ServiceRegistry {
+	return NewServiceRegistry()
+}
+
+// CreateConsumer creates a new consumer instance.
+func (f *DefaultFactory) CreateConsumer() api.Consumer {
 	return NewConsumer()
 }
 
-// Consumer implements api.Consumer for executing functions.
+// Global factory instance for convenience
+var DefaultRegistryFactory = NewDefaultFactory()
+
+// Convenience functions using the default factory
+func CreateFunctionRegistry() api.FunctionRegistry {
+	return DefaultRegistryFactory.CreateFunctionRegistry()
+}
+
+func CreateServiceRegistry() api.ServiceRegistry {
+	return DefaultRegistryFactory.CreateServiceRegistry()
+}
+
+func CreateConsumer() api.Consumer {
+	return DefaultRegistryFactory.CreateConsumer()
+}
+
+// Consumer is a simple implementation of api.Consumer
 type Consumer struct{}
 
 // Ensure Consumer implements the API interface at compile time
 var _ api.Consumer = (*Consumer)(nil)
 
-// NewConsumer creates a new consumer.
+// NewConsumer creates a new consumer instance.
 func NewConsumer() *Consumer {
 	return &Consumer{}
 }

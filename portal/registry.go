@@ -196,7 +196,9 @@ type PortalRegistryStats struct {
 
 // NewDefaultPortalRegistry creates a registry with common portals pre-registered
 func NewDefaultPortalRegistry() api.PortalRegistry {
-	registry := NewPortalRegistry().(*PortalRegistryImpl)
+	registry := &PortalRegistryImpl{
+		portals: make(map[string]api.FunctionPortal),
+	}
 
 	// Register common portals
 	localPortal := NewLocalPortal()
@@ -206,4 +208,61 @@ func NewDefaultPortalRegistry() api.PortalRegistry {
 	registry.RegisterTestingPortal(testingPortal)
 
 	return registry
+}
+
+// UnregisterPortal removes a portal
+func (r *PortalRegistryImpl) UnregisterPortal(schemes []string) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	for _, scheme := range schemes {
+		if _, exists := r.portals[scheme]; !exists {
+			return fmt.Errorf("scheme %s is not registered", scheme)
+		}
+		delete(r.portals, scheme)
+	}
+	return nil
+}
+
+// Base Registry interface implementation
+
+// List returns all registered scheme names
+func (r *PortalRegistryImpl) List() []string {
+	return r.GetSupportedSchemes()
+}
+
+// Count returns the number of registered portal schemes
+func (r *PortalRegistryImpl) Count() int {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	return len(r.portals)
+}
+
+// Exists checks if a scheme is registered
+func (r *PortalRegistryImpl) Exists(scheme string) bool {
+	return r.SupportsScheme(scheme)
+}
+
+// Clear removes all portal registrations
+func (r *PortalRegistryImpl) Clear() error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	// Close all portals first
+	var errors []error
+	for scheme, portal := range r.portals {
+		if err := portal.Close(); err != nil {
+			errors = append(errors, fmt.Errorf("failed to close portal for scheme %s: %w", scheme, err))
+		}
+	}
+
+	// Clear all portals
+	r.portals = make(map[string]api.FunctionPortal)
+
+	// Return combined errors if any
+	if len(errors) > 0 {
+		return fmt.Errorf("failed to close %d portals: %v", len(errors), errors)
+	}
+
+	return nil
 }

@@ -10,22 +10,25 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/registry"
 	"github.com/gorilla/websocket"
 )
 
 // WebSocketPortal implements api.WebSocketPortal
 type WebSocketPortal struct {
+	// Injected dependencies (shared registries)
+	funcRegistry    api.FunctionRegistry
+	serviceRegistry api.ServiceRegistry
+
+	// WebSocket-specific fields (transport concerns only)
 	config      *WebSocketConfig
-	functions   map[string]api.Function
-	services    map[string]api.Service
 	connections map[string]*websocket.Conn
 	server      *http.Server
 	mu          sync.RWMutex
 	upgrader    websocket.Upgrader
 }
 
-// WebSocketConfig holds configuration for the WebSocket portal
+// WebSocketConfig holds configuration for the WebSocket portal.
 type WebSocketConfig struct {
 	Host              string
 	Port              int
@@ -43,37 +46,43 @@ type WebSocketConfig struct {
 	MaxMessageSize    int64
 }
 
-// DefaultWebSocketConfig returns default configuration for WebSocket portal
+// DefaultWebSocketConfig returns default WebSocket configuration.
 func DefaultWebSocketConfig() *WebSocketConfig {
 	return &WebSocketConfig{
 		Host:              "localhost",
-		Port:              8080,
+		Port:              8081,
 		Path:              "/ws",
 		ReadBufferSize:    1024,
 		WriteBufferSize:   1024,
 		HandshakeTimeout:  10 * time.Second,
 		CheckOrigin:       func(r *http.Request) bool { return true },
-		Subprotocols:      []string{"defs-ws-v1"},
-		EnableCompression: true,
+		Subprotocols:      []string{},
+		EnableCompression: false,
 		WriteTimeout:      10 * time.Second,
 		ReadTimeout:       60 * time.Second,
 		PingPeriod:        54 * time.Second,
 		PongWait:          60 * time.Second,
-		MaxMessageSize:    512 * 1024, // 512KB
+		MaxMessageSize:    512,
 	}
 }
 
-// NewWebSocketPortal creates a new WebSocket portal
-func NewWebSocketPortal(config *WebSocketConfig) api.WebSocketPortal {
+// NewWebSocketPortal creates a new WebSocket portal with injected registries
+func NewWebSocketPortal(config *WebSocketConfig, funcRegistry api.FunctionRegistry, serviceRegistry api.ServiceRegistry) api.WebSocketPortal {
 	if config == nil {
 		config = DefaultWebSocketConfig()
 	}
+	if funcRegistry == nil {
+		funcRegistry = registry.NewFunctionRegistry()
+	}
+	if serviceRegistry == nil {
+		serviceRegistry = registry.NewServiceRegistry()
+	}
 
 	portal := &WebSocketPortal{
-		config:      config,
-		functions:   make(map[string]api.Function),
-		services:    make(map[string]api.Service),
-		connections: make(map[string]*websocket.Conn),
+		funcRegistry:    funcRegistry,
+		serviceRegistry: serviceRegistry,
+		config:          config,
+		connections:     make(map[string]*websocket.Conn),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:    config.ReadBufferSize,
 			WriteBufferSize:   config.WriteBufferSize,
@@ -89,20 +98,20 @@ func NewWebSocketPortal(config *WebSocketConfig) api.WebSocketPortal {
 
 // Apply registers a function and makes it available via WebSocket
 func (p *WebSocketPortal) Apply(ctx context.Context, function api.Function) (api.Address, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if function == nil {
 		return nil, fmt.Errorf("function cannot be nil")
 	}
 
 	name := function.Name()
-
 	if name == "" {
 		return nil, fmt.Errorf("function name cannot be empty")
 	}
 
-	p.functions[name] = function
+	// Register with shared function registry (no duplication!)
+	err := p.funcRegistry.Register(name, function)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register function: %w", err)
+	}
 
 	// Generate WebSocket address
 	address := p.generateAddress(name)
@@ -111,9 +120,6 @@ func (p *WebSocketPortal) Apply(ctx context.Context, function api.Function) (api
 
 // ApplyService registers a service and makes it available via WebSocket
 func (p *WebSocketPortal) ApplyService(ctx context.Context, service api.Service) (api.Address, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	if service == nil {
 		return nil, fmt.Errorf("service cannot be nil")
 	}
@@ -123,7 +129,11 @@ func (p *WebSocketPortal) ApplyService(ctx context.Context, service api.Service)
 		return nil, fmt.Errorf("service name cannot be empty")
 	}
 
-	p.services[name] = service
+	// Register with shared service registry (no duplication!)
+	err := p.serviceRegistry.RegisterService(name, service.Schema())
+	if err != nil {
+		return nil, fmt.Errorf("failed to register service: %w", err)
+	}
 
 	// Generate WebSocket service address
 	address := p.generateServiceAddress(name)
@@ -136,14 +146,13 @@ func (p *WebSocketPortal) ResolveFunction(ctx context.Context, address api.Addre
 		return nil, fmt.Errorf("address scheme must be 'ws' or 'wss': %s", address.String())
 	}
 
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-
 	// Extract function name from path
 	path := address.Path()
 	if len(path) > 1 && path[0] == '/' {
 		functionName := path[1:] // Remove leading '/'
-		if function, exists := p.functions[functionName]; exists {
+
+		// Look up in shared registry
+		if function, exists := p.funcRegistry.Get(functionName); exists {
 			return function, nil
 		}
 	}
@@ -157,15 +166,17 @@ func (p *WebSocketPortal) ResolveService(ctx context.Context, address api.Addres
 		return nil, fmt.Errorf("address scheme must be 'ws' or 'wss': %s", address.String())
 	}
 
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-
 	// Extract service name from path
 	path := address.Path()
 	if len(path) > 9 && path[:9] == "/service/" { // "/service/" prefix
 		serviceName := path[9:]
-		if service, exists := p.services[serviceName]; exists {
-			return service, nil
+
+		// Look up in shared registry
+		if registeredService, exists := p.serviceRegistry.GetService(serviceName); exists {
+			// TODO: Convert RegisteredService back to Service interface
+			// For now, return an error indicating incomplete implementation
+			_ = registeredService
+			return nil, fmt.Errorf("service resolution not fully implemented yet")
 		}
 	}
 
@@ -260,16 +271,26 @@ func (p *WebSocketPortal) BaseURL() string {
 	return fmt.Sprintf("%s://%s:%d", scheme, p.config.Host, p.config.Port)
 }
 
+// GetFunctionRegistry returns the underlying function registry
+func (p *WebSocketPortal) GetFunctionRegistry() api.FunctionRegistry {
+	return p.funcRegistry
+}
+
+// GetServiceRegistry returns the underlying service registry
+func (p *WebSocketPortal) GetServiceRegistry() api.ServiceRegistry {
+	return p.serviceRegistry
+}
+
 // WebSocket message types
 type WSMessage struct {
-	Type      string                 `json:"type"`
-	ID        string                 `json:"id,omitempty"`
-	Function  string                 `json:"function,omitempty"`
-	Service   string                 `json:"service,omitempty"`
-	Method    string                 `json:"method,omitempty"`
-	Data      map[string]interface{} `json:"data,omitempty"`
-	Error     string                 `json:"error,omitempty"`
-	Timestamp int64                  `json:"timestamp,omitempty"`
+	Type      string         `json:"type"`
+	ID        string         `json:"id,omitempty"`
+	Function  string         `json:"function,omitempty"`
+	Service   string         `json:"service,omitempty"`
+	Method    string         `json:"method,omitempty"`
+	Data      map[string]any `json:"data,omitempty"`
+	Error     string         `json:"error,omitempty"`
+	Timestamp int64          `json:"timestamp,omitempty"`
 }
 
 // WebSocket message types
@@ -386,83 +407,75 @@ func (p *WebSocketPortal) handleFunctionCall(msg WSMessage) *WSMessage {
 
 	// Handle function calls
 	if msg.Function != "" {
-		p.mu.RLock()
-		function, exists := p.functions[msg.Function]
-		p.mu.RUnlock()
+		// Look up in shared registry
+		if function, exists := p.funcRegistry.Get(msg.Function); exists {
+			// Call the function
+			data := api.NewFunctionData(msg.Data)
+			result, err := function.Call(ctx, data)
+			if err != nil {
+				response.Type = WSMsgTypeError
+				response.Error = err.Error()
+				return response
+			}
 
-		if !exists {
-			response.Type = WSMsgTypeError
-			response.Error = fmt.Sprintf("function not found: %s", msg.Function)
+			response.Data = map[string]any{
+				"result": result.Value(),
+			}
 			return response
 		}
-
-		// Call the function
-		data := NewFunctionData(msg.Data)
-		result, err := function.Call(ctx, data)
-		if err != nil {
-			response.Type = WSMsgTypeError
-			response.Error = err.Error()
-			return response
-		}
-
-		response.Data = map[string]interface{}{
-			"result": result.Value(),
-		}
-		return response
 	}
 
 	// Handle service method calls
 	if msg.Service != "" && msg.Method != "" {
-		p.mu.RLock()
-		svc, exists := p.services[msg.Service]
-		p.mu.RUnlock()
-
-		if !exists {
-			response.Type = WSMsgTypeError
-			response.Error = fmt.Sprintf("service not found: %s", msg.Service)
-			return response
-		}
-
-		// Find method by name
-		var method core.ServiceMethodSchema
-		var methodExists bool
-		for _, m := range svc.Schema().Methods() {
-			if m.Name() == msg.Method {
-				method = m
-				methodExists = true
-				break
+		// Look up in shared registry
+		if _, exists := p.serviceRegistry.GetService(msg.Service); exists {
+			// Find method by name - using service methods
+			var methodFound bool
+			for _, methodName := range p.serviceRegistry.ListServiceMethods(msg.Service) {
+				if methodName == msg.Method {
+					methodFound = true
+					break
+				}
 			}
-		}
 
-		if !methodExists {
-			response.Type = WSMsgTypeError
-			response.Error = fmt.Sprintf("method not found: %s.%s", msg.Service, msg.Method)
+			if !methodFound {
+				response.Type = WSMsgTypeError
+				response.Error = fmt.Sprintf("method not found: %s.%s", msg.Service, msg.Method)
+				return response
+			}
+
+			// Call service method through registry
+			result, err := p.serviceRegistry.CallServiceMethod(context.Background(), msg.Service, msg.Method, msg.Data)
+			if err != nil {
+				response.Type = WSMsgTypeError
+				response.Error = err.Error()
+				return response
+			}
+
+			response.Type = WSMsgTypeResponse
+			response.Data = map[string]any{
+				"result": result,
+			}
 			return response
 		}
-
-		// Note: ServiceMethodSchema doesn't implement api.Function directly
-		// We would need to create a wrapper or different calling mechanism
-		// For now, this is a placeholder that shows the structure
-		_ = method // Mark as used for now
-		response.Type = WSMsgTypeError
-		response.Error = "service method calling not yet implemented"
-		return response
 	}
 
 	response.Type = WSMsgTypeError
-	response.Error = "either function or service+method must be specified"
+	response.Error = "invalid message format"
 	return response
 }
 
 // handleHealth handles health check requests
 func (p *WebSocketPortal) handleHealth(w http.ResponseWriter, r *http.Request) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"status":      "healthy",
 		"timestamp":   time.Now().Unix(),
-		"functions":   len(p.functions),
-		"services":    len(p.services),
+		"functions":   p.funcRegistry.Count(),
+		"services":    p.serviceRegistry.Count(),
 		"connections": len(p.connections),
 	})
 }
@@ -551,10 +564,10 @@ func (p *WebSocketPortal) CallFunction(ctx context.Context, address api.Address,
 
 	// Extract result
 	if result, ok := response.Data["result"]; ok {
-		return NewFunctionDataValue(result), nil
+		return api.NewFunctionDataValue(result), nil
 	}
 
-	return NewFunctionDataValue(response.Data), nil
+	return api.NewFunctionDataValue(response.Data), nil
 }
 
 // Stats returns statistics about the WebSocket portal
@@ -563,8 +576,8 @@ func (p *WebSocketPortal) Stats() WebSocketPortalStats {
 	defer p.mu.RUnlock()
 
 	return WebSocketPortalStats{
-		FunctionCount:   len(p.functions),
-		ServiceCount:    len(p.services),
+		FunctionCount:   p.funcRegistry.Count(),
+		ServiceCount:    p.serviceRegistry.Count(),
 		ConnectionCount: len(p.connections),
 		IsRunning:       p.server != nil,
 		Config:          *p.config,
