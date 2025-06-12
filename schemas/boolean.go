@@ -10,6 +10,7 @@ import (
 // BooleanSchemaConfig holds the configuration for building a BooleanSchema.
 type BooleanSchemaConfig struct {
 	Metadata        core.SchemaMetadata
+	Annotations     []core.Annotation
 	DefaultVal      *bool
 	AllowStringConv bool // Allow conversion from string ("true", "false", "1", "0")
 	CaseInsensitive bool // Case-insensitive string conversion
@@ -39,6 +40,16 @@ func (b *BooleanSchema) Type() core.SchemaType {
 // Metadata returns the schema metadata.
 func (b *BooleanSchema) Metadata() core.SchemaMetadata {
 	return b.config.Metadata
+}
+
+// Annotations returns the annotations of the schema.
+func (b *BooleanSchema) Annotations() []core.Annotation {
+	if b.config.Annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(b.config.Annotations))
+	copy(result, b.config.Annotations)
+	return result
 }
 
 // Clone returns a deep copy of the BooleanSchema.

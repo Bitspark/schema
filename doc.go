@@ -27,4 +27,5 @@
 //
 // The core package is designed to eventually replace the legacy schema package
 // while maintaining full compatibility through the shared API interfaces.
-package schema
+// package schema
+package main

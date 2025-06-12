@@ -9,10 +9,11 @@ import (
 
 // NumberSchemaConfig holds the configuration for building a NumberSchema.
 type NumberSchemaConfig struct {
-	Metadata   core.SchemaMetadata
-	Minimum    *float64
-	Maximum    *float64
-	DefaultVal *float64
+	Metadata    core.SchemaMetadata
+	Annotations []core.Annotation
+	Minimum     *float64
+	Maximum     *float64
+	DefaultVal  *float64
 }
 
 // NumberSchema is a clean, API-first implementation of number schema validation.
@@ -39,6 +40,16 @@ func (n *NumberSchema) Type() core.SchemaType {
 // Metadata returns the schema metadata.
 func (n *NumberSchema) Metadata() core.SchemaMetadata {
 	return n.config.Metadata
+}
+
+// Annotations returns the annotations of the schema.
+func (n *NumberSchema) Annotations() []core.Annotation {
+	if n.config.Annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(n.config.Annotations))
+	copy(result, n.config.Annotations)
+	return result
 }
 
 // Clone returns a deep copy of the NumberSchema.

@@ -9,16 +9,26 @@ import (
 
 // IntegerSchemaConfig holds the configuration for building an IntegerSchema.
 type IntegerSchemaConfig struct {
-	Metadata   core.SchemaMetadata
-	Minimum    *int64
-	Maximum    *int64
-	DefaultVal *int64
+	Metadata    core.SchemaMetadata
+	Annotations []core.Annotation
+	Minimum     *int64
+	Maximum     *int64
+	DefaultVal  *int64
 }
 
 // IntegerSchema is a clean, API-first implementation of integer schema validation.
 // It implements core.IntegerSchema interface and provides immutable operations.
 type IntegerSchema struct {
 	config IntegerSchemaConfig
+}
+
+func (i *IntegerSchema) Annotations() []core.Annotation {
+	if i.config.Annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(i.config.Annotations))
+	copy(result, i.config.Annotations)
+	return result
 }
 
 // Ensure IntegerSchema implements the API interfaces at compile time

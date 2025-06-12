@@ -34,7 +34,7 @@ func (tm *TypeMapper) MapSchemaType(schemaType core.SchemaType) string {
 		return "boolean"
 	case core.TypeArray:
 		return "unknown[]" // Will be refined by the generator
-	case core.TypeObject:
+	case core.TypeStructure:
 		return "object" // Will be refined by the generator
 	case core.TypeNull:
 		return "null"

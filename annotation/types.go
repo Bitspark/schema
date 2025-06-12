@@ -4,17 +4,18 @@ package annotation
 
 import (
 	"defs.dev/schema/api"
+	"defs.dev/schema/api/core"
 )
 
 // Re-export the interfaces from api for convenience
-type Annotation = api.Annotation
+type Annotation = core.Annotation
 type AnnotationRegistry = api.AnnotationRegistry
-type AnnotationType = api.AnnotationType
-type AnnotationMetadata = api.AnnotationMetadata
-type AnnotationValidationResult = api.AnnotationValidationResult
-type AnnotationValidationError = api.AnnotationValidationError
-type AnnotationValidationWarning = api.AnnotationValidationWarning
-type AnnotationValidationSuggestion = api.AnnotationValidationSuggestion
+type AnnotationType = core.AnnotationType
+type AnnotationMetadata = core.AnnotationMetadata
+type AnnotationValidationResult = core.AnnotationValidationResult
+type AnnotationValidationError = core.AnnotationValidationError
+type AnnotationValidationWarning = core.AnnotationValidationWarning
+type AnnotationValidationSuggestion = core.AnnotationValidationSuggestion
 type AnnotationTypeOption = api.AnnotationTypeOption
 type AnnotationTypeConfig = api.AnnotationTypeConfig
 

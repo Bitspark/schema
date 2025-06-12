@@ -31,6 +31,9 @@ func (s *mockSchema) Metadata() core.SchemaMetadata {
 		Examples:    []any{s.example},
 	}
 }
+func (s *mockSchema) Annotations() []core.Annotation {
+	return []core.Annotation{}
+}
 func (s *mockSchema) GenerateExample() any { return s.example }
 func (s *mockSchema) Clone() core.Schema   { return s }
 
@@ -44,7 +47,7 @@ func (s *mockSchema) Accept(visitor core.SchemaVisitor) error {
 		return visitor.VisitBoolean(&mockBooleanSchema{mockSchema: s})
 	case core.TypeArray:
 		return visitor.VisitArray(&mockArraySchema{mockSchema: s})
-	case core.TypeObject:
+	case core.TypeStructure:
 		return visitor.VisitObject(&mockObjectSchema{mockSchema: s})
 	default:
 		return nil
@@ -390,7 +393,7 @@ func TestGenerator_VisitObject(t *testing.T) {
 
 	schema := &mockObjectSchema{
 		mockSchema: &mockSchema{
-			schemaType:  core.TypeObject,
+			schemaType:  core.TypeStructure,
 			title:       "Person",
 			description: "A person object",
 		},

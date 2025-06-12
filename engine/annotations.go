@@ -29,7 +29,7 @@ func (a *SimpleAnnotationSchema) ValidateAsAnnotation() error {
 	case core.TypeArray:
 		// Arrays are allowed - we trust the builder to create valid item schemas
 		return nil
-	case core.TypeObject:
+	case core.TypeStructure:
 		// Objects are allowed - we trust the builder to create valid property schemas
 		return nil
 	case core.TypeFunction, core.TypeService:

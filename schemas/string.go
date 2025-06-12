@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"regexp"
 
-	"defs.dev/schema/api"
 	"defs.dev/schema/api/core"
 )
 
 // ValidatorRegistry interface to avoid import cycle
 type ValidatorRegistry interface {
-	ValidateWithAnnotations(value any, annotations []api.Annotation) ValidationResult
+	ValidateWithAnnotations(value any, annotations []core.Annotation) ValidationResult
 }
 
 // ValidationResult represents the result of validator-based validation.
@@ -61,7 +60,7 @@ type StringSchemaConfig struct {
 	Format            string
 	EnumValues        []string
 	DefaultVal        *string
-	Annotations       []api.Annotation
+	Annotations       []core.Annotation
 	ValidatorRegistry ValidatorRegistry
 }
 
@@ -114,7 +113,7 @@ func (s *StringSchema) Clone() core.Schema {
 
 	// Deep copy annotations
 	if s.config.Annotations != nil {
-		newConfig.Annotations = make([]api.Annotation, len(s.config.Annotations))
+		newConfig.Annotations = make([]core.Annotation, len(s.config.Annotations))
 		copy(newConfig.Annotations, s.config.Annotations)
 	}
 
@@ -160,11 +159,11 @@ func (s *StringSchema) DefaultValue() *string {
 }
 
 // Annotations returns the annotations for this schema.
-func (s *StringSchema) Annotations() []api.Annotation {
+func (s *StringSchema) Annotations() []core.Annotation {
 	if s.config.Annotations == nil {
 		return nil
 	}
-	result := make([]api.Annotation, len(s.config.Annotations))
+	result := make([]core.Annotation, len(s.config.Annotations))
 	copy(result, s.config.Annotations)
 	return result
 }

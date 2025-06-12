@@ -37,13 +37,13 @@ func (s *ServiceMethodSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
 }
 
+func (s *ServiceMethodSchema) Annotations() []core.Annotation {
+	return []core.Annotation{}
+}
+
 func (s *ServiceMethodSchema) Validate(value any) core.ValidationResult {
 	// Delegate validation to the underlying function schema
 	return s.function.Validate(value)
-}
-
-func (s *ServiceMethodSchema) GenerateExample() any {
-	return s.function.GenerateExample()
 }
 
 func (s *ServiceMethodSchema) Clone() core.Schema {
@@ -99,6 +99,11 @@ func (s *ServiceSchema) Type() core.SchemaType {
 
 func (s *ServiceSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
+}
+
+// Annotations returns the annotations of the schema.
+func (s *ServiceSchema) Annotations() []core.Annotation {
+	return []core.Annotation{}
 }
 
 func (s *ServiceSchema) Validate(value any) core.ValidationResult {
@@ -239,17 +244,6 @@ func (s *ServiceSchema) validateServiceStruct(instance any) core.ValidationResul
 			"validated_type": "service_struct",
 		},
 	}
-}
-
-func (s *ServiceSchema) GenerateExample() any {
-	example := make(map[string]any)
-
-	// Generate examples for each method
-	for _, method := range s.methods {
-		example[method.name] = method.GenerateExample()
-	}
-
-	return example
 }
 
 func (s *ServiceSchema) Clone() core.Schema {

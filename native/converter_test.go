@@ -25,7 +25,7 @@ func TestDefaultTypeConverter_BasicTypes(t *testing.T) {
 		{"float64", 3.14, core.TypeNumber},
 		{"bool", true, core.TypeBoolean},
 		{"slice", []string{"a", "b"}, core.TypeArray},
-		{"map", map[string]int{"key": 1}, core.TypeObject},
+		{"map", map[string]int{"key": 1}, core.TypeStructure},
 	}
 
 	for _, tt := range tests {
@@ -62,7 +62,7 @@ func TestDefaultTypeConverter_StructConversion(t *testing.T) {
 		t.Fatalf("FromType() error = %v", err)
 	}
 
-	if schema.Type() != core.TypeObject {
+	if schema.Type() != core.TypeStructure {
 		t.Errorf("FromType() type = %v, want object", schema.Type())
 	}
 

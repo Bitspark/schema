@@ -10,6 +10,7 @@ import (
 // ArraySchemaConfig holds the configuration for building an ArraySchema.
 type ArraySchemaConfig struct {
 	Metadata       core.SchemaMetadata
+	Annotations    []core.Annotation
 	ItemSchema     core.Schema
 	MinItems       *int
 	MaxItems       *int
@@ -42,6 +43,16 @@ func (a *ArraySchema) Type() core.SchemaType {
 // Metadata returns the schema metadata.
 func (a *ArraySchema) Metadata() core.SchemaMetadata {
 	return a.config.Metadata
+}
+
+// Annotations returns the annotations of the schema.
+func (a *ArraySchema) Annotations() []core.Annotation {
+	if a.config.Annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(a.config.Annotations))
+	copy(result, a.config.Annotations)
+	return result
 }
 
 // Clone returns a deep copy of the ArraySchema.
@@ -266,72 +277,6 @@ func (a *ArraySchema) getUniqueKey(item any) any {
 		// might use content-based hashing
 		return fmt.Sprintf("%+v", v)
 	}
-}
-
-// GenerateExample generates an example value for the array schema.
-func (a *ArraySchema) GenerateExample() any {
-	// Use provided examples if available
-	if len(a.config.Metadata.Examples) > 0 {
-		return a.config.Metadata.Examples[0]
-	}
-
-	// Use default value if set
-	if a.config.DefaultVal != nil {
-		return a.config.DefaultVal
-	}
-
-	// Generate based on constraints
-	minLength := 1
-	if a.config.MinItems != nil && *a.config.MinItems > 0 {
-		minLength = *a.config.MinItems
-	}
-
-	maxLength := 3
-	if a.config.MaxItems != nil {
-		maxLength = *a.config.MaxItems
-		if maxLength > 5 {
-			maxLength = 5 // Cap for reasonable examples
-		}
-	}
-
-	// Choose length between min and max
-	length := minLength
-	if maxLength > minLength {
-		length = (minLength + maxLength) / 2
-	}
-
-	var result []any
-
-	// Generate items using item schema if available
-	if a.config.ItemSchema != nil {
-		for i := 0; i < length; i++ {
-			example := a.config.ItemSchema.GenerateExample()
-
-			// Ensure uniqueness if required
-			if a.config.UniqueItems {
-				// Simple uniqueness for examples - just modify slightly
-				if i > 0 {
-					switch v := example.(type) {
-					case string:
-						example = fmt.Sprintf("%s_%d", v, i)
-					case int64:
-						example = v + int64(i)
-					case float64:
-						example = v + float64(i)
-					}
-				}
-			}
-
-			result = append(result, example)
-		}
-	} else {
-		// Generic examples without item schema
-		for i := 0; i < length; i++ {
-			result = append(result, fmt.Sprintf("item_%d", i+1))
-		}
-	}
-
-	return result
 }
 
 // Accept implements the visitor pattern for schema traversal.

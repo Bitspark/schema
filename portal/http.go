@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -477,6 +478,14 @@ func (h *HTTPPortal) handleFunctionCall(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate output if schema is available
+	if hasSchema {
+		if err := h.validateOutput(output, schema); err != nil {
+			http.Error(w, fmt.Sprintf("Output validation error: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
@@ -519,7 +528,35 @@ func (h *HTTPPortal) extractServiceName(path string) string {
 }
 
 func (h *HTTPPortal) validateInput(input api.FunctionData, schema core.FunctionSchema) error {
-	// Basic validation - would be enhanced with proper schema validation
+	// Validate input using the function schema
+	result := schema.Validate(input.Value())
+	if !result.Valid {
+		// Convert validation errors to a single error message
+		var errorMessages []string
+		for _, err := range result.Errors {
+			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+		}
+		return fmt.Errorf("input validation failed: %s", strings.Join(errorMessages, "; "))
+	}
+	return nil
+}
+
+func (h *HTTPPortal) validateOutput(output api.FunctionData, schema core.FunctionSchema) error {
+	// Cast to concrete type to access ValidateOutput method
+	if concreteSchema, ok := schema.(interface {
+		ValidateOutput(any) core.ValidationResult
+	}); ok {
+		result := concreteSchema.ValidateOutput(output.Value())
+		if !result.Valid {
+			// Convert validation errors to a single error message
+			var errorMessages []string
+			for _, err := range result.Errors {
+				errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+			}
+			return fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
+		}
+	}
+	// If schema doesn't support output validation, skip it
 	return nil
 }
 

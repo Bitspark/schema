@@ -202,6 +202,7 @@ func (args ArgSchemas) Get(name string) (*ArgSchema, bool) {
 // structural validation and runtime type checking.
 type FunctionSchema struct {
 	metadata          core.SchemaMetadata
+	annotations       []core.Annotation
 	inputs            ArgSchemas
 	outputs           ArgSchemas
 	errors            core.Schema
@@ -240,6 +241,15 @@ func (s *FunctionSchema) Type() core.SchemaType {
 
 func (s *FunctionSchema) Metadata() core.SchemaMetadata {
 	return s.metadata
+}
+
+func (s *FunctionSchema) Annotations() []core.Annotation {
+	if s.annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(s.annotations))
+	copy(result, s.annotations)
+	return result
 }
 
 func (s *FunctionSchema) Validate(value any) core.ValidationResult {
@@ -454,32 +464,6 @@ func (s *FunctionSchema) convertToInputMap(value any) (map[string]any, error) {
 	}
 
 	return result, nil
-}
-
-func (s *FunctionSchema) GenerateExample() any {
-	// If we have explicit examples, return the first one
-	if len(s.examples) > 0 {
-		return s.examples[0]
-	}
-
-	// Generate example from input schemas
-	example := make(map[string]any)
-	for name, inputSchema := range s.inputs.ToMap() {
-		example[name] = inputSchema.GenerateExample()
-	}
-
-	// Ensure all required inputs are present
-	for _, required := range s.inputs.RequiredNames() {
-		if _, exists := example[required]; !exists {
-			if inputSchema, exists := s.inputs.ToMap()[required]; exists {
-				example[required] = inputSchema.GenerateExample()
-			} else {
-				example[required] = fmt.Sprintf("example_%s", required)
-			}
-		}
-	}
-
-	return example
 }
 
 func (s *FunctionSchema) Clone() core.Schema {

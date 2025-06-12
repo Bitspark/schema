@@ -40,7 +40,7 @@ func (tm *TypeMapper) MapSchemaType(schemaType core.SchemaType) string {
 		return "bool"
 	case core.TypeArray:
 		return "[]any" // Will be specialized based on item type
-	case core.TypeObject:
+	case core.TypeStructure:
 		return "any" // Will be specialized to struct
 	default:
 		return "any"

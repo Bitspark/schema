@@ -197,7 +197,7 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 		}
 		if !found {
 			t.Error("Expected 'userData' input to exist")
-		} else if userDataArg.Schema().Type() != core.TypeObject {
+		} else if userDataArg.Schema().Type() != core.TypeStructure {
 			t.Errorf("Expected 'userData' to be object type, got %s", userDataArg.Schema().Type())
 		}
 	})

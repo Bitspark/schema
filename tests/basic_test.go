@@ -222,8 +222,8 @@ func TestGoModSchema(t *testing.T) {
 	}
 
 	// Test basic properties
-	if goModSchema.Type() != core.TypeObject {
-		t.Errorf("Expected type %s, got %s", core.TypeObject, goModSchema.Type())
+	if goModSchema.Type() != core.TypeStructure {
+		t.Errorf("Expected type %s, got %s", core.TypeStructure, goModSchema.Type())
 	}
 
 	if goModSchema.Metadata().Description != "" {

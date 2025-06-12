@@ -364,8 +364,8 @@ func TestObjectSchemaIntrospection(t *testing.T) {
 		Build()
 
 	// Test type
-	if schema.Type() != core.TypeObject {
-		t.Errorf("Expected type %s, got %s", core.TypeObject, schema.Type())
+	if schema.Type() != core.TypeStructure {
+		t.Errorf("Expected type %s, got %s", core.TypeStructure, schema.Type())
 	}
 
 	// Test metadata
@@ -449,31 +449,6 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 	}
 }
 
-func TestObjectSchemaExampleGeneration(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Example("John").Build()
-	numberSchema := builders.NewNumberSchema().Example(30.0).Build()
-
-	schema := builders.NewObjectSchema().
-		Property("name", stringSchema).
-		Property("age", numberSchema).
-		Required("name").
-		Build()
-
-	example := schema.GenerateExample()
-	exampleObj, ok := example.(map[string]any)
-	if !ok {
-		t.Errorf("Expected generated example to be object, got %T", example)
-	}
-
-	// Should include required properties
-	if _, ok := exampleObj["name"]; !ok {
-		t.Error("Expected example to include required 'name' property")
-	}
-
-	// May or may not include optional properties (implementation dependent)
-	t.Logf("Generated example: %v", exampleObj)
-}
-
 func TestObjectSchemaBuilder(t *testing.T) {
 	t.Run("Immutability", func(t *testing.T) {
 		builder1 := builders.NewObjectSchema().Property("name", builders.NewStringSchema().Build())
@@ -538,7 +513,7 @@ func TestObjectSchemaVisitor(t *testing.T) {
 
 	visitor := &testObjectVisitor{
 		visitObject: func(s core.ObjectSchema) error {
-			if s.Type() != core.TypeObject {
+			if s.Type() != core.TypeStructure {
 				t.Error("Expected visitor to receive object schema")
 			}
 			return nil

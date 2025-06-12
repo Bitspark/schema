@@ -36,7 +36,7 @@ func (r *registryImpl) RegisterType(name string, schema core.Schema, opts ...Ann
 
 	// Apply options to build configuration
 	config := &AnnotationTypeConfig{
-		Metadata: AnnotationMetadata{
+		Metadata: core.AnnotationMetadata{
 			Name: name,
 		},
 	}
@@ -87,7 +87,7 @@ func (r *registryImpl) HasType(name string) bool {
 // Instance management implementation
 
 func (r *registryImpl) Create(name string, value any) (Annotation, error) {
-	return r.CreateWithMetadata(name, value, AnnotationMetadata{})
+	return r.CreateWithMetadata(name, value, core.AnnotationMetadata{})
 }
 
 func (r *registryImpl) CreateWithMetadata(name string, value any, metadata AnnotationMetadata) (Annotation, error) {

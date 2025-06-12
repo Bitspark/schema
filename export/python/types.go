@@ -44,7 +44,7 @@ func (tm *TypeMapper) MapSchemaType(schemaType core.SchemaType) string {
 			return "list"
 		}
 		return "List"
-	case core.TypeObject:
+	case core.TypeStructure:
 		if tm.options.TypeHintStyle == "builtin" && tm.isPython39Plus() {
 			return "dict"
 		}

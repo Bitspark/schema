@@ -22,7 +22,7 @@ func TestTypeMapper_MapSchemaType(t *testing.T) {
 		{core.TypeNumber, "float64"},
 		{core.TypeBoolean, "bool"},
 		{core.TypeArray, "[]any"},
-		{core.TypeObject, "any"},
+		{core.TypeStructure, "any"},
 	}
 
 	for _, tt := range tests {

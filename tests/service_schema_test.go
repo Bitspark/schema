@@ -492,7 +492,7 @@ func TestServiceSchemaAdvancedFeatures(t *testing.T) {
 			t.Error("Expected error schema to be defined for risky operation")
 		}
 
-		if funcSchema.Errors().Type() != core.TypeObject {
+		if funcSchema.Errors().Type() != core.TypeStructure {
 			t.Errorf("Expected error schema to be object type, got %s", funcSchema.Errors().Type())
 		}
 	})

@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"defs.dev/schema/api"
@@ -172,7 +173,42 @@ func (r *FunctionRegistry) Call(ctx context.Context, name string, params api.Fun
 		return nil, fmt.Errorf("function %s not found", name)
 	}
 
-	return fn.Call(ctx, params)
+	// Validate input parameters
+	schema := fn.Schema()
+	if schema != nil {
+		result := schema.Validate(params.Value())
+		if !result.Valid {
+			var errorMessages []string
+			for _, err := range result.Errors {
+				errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+			}
+			return nil, fmt.Errorf("input validation failed: %s", strings.Join(errorMessages, "; "))
+		}
+	}
+
+	// Execute function
+	output, err := fn.Call(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate output if schema supports it
+	if schema != nil {
+		if concreteSchema, ok := schema.(interface {
+			ValidateOutput(any) core.ValidationResult
+		}); ok {
+			result := concreteSchema.ValidateOutput(output.Value())
+			if !result.Valid {
+				var errorMessages []string
+				for _, err := range result.Errors {
+					errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", err.Path, err.Message))
+				}
+				return nil, fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
+			}
+		}
+	}
+
+	return output, nil
 }
 
 // CallTyped executes a typed function with type-safe input and output (deprecated).

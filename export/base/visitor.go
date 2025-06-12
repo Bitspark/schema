@@ -57,7 +57,7 @@ func (v *BaseVisitor) VisitArray(schema core.ArraySchema) error {
 // VisitObject provides a default implementation for object schema visitation.
 // Concrete generators should override this method.
 func (v *BaseVisitor) VisitObject(schema core.ObjectSchema) error {
-	return NewUnsupportedSchemaError(v.GeneratorName, core.TypeObject, "object schema not implemented")
+	return NewUnsupportedSchemaError(v.GeneratorName, core.TypeStructure, "object schema not implemented")
 }
 
 // VisitFunction provides a default implementation for function schema visitation.
@@ -200,7 +200,7 @@ func (v *CountingVisitor) VisitArray(schema core.ArraySchema) error {
 }
 
 func (v *CountingVisitor) VisitObject(schema core.ObjectSchema) error {
-	v.count(core.TypeObject)
+	v.count(core.TypeStructure)
 	return nil
 }
 

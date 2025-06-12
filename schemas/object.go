@@ -3,7 +3,6 @@ package schemas
 import (
 	"fmt"
 	"reflect"
-	"sort"
 
 	"defs.dev/schema/api/core"
 )
@@ -11,6 +10,7 @@ import (
 // ObjectSchemaConfig holds the configuration for building an ObjectSchema.
 type ObjectSchemaConfig struct {
 	Metadata             core.SchemaMetadata
+	Annotations          []core.Annotation
 	Properties           map[string]core.Schema
 	Required             []string
 	AdditionalProperties bool
@@ -39,12 +39,22 @@ func NewObjectSchema(config ObjectSchemaConfig) *ObjectSchema {
 
 // Type returns the schema type constant.
 func (o *ObjectSchema) Type() core.SchemaType {
-	return core.TypeObject
+	return core.TypeStructure
 }
 
 // Metadata returns the schema metadata.
 func (o *ObjectSchema) Metadata() core.SchemaMetadata {
 	return o.config.Metadata
+}
+
+// Annotations returns the annotations for this schema.
+func (o *ObjectSchema) Annotations() []core.Annotation {
+	if o.config.Annotations == nil {
+		return nil
+	}
+	result := make([]core.Annotation, len(o.config.Annotations))
+	copy(result, o.config.Annotations)
+	return result
 }
 
 // Clone returns a deep copy of the ObjectSchema.
@@ -409,64 +419,6 @@ func (o *ObjectSchema) matchesPattern(propName, pattern string) bool {
 	}
 	// Could add regex matching here: regexp.MustCompile(pattern).MatchString(propName)
 	return propName == pattern
-}
-
-// GenerateExample generates an example value for the object schema.
-func (o *ObjectSchema) GenerateExample() any {
-	// Use provided examples if available
-	if len(o.config.Metadata.Examples) > 0 {
-		return o.config.Metadata.Examples[0]
-	}
-
-	// Use default value if set
-	if o.config.DefaultVal != nil {
-		return o.config.DefaultVal
-	}
-
-	// Generate based on properties
-	result := make(map[string]any)
-
-	// Add required properties first
-	for _, reqProp := range o.config.Required {
-		if propSchema, exists := o.config.Properties[reqProp]; exists {
-			result[reqProp] = propSchema.GenerateExample()
-		} else {
-			// Generate a basic example for unknown required property
-			result[reqProp] = fmt.Sprintf("example_%s", reqProp)
-		}
-	}
-
-	// Add some optional properties (limit to reasonable number)
-	optionalCount := 0
-	maxOptional := 3
-
-	// Sort property names for consistent example generation
-	var propNames []string
-	for propName := range o.config.Properties {
-		propNames = append(propNames, propName)
-	}
-	sort.Strings(propNames)
-
-	for _, propName := range propNames {
-		// Skip if already added as required
-		if _, exists := result[propName]; exists {
-			continue
-		}
-
-		// Add some optional properties but not all
-		if optionalCount < maxOptional {
-			propSchema := o.config.Properties[propName]
-			result[propName] = propSchema.GenerateExample()
-			optionalCount++
-		}
-	}
-
-	// If no properties defined, create a simple example
-	if len(result) == 0 {
-		result["example_property"] = "example_value"
-	}
-
-	return result
 }
 
 // Accept implements the visitor pattern for schema traversal.

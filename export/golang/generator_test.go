@@ -28,6 +28,10 @@ func (m *mockSchema) Metadata() core.SchemaMetadata {
 	}
 }
 
+func (m *mockSchema) Annotations() []core.Annotation {
+	return []core.Annotation{}
+}
+
 func (m *mockSchema) Validate(value any) core.ValidationResult {
 	return core.ValidationResult{Valid: true}
 }
