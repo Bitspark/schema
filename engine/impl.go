@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"defs.dev/schema/api/core"
+	"defs.dev/schema/validation"
 )
 
 // schemaEngineImpl is the concrete implementation of SchemaEngine
@@ -313,10 +314,33 @@ func (e *schemaEngineImpl) ValidateAnnotation(name string, value any) error {
 		return nil // Allow unknown annotations in non-strict mode
 	}
 
-	// TODO: Use consumer-driven validation for annotation values
-	// For now, skip validation to avoid breaking existing functionality
-	// annotSchema will be used when we implement consumer-driven validation
-	_ = annotSchema
+	// Use consumer-driven validation for annotation values
+	// Since AnnotationSchema embeds core.Schema, we can use it directly
+	// But we need to access the underlying schema for proper validation
+	var schemaToValidate core.Schema = annotSchema
+
+	// If it's a SimpleAnnotationSchema wrapper, get the underlying schema
+	if simpleAnnot, ok := annotSchema.(*SimpleAnnotationSchema); ok {
+		schemaToValidate = simpleAnnot.Schema
+	}
+
+	result := validation.ValidateValue(schemaToValidate, value)
+	if !result.Valid && len(result.Errors) > 0 {
+		// Return the first validation issue as an error
+		issue := result.Errors[0]
+		return EngineError{
+			Type:    ErrorTypeValidationFailed,
+			Message: fmt.Sprintf("annotation validation failed for %s: %s", name, issue.Message),
+			Details: map[string]any{
+				"annotation_name": name,
+				"value":           value,
+				"path":            issue.Path,
+				"code":            issue.Code,
+				"all_errors":      result.Errors,
+			},
+		}
+	}
+
 	return nil
 }
 

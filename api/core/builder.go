@@ -76,7 +76,6 @@ type BooleanSchemaBuilder interface {
 
 	Example(example bool) BooleanSchemaBuilder
 	Default(value bool) BooleanSchemaBuilder
-	AllowStringConversion() BooleanSchemaBuilder
 	CaseInsensitive() BooleanSchemaBuilder
 
 	// Common boolean helpers

@@ -6,6 +6,7 @@ import (
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/builders"
 	"defs.dev/schema/schemas"
+	"defs.dev/schema/validation"
 )
 
 func TestFunctionSchemaBuilder(t *testing.T) {
@@ -218,7 +219,7 @@ func TestFunctionSchemaValidation(t *testing.T) {
 			"age":  30,
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass, got errors: %v", result.Errors)
 		}
@@ -229,7 +230,7 @@ func TestFunctionSchemaValidation(t *testing.T) {
 			"age": 30,
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if result.Valid {
 			t.Error("Expected validation to fail for missing required input 'name'")
 		}
@@ -240,7 +241,7 @@ func TestFunctionSchemaValidation(t *testing.T) {
 		} else {
 			found := false
 			for _, err := range result.Errors {
-				if err.Code == "missing_required_input" && err.Path == "name" {
+				if err.Code == "missing_required_input" && len(err.Path) > 0 && err.Path[len(err.Path)-1] == "name" {
 					found = true
 					break
 				}
@@ -257,7 +258,7 @@ func TestFunctionSchemaValidation(t *testing.T) {
 			"age":  30,
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if result.Valid {
 			t.Error("Expected validation to fail for invalid input type")
 		}
@@ -394,7 +395,7 @@ func TestFunctionSchemaAdvancedFeatures(t *testing.T) {
 			},
 		}
 
-		result := schema.Validate(validData)
+		result := validation.ValidateValue(schema, validData)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass for valid nested data, got errors: %v", result.Errors)
 		}
@@ -419,7 +420,7 @@ func TestFunctionSchemaAdvancedFeatures(t *testing.T) {
 			"operation": "square",
 		}
 
-		result := schema.Validate(data)
+		result := validation.ValidateValue(schema, data)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass for array data, got errors: %v", result.Errors)
 		}

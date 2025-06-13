@@ -64,7 +64,7 @@ func (r *ValidationResult) AddWarning(path []string, code, message string) {
 	})
 }
 
-// Merge combines two ValidationResults.
+// Merge combines multiple ValidationResults.
 func (r *ValidationResult) Merge(other ValidationResult) {
 	if !other.Valid {
 		r.Valid = false

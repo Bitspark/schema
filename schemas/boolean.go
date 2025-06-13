@@ -12,7 +12,6 @@ type BooleanSchemaConfig struct {
 	Metadata        core.SchemaMetadata
 	Annotations     []core.Annotation
 	DefaultVal      *bool
-	AllowStringConv bool // Allow conversion from string ("true", "false", "1", "0")
 	CaseInsensitive bool // Case-insensitive string conversion
 }
 
@@ -73,11 +72,6 @@ func (b *BooleanSchema) Clone() core.Schema {
 // DefaultValue returns the default value.
 func (b *BooleanSchema) DefaultValue() *bool {
 	return b.config.DefaultVal
-}
-
-// AllowStringConversion returns whether string-to-bool conversion is allowed.
-func (b *BooleanSchema) AllowStringConversion() bool {
-	return b.config.AllowStringConv
 }
 
 // CaseInsensitive returns whether string conversion is case-insensitive.

@@ -1,10 +1,12 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/builders"
+	"defs.dev/schema/validation"
 )
 
 func TestObjectSchemaBasicValidation(t *testing.T) {
@@ -27,12 +29,21 @@ func TestObjectSchemaBasicValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := schema.Validate(tt.value)
+			result := validation.ValidateValue(schema, tt.value)
 			if result.Valid != tt.wantValid {
 				t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 			}
-			if tt.wantError != "" && (len(result.Errors) == 0 || result.Errors[0].Message != tt.wantError) {
-				t.Errorf("Validate() error = %v, want %v", result.Errors, tt.wantError)
+			if tt.wantError != "" {
+				found := false
+				for _, err := range result.Errors {
+					if err.Message == tt.wantError {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Expected error message '%s', got: %v", tt.wantError, result.Errors)
+				}
 			}
 		})
 	}
@@ -54,7 +65,7 @@ func TestObjectSchemaStructValidation(t *testing.T) {
 		Email: "john@example.com",
 	}
 
-	result := schema.Validate(testStruct)
+	result := validation.ValidateValue(schema, testStruct)
 	if !result.Valid {
 		t.Errorf("Struct validation failed: %v", result.Errors)
 	}
@@ -103,7 +114,7 @@ func TestObjectSchemaProperties(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := schema.Validate(tt.value)
+			result := validation.ValidateValue(schema, tt.value)
 			if result.Valid != tt.wantValid {
 				t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 			}
@@ -161,7 +172,7 @@ func TestObjectSchemaRequired(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := schema.Validate(tt.value)
+			result := validation.ValidateValue(schema, tt.value)
 			if result.Valid != tt.wantValid {
 				t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 			}
@@ -217,7 +228,7 @@ func TestObjectSchemaAdditionalProperties(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := schema.Validate(tt.value)
+			result := validation.ValidateValue(schema, tt.value)
 			if result.Valid != tt.wantValid {
 				t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 			}
@@ -259,7 +270,7 @@ func TestObjectSchemaConstraints(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := schema.Validate(tt.value)
+				result := validation.ValidateValue(schema, tt.value)
 				if result.Valid != tt.wantValid {
 					t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 				}
@@ -329,7 +340,7 @@ func TestObjectSchemaNestedObjects(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := personSchema.Validate(tt.value)
+			result := validation.ValidateValue(personSchema, tt.value)
 			if result.Valid != tt.wantValid {
 				t.Errorf("Validate() valid = %v, want %v", result.Valid, tt.wantValid)
 				if !result.Valid {
@@ -339,7 +350,9 @@ func TestObjectSchemaNestedObjects(t *testing.T) {
 			if tt.errorPath != "" && len(result.Errors) > 0 {
 				found := false
 				for _, err := range result.Errors {
-					if err.Path == tt.errorPath {
+					// Check if the path contains the expected path component
+					pathStr := strings.Join(err.Path, ".")
+					if strings.Contains(pathStr, tt.errorPath) {
 						found = true
 						break
 					}
@@ -574,7 +587,7 @@ func TestObjectBuilderAdditionalMethods(t *testing.T) {
 			"email": "john@example.com",
 		}
 
-		result := schema.Validate(testData)
+		result := validation.ValidateValue(schema, testData)
 		if !result.Valid {
 			t.Errorf("Expected test data to be valid, got errors: %v", result.Errors)
 		}
@@ -586,7 +599,7 @@ func TestObjectBuilderAdditionalMethods(t *testing.T) {
 			Email: "john@example.com",
 		}
 
-		result = schema.Validate(testInstance)
+		result = validation.ValidateValue(schema, testInstance)
 		if !result.Valid {
 			t.Errorf("Expected struct instance to be valid, got errors: %v", result.Errors)
 		}
@@ -614,7 +627,7 @@ func TestObjectBuilderHelperMethods(t *testing.T) {
 			"age":   30,
 		}
 
-		result := schema.Validate(validUser)
+		result := validation.ValidateValue(schema, validUser)
 		if !result.Valid {
 			t.Errorf("Expected valid user to pass validation, got errors: %v", result.Errors)
 		}
@@ -627,7 +640,7 @@ func TestObjectBuilderHelperMethods(t *testing.T) {
 			"age":   -5, // negative age
 		}
 
-		result = schema.Validate(invalidUser)
+		result = validation.ValidateValue(schema, invalidUser)
 		if result.Valid {
 			t.Error("Expected invalid user to fail validation")
 		}

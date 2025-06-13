@@ -7,6 +7,7 @@ import (
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/builders"
 	jsonexport "defs.dev/schema/export/json"
+	"defs.dev/schema/validation"
 )
 
 // Helper function to generate JSON Schema using the export system
@@ -64,13 +65,13 @@ func TestStringSchemaValidation(t *testing.T) {
 		Build()
 
 	// Test valid input
-	result := schema.Validate("hello")
+	result := validation.ValidateValue(schema, "hello")
 	if !result.Valid {
 		t.Errorf("Expected 'hello' to be valid, got errors: %v", result.Errors)
 	}
 
 	// Test too short
-	result = schema.Validate("hi")
+	result = validation.ValidateValue(schema, "hi")
 	if result.Valid {
 		t.Error("Expected 'hi' to be invalid (too short)")
 	}
@@ -79,13 +80,13 @@ func TestStringSchemaValidation(t *testing.T) {
 	}
 
 	// Test too long
-	result = schema.Validate("this_is_too_long")
+	result = validation.ValidateValue(schema, "this_is_too_long")
 	if result.Valid {
 		t.Error("Expected 'this_is_too_long' to be invalid (too long)")
 	}
 
 	// Test wrong type
-	result = schema.Validate(123)
+	result = validation.ValidateValue(schema, 123)
 	if result.Valid {
 		t.Error("Expected 123 to be invalid (wrong type)")
 	}
@@ -97,13 +98,13 @@ func TestStringSchemaPattern(t *testing.T) {
 		Build()
 
 	// Test valid pattern
-	result := schema.Validate("hello")
+	result := validation.ValidateValue(schema, "hello")
 	if !result.Valid {
 		t.Errorf("Expected 'hello' to match pattern, got errors: %v", result.Errors)
 	}
 
 	// Test invalid pattern
-	result = schema.Validate("Hello123")
+	result = validation.ValidateValue(schema, "Hello123")
 	if result.Valid {
 		t.Error("Expected 'Hello123' to not match pattern")
 	}
@@ -113,13 +114,13 @@ func TestStringSchemaEmail(t *testing.T) {
 	schema := builders.NewStringSchema().Email().Build()
 
 	// Test valid email
-	result := schema.Validate("user@example.com")
+	result := validation.ValidateValue(schema, "user@example.com")
 	if !result.Valid {
 		t.Errorf("Expected 'user@example.com' to be valid, got errors: %v", result.Errors)
 	}
 
 	// Test invalid email
-	result = schema.Validate("not-an-email")
+	result = validation.ValidateValue(schema, "not-an-email")
 	if result.Valid {
 		t.Error("Expected 'not-an-email' to be invalid")
 	}
@@ -131,13 +132,13 @@ func TestStringSchemaEnum(t *testing.T) {
 		Build()
 
 	// Test valid enum value
-	result := schema.Validate("red")
+	result := validation.ValidateValue(schema, "red")
 	if !result.Valid {
 		t.Errorf("Expected 'red' to be valid, got errors: %v", result.Errors)
 	}
 
 	// Test invalid enum value
-	result = schema.Validate("yellow")
+	result = validation.ValidateValue(schema, "yellow")
 	if result.Valid {
 		t.Error("Expected 'yellow' to be invalid")
 	}

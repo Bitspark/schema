@@ -19,7 +19,6 @@ func NewBooleanSchema() core.BooleanSchemaBuilder {
 	return &BooleanBuilder{
 		config: schemas.BooleanSchemaConfig{
 			Metadata:        core.SchemaMetadata{},
-			AllowStringConv: false,
 			CaseInsensitive: false,
 		},
 	}
@@ -65,18 +64,10 @@ func (b *BooleanBuilder) Default(value bool) core.BooleanSchemaBuilder {
 	return clone
 }
 
-// AllowStringConversion enables conversion from string values ("true", "false", "1", "0").
-func (b *BooleanBuilder) AllowStringConversion() core.BooleanSchemaBuilder {
-	clone := b.clone()
-	clone.config.AllowStringConv = true
-	return clone
-}
-
 // CaseInsensitive enables case-insensitive string conversion.
 // This automatically enables string conversion if not already enabled.
 func (b *BooleanBuilder) CaseInsensitive() core.BooleanSchemaBuilder {
 	clone := b.clone()
-	clone.config.AllowStringConv = true
 	clone.config.CaseInsensitive = true
 	return clone
 }

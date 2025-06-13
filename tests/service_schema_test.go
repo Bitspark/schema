@@ -6,6 +6,7 @@ import (
 	"defs.dev/schema/api/core"
 	"defs.dev/schema/builders"
 	"defs.dev/schema/schemas"
+	"defs.dev/schema/validation"
 )
 
 func TestServiceSchemaBuilder(t *testing.T) {
@@ -257,7 +258,7 @@ func TestServiceSchemaIntrospection(t *testing.T) {
 				"operation": "add",
 			}
 
-			result := funcSchema.Validate(validInput)
+			result := validation.ValidateValue(funcSchema, validInput)
 			if !result.Valid {
 				t.Errorf("Expected validation to pass for valid input, got errors: %v", result.Errors)
 			}
@@ -269,7 +270,7 @@ func TestServiceSchemaIntrospection(t *testing.T) {
 				"operation": "add",
 			}
 
-			result = funcSchema.Validate(invalidInput)
+			result = validation.ValidateValue(funcSchema, invalidInput)
 			if result.Valid {
 				t.Error("Expected validation to fail for invalid input type")
 			}
@@ -457,7 +458,7 @@ func TestServiceSchemaAdvancedFeatures(t *testing.T) {
 			},
 		}
 
-		result := funcSchema.Validate(validData)
+		result := validation.ValidateValue(funcSchema, validData)
 		if !result.Valid {
 			t.Errorf("Expected validation to pass for complex valid data, got errors: %v", result.Errors)
 		}

@@ -1,67 +1,21 @@
 package schemas
 
 import (
-	"fmt"
 	"regexp"
 
 	"defs.dev/schema/api/core"
 )
 
-// ValidatorRegistry interface to avoid import cycle
-type ValidatorRegistry interface {
-	ValidateWithAnnotations(value any, annotations []core.Annotation) ValidationResult
-}
-
-// ValidationResult represents the result of validator-based validation.
-type ValidationResult struct {
-	Valid             bool                   `json:"valid"`
-	Errors            []ValidationError      `json:"errors,omitempty"`
-	Warnings          []ValidationWarning    `json:"warnings,omitempty"`
-	Suggestions       []ValidationSuggestion `json:"suggestions,omitempty"`
-	Metadata          map[string]any         `json:"metadata,omitempty"`
-	AppliedValidators []string               `json:"applied_validators,omitempty"`
-}
-
-// ValidationError represents a specific validation error.
-type ValidationError struct {
-	ValidatorName string `json:"validator_name"`
-	Path          string `json:"path,omitempty"`
-	Message       string `json:"message"`
-	Code          string `json:"code"`
-	Value         any    `json:"value,omitempty"`
-	Expected      string `json:"expected,omitempty"`
-	Context       string `json:"context,omitempty"`
-	Suggestion    string `json:"suggestion,omitempty"`
-}
-
-// ValidationWarning represents a non-fatal validation issue.
-type ValidationWarning struct {
-	ValidatorName string `json:"validator_name"`
-	Path          string `json:"path,omitempty"`
-	Message       string `json:"message"`
-	Code          string `json:"code"`
-	Suggestion    string `json:"suggestion,omitempty"`
-}
-
-// ValidationSuggestion provides actionable suggestions for fixing validation issues.
-type ValidationSuggestion struct {
-	ValidatorName string         `json:"validator_name"`
-	Message       string         `json:"message"`
-	Action        string         `json:"action"`
-	Parameters    map[string]any `json:"parameters,omitempty"`
-}
-
 // StringSchemaConfig holds the configuration for building a StringSchema.
 type StringSchemaConfig struct {
-	Metadata          core.SchemaMetadata
-	MinLength         *int
-	MaxLength         *int
-	Pattern           *regexp.Regexp
-	Format            string
-	EnumValues        []string
-	DefaultVal        *string
-	Annotations       []core.Annotation
-	ValidatorRegistry ValidatorRegistry
+	Metadata    core.SchemaMetadata
+	MinLength   *int
+	MaxLength   *int
+	Pattern     *regexp.Regexp
+	Format      string
+	EnumValues  []string
+	DefaultVal  *string
+	Annotations []core.Annotation
 }
 
 // StringSchema is a clean, API-first implementation of string schema validation.
@@ -210,51 +164,6 @@ func (s *StringSchema) Accept(visitor core.SchemaVisitor) error {
 	return visitor.VisitString(s)
 }
 
-// Legacy validation functions (kept temporarily for fallback)
-func (s *StringSchema) validateFormatLegacy(value, format string) error {
-	switch format {
-	case "email":
-		if !s.isValidEmailLegacy(value) {
-			return fmt.Errorf("invalid email format")
-		}
-	case "uuid":
-		if !s.isValidUUIDLegacy(value) {
-			return fmt.Errorf("invalid UUID format")
-		}
-	case "url":
-		if !s.isValidURLLegacy(value) {
-			return fmt.Errorf("invalid URL format")
-		}
-	}
-	return nil
-}
-
-func (s *StringSchema) getFormatSuggestionLegacy(format string) string {
-	switch format {
-	case "email":
-		return "Provide a valid email address (e.g., user@example.com)"
-	case "uuid":
-		return "Provide a valid UUID (e.g., 123e4567-e89b-12d3-a456-426614174000)"
-	case "url":
-		return "Provide a valid URL (e.g., https://example.com)"
-	default:
-		return fmt.Sprintf("Provide a valid %s", format)
-	}
-}
-
-func (s *StringSchema) generateFormatExampleLegacy(format string) string {
-	switch format {
-	case "email":
-		return "user@example.com"
-	case "uuid":
-		return "123e4567-e89b-12d3-a456-426614174000"
-	case "url":
-		return "https://example.com"
-	default:
-		return "string"
-	}
-}
-
 func (s *StringSchema) generateStringOfLength(length int) string {
 	if length <= 0 {
 		return ""
@@ -264,6 +173,25 @@ func (s *StringSchema) generateStringOfLength(length int) string {
 		result[i] = 'a'
 	}
 	return string(result)
+}
+
+func (s *StringSchema) generateFormatExampleLegacy(format string) string {
+	switch format {
+	case "email":
+		return "user@example.com"
+	case "url":
+		return "https://example.com"
+	case "uuid":
+		return "550e8400-e29b-41d4-a716-446655440000"
+	case "date":
+		return "2023-01-01"
+	case "time":
+		return "12:00:00"
+	case "date-time":
+		return "2023-01-01T12:00:00Z"
+	default:
+		return "string"
+	}
 }
 
 func (s *StringSchema) isValidEmailLegacy(email string) bool {

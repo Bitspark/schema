@@ -11,6 +11,7 @@ import (
 	"defs.dev/schema/builders"
 	"defs.dev/schema/portal"
 	"defs.dev/schema/registry"
+	"defs.dev/schema/validation"
 )
 
 // Integration Test 1: End-to-End Service with Complex Generics
@@ -114,7 +115,7 @@ func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 
 	// Use the function schema directly for validation
 	functionSchema := createUserMethod.Function()
-	result := functionSchema.Validate(map[string]any{"userData": validUserData})
+	result := validation.ValidateValue(functionSchema, map[string]any{"userData": validUserData})
 	if !result.Valid {
 		t.Errorf("Expected valid user data, got errors: %v", result.Errors)
 	}
@@ -127,7 +128,7 @@ func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 		"tags": "not-an-array",
 	}
 
-	result = functionSchema.Validate(map[string]any{"userData": invalidUserData})
+	result = validation.ValidateValue(functionSchema, map[string]any{"userData": invalidUserData})
 	if result.Valid {
 		t.Error("Expected validation to fail for invalid user data")
 	}
@@ -776,7 +777,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	}
 
 	functionSchema := calculateMetricsMethod.Schema()
-	validationResult := functionSchema.Validate(methodInput)
+	validationResult := validation.ValidateValue(functionSchema, methodInput)
 	if !validationResult.Valid {
 		t.Errorf("Expected valid method input, got errors: %v", validationResult.Errors)
 	}
@@ -789,7 +790,7 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 
 	utilityInput := map[string]any{"dataset": testDataset}
 	utilityFunctionSchema := validateFunc.Schema()
-	utilityValidationResult := utilityFunctionSchema.Validate(utilityInput)
+	utilityValidationResult := validation.ValidateValue(utilityFunctionSchema, utilityInput)
 	if !utilityValidationResult.Valid {
 		t.Errorf("Expected valid utility input, got errors: %v", utilityValidationResult.Errors)
 	}
@@ -938,7 +939,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		},
 	}
 
-	result := entityListResultSchema.Validate(validEntityListResult)
+	result := validation.ValidateValue(entityListResultSchema, validEntityListResult)
 	if !result.Valid {
 		t.Errorf("Expected valid entity list result, got errors: %v", result.Errors)
 	}
@@ -979,7 +980,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		"size": 2,
 	}
 
-	result = entityMapSchema.Validate(validEntityMap)
+	result = validation.ValidateValue(entityMapSchema, validEntityMap)
 	if !result.Valid {
 		t.Errorf("Expected valid entity map, got errors: %v", result.Errors)
 	}
@@ -1031,7 +1032,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		},
 	}
 
-	result = complexNestedSchema.Validate(validComplexNested)
+	result = validation.ValidateValue(complexNestedSchema, validComplexNested)
 	if !result.Valid {
 		t.Errorf("Expected valid complex nested schema, got errors: %v", result.Errors)
 	}
@@ -1062,7 +1063,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		},
 	}
 
-	result = complexNestedSchema.Validate(invalidComplexNested)
+	result = validation.ValidateValue(complexNestedSchema, invalidComplexNested)
 	if result.Valid {
 		t.Error("Expected validation to fail for invalid complex nested data")
 	}

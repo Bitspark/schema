@@ -50,6 +50,7 @@ type ArraySchema interface {
 	MinItems() *int
 	MaxItems() *int
 	UniqueItemsRequired() bool
+	ContainsSchema() Schema
 }
 
 // ObjectSchema interface for object schemas with introspection methods.
