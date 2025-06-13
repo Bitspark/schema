@@ -2,11 +2,11 @@ package native
 
 import (
 	"defs.dev/schema/annotation"
+	"defs.dev/schema/runtime/registry"
 	"reflect"
 	"testing"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 func TestDefaultTypeConverter_BasicTypes(t *testing.T) {

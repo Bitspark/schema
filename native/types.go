@@ -5,10 +5,10 @@ package native
 
 import (
 	"defs.dev/schema/annotation"
+	"defs.dev/schema/runtime/registry"
 	"reflect"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 // TypeConverter converts Go types to schemas with annotation support.

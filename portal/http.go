@@ -3,6 +3,7 @@ package portal
 import (
 	"context"
 	"defs.dev/schema/consumers/validation"
+	registry2 "defs.dev/schema/runtime/registry"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 // HTTPPortal implements the api.HTTPPortal interface for HTTP-based function execution.
@@ -100,8 +100,8 @@ func NewHTTPPortal(config *HTTPConfig) *HTTPPortal {
 	mux := http.NewServeMux()
 
 	portal := &HTTPPortal{
-		funcRegistry:    registry.NewFunctionRegistry(),
-		serviceRegistry: registry.NewServiceRegistry(),
+		funcRegistry:    registry2.NewFunctionRegistry(),
+		serviceRegistry: registry2.NewServiceRegistry(),
 		config:          config,
 		mux:             mux,
 		functions:       make(map[string]api.Function),

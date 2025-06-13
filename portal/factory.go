@@ -2,7 +2,7 @@ package portal
 
 import (
 	"defs.dev/schema/api"
-	"defs.dev/schema/registry"
+	"defs.dev/schema/runtime/registry"
 )
 
 // DefaultPortalFactory implements the api.PortalFactory interface for creating portal components.

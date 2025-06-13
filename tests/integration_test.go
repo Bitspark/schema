@@ -2,17 +2,109 @@ package tests
 
 import (
 	"context"
-	builders2 "defs.dev/schema/builders"
-	"defs.dev/schema/consumers/validation"
+	registry2 "defs.dev/schema/runtime/registry"
 	"fmt"
 	"testing"
 	"time"
 
+	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/consumers/validation"
+
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
 	"defs.dev/schema/portal"
-	"defs.dev/schema/registry"
 )
+
+// Helper function to generate JSON Schema using a simple stub
+func toJSONSchemaIntegration(schema core.Schema) map[string]any {
+	// Simple stub implementation for testing
+	result := map[string]any{}
+
+	// Map schema types to JSON Schema types
+	switch schema.Type() {
+	case core.TypeStructure:
+		result["type"] = "object"
+	default:
+		result["type"] = string(schema.Type())
+	}
+
+	if desc := schema.Metadata().Description; desc != "" {
+		result["description"] = desc
+	}
+
+	// Handle object schemas
+	if objectSchema, ok := schema.(core.ObjectSchema); ok {
+		if properties := objectSchema.Properties(); properties != nil && len(properties) > 0 {
+			propMap := make(map[string]any)
+			for name, prop := range properties {
+				propMap[name] = toJSONSchemaIntegration(prop)
+			}
+			result["properties"] = propMap
+		}
+		if required := objectSchema.Required(); required != nil && len(required) > 0 {
+			// Convert to []any for JSON compatibility
+			requiredAny := make([]any, len(required))
+			for i, req := range required {
+				requiredAny[i] = req
+			}
+			result["required"] = requiredAny
+		}
+		if !objectSchema.AdditionalProperties() {
+			result["additionalProperties"] = false
+		}
+	}
+
+	// Handle array schemas
+	if arraySchema, ok := schema.(core.ArraySchema); ok {
+		if minItems := arraySchema.MinItems(); minItems != nil {
+			result["minItems"] = float64(*minItems)
+		}
+		if maxItems := arraySchema.MaxItems(); maxItems != nil {
+			result["maxItems"] = float64(*maxItems)
+		}
+		if arraySchema.UniqueItemsRequired() {
+			result["uniqueItems"] = true
+		}
+		if itemSchema := arraySchema.ItemSchema(); itemSchema != nil {
+			result["items"] = toJSONSchemaIntegration(itemSchema)
+		}
+	}
+
+	// Handle string schemas
+	if stringSchema, ok := schema.(core.StringSchema); ok {
+		if minLen := stringSchema.MinLength(); minLen != nil {
+			result["minLength"] = *minLen
+		}
+		if maxLen := stringSchema.MaxLength(); maxLen != nil {
+			result["maxLength"] = *maxLen
+		}
+		if pattern := stringSchema.Pattern(); pattern != "" {
+			result["pattern"] = pattern
+		}
+	}
+
+	// Handle integer schemas
+	if integerSchema, ok := schema.(core.IntegerSchema); ok {
+		if min := integerSchema.Minimum(); min != nil {
+			result["minimum"] = *min
+		}
+		if max := integerSchema.Maximum(); max != nil {
+			result["maximum"] = *max
+		}
+	}
+
+	// Handle number schemas
+	if numberSchema, ok := schema.(core.NumberSchema); ok {
+		if min := numberSchema.Minimum(); min != nil {
+			result["minimum"] = *min
+		}
+		if max := numberSchema.Maximum(); max != nil {
+			result["maximum"] = *max
+		}
+	}
+
+	return result
+}
 
 // Integration Test 1: End-to-End Service with Complex Generics
 func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
@@ -100,9 +192,18 @@ func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 	}
 
 	// Test method introspection
-	createUserMethod := methods[0]
-	if createUserMethod.Name() != "createUser" {
-		t.Errorf("Expected method name 'createUser', got %s", createUserMethod.Name())
+	// Find the createUser method
+	var createUserMethod core.ServiceMethodSchema
+	found := false
+	for _, method := range methods {
+		if method.Name() == "createUser" {
+			createUserMethod = method
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("createUser method not found in service methods")
 	}
 
 	// Test complex input validation
@@ -536,8 +637,8 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 // Integration Test 4: Service Registry with Function Registry Integration
 func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	// Create registries
-	funcRegistry := registry.NewFunctionRegistry()
-	serviceRegistry := registry.NewServiceRegistry()
+	funcRegistry := registry2.NewFunctionRegistry()
+	serviceRegistry := registry2.NewServiceRegistry()
 
 	// Create a comprehensive analytics service
 	analyticsService := builders2.NewServiceSchema().
@@ -1086,7 +1187,7 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 	}
 
 	// Test JSON Schema generation for complex schemas
-	jsonSchema := toJSONSchema(complexNestedSchema)
+	jsonSchema := toJSONSchemaIntegration(complexNestedSchema)
 	if jsonSchema["type"] != "object" {
 		t.Errorf("Expected JSON schema type 'object', got %v", jsonSchema["type"])
 	}
@@ -1096,7 +1197,17 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		t.Error("Expected JSON schema to have properties")
 	}
 
-	propertiesMap := properties.(map[string]any)
+	if properties == nil {
+		t.Error("Expected JSON schema properties to not be nil")
+		return
+	}
+
+	propertiesMap, ok := properties.(map[string]any)
+	if !ok {
+		t.Errorf("Expected JSON schema properties to be a map, got %T", properties)
+		return
+	}
+
 	if _, hasData := propertiesMap["data"]; !hasData {
 		t.Error("Expected JSON schema to have 'data' property")
 	}

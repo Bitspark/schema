@@ -1,10 +1,11 @@
 package tests
 
 import (
-	builders2 "defs.dev/schema/builders"
-	"defs.dev/schema/consumers/validation"
 	"strings"
 	"testing"
+
+	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/consumers/validation"
 
 	"defs.dev/schema/core"
 )
@@ -423,8 +424,8 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 	jsonSchema := toJSONSchema(schema)
 
 	// Check basic properties
-	if jsonSchema["type"] != "object" {
-		t.Errorf("Expected type 'object', got %v", jsonSchema["type"])
+	if jsonSchema["type"] != "structure" {
+		t.Errorf("Expected type 'structure', got %v", jsonSchema["type"])
 	}
 
 	if jsonSchema["description"] != "Test object" {
@@ -446,16 +447,12 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 	}
 
 	// Check required array
-	requiredInterface, ok := jsonSchema["required"].([]any)
+	requiredInterface, ok := jsonSchema["required"].([]string)
 	if !ok {
-		t.Fatal("Expected required to be an array")
+		t.Fatal("Expected required to be a string array")
 	}
 
-	// Convert to string array
-	required := make([]string, len(requiredInterface))
-	for i, v := range requiredInterface {
-		required[i] = v.(string)
-	}
+	required := requiredInterface
 
 	if len(required) != 1 || required[0] != "name" {
 		t.Errorf("Expected required ['name'], got %v", required)

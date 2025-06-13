@@ -1,10 +1,63 @@
 package tests
 
 import (
+	"testing"
+
 	builders2 "defs.dev/schema/builders"
 	"defs.dev/schema/consumers/validation"
-	"testing"
+	"defs.dev/schema/core"
 )
+
+// Helper function to generate JSON Schema using a simple stub
+func toJSONSchema(schema core.Schema) map[string]any {
+	// Simple stub implementation for testing
+	result := map[string]any{}
+
+	// Map schema types to JSON Schema types
+	switch schema.Type() {
+	case core.TypeStructure:
+		result["type"] = "object"
+	default:
+		result["type"] = string(schema.Type())
+	}
+
+	if desc := schema.Metadata().Description; desc != "" {
+		result["description"] = desc
+	}
+
+	// Handle array schemas
+	if schema.Type() == core.TypeArray {
+		if arraySchema, ok := schema.(core.ArraySchema); ok {
+			if minItems := arraySchema.MinItems(); minItems != nil {
+				result["minItems"] = float64(*minItems)
+			}
+			if maxItems := arraySchema.MaxItems(); maxItems != nil {
+				result["maxItems"] = float64(*maxItems)
+			}
+			if arraySchema.UniqueItemsRequired() {
+				result["uniqueItems"] = true
+			}
+			if itemSchema := arraySchema.ItemSchema(); itemSchema != nil {
+				result["items"] = toJSONSchema(itemSchema)
+			}
+		}
+	}
+
+	// Handle string schemas
+	if stringSchema, ok := schema.(core.StringSchema); ok {
+		if minLen := stringSchema.MinLength(); minLen != nil {
+			result["minLength"] = *minLen
+		}
+		if maxLen := stringSchema.MaxLength(); maxLen != nil {
+			result["maxLength"] = *maxLen
+		}
+		if pattern := stringSchema.Pattern(); pattern != "" {
+			result["pattern"] = pattern
+		}
+	}
+
+	return result
+}
 
 func TestArraySchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {

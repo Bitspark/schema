@@ -1,14 +1,95 @@
 package tests
 
 import (
-	builders2 "defs.dev/schema/builders"
 	"testing"
+
+	builders2 "defs.dev/schema/builders"
 
 	"defs.dev/schema/consumers/validation"
 
 	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
 )
+
+// Helper function to generate JSON Schema for function schemas
+func toJSONSchemaFunction(schema core.Schema) map[string]any {
+	// Simple stub implementation for testing
+	result := map[string]any{}
+
+	// Map schema types to JSON Schema types
+	switch schema.Type() {
+	case core.TypeFunction:
+		result["type"] = "object"
+		result["x-function"] = true
+
+		// Add function-specific properties
+		if functionSchema, ok := schema.(core.FunctionSchema); ok {
+			// Add inputs as properties
+			inputs := functionSchema.Inputs()
+			if inputs != nil && len(inputs.Args()) > 0 {
+				properties := make(map[string]any)
+				required := []any{}
+
+				for _, arg := range inputs.Args() {
+					properties[arg.Name()] = toJSONSchemaFunction(arg.Schema())
+					if !arg.Optional() {
+						required = append(required, arg.Name())
+					}
+				}
+
+				result["properties"] = properties
+				if len(required) > 0 {
+					result["required"] = required
+				}
+			}
+
+			// Add outputs as x-returns
+			outputs := functionSchema.Outputs()
+			if outputs != nil && len(outputs.Args()) > 0 {
+				returns := make(map[string]any)
+				for _, arg := range outputs.Args() {
+					returns[arg.Name()] = map[string]any{
+						"type": string(arg.Schema().Type()),
+					}
+				}
+				result["x-returns"] = returns
+			}
+		}
+	case core.TypeStructure:
+		result["type"] = "object"
+	default:
+		result["type"] = string(schema.Type())
+	}
+
+	if desc := schema.Metadata().Description; desc != "" {
+		result["description"] = desc
+	}
+
+	// Handle string schemas
+	if stringSchema, ok := schema.(core.StringSchema); ok {
+		if minLen := stringSchema.MinLength(); minLen != nil {
+			result["minLength"] = *minLen
+		}
+		if maxLen := stringSchema.MaxLength(); maxLen != nil {
+			result["maxLength"] = *maxLen
+		}
+		if pattern := stringSchema.Pattern(); pattern != "" {
+			result["pattern"] = pattern
+		}
+	}
+
+	// Handle integer schemas
+	if integerSchema, ok := schema.(core.IntegerSchema); ok {
+		if min := integerSchema.Minimum(); min != nil {
+			result["minimum"] = *min
+		}
+		if max := integerSchema.Maximum(); max != nil {
+			result["maximum"] = *max
+		}
+	}
+
+	return result
+}
 
 func TestFunctionSchemaBuilder(t *testing.T) {
 	t.Run("Basic function schema creation", func(t *testing.T) {
@@ -303,7 +384,7 @@ func TestFunctionSchemaJSONSchema(t *testing.T) {
 		Output("greeting", builders2.NewStringSchema().Build()).
 		Build()
 
-	jsonSchema := toJSONSchema(schema)
+	jsonSchema := toJSONSchemaFunction(schema)
 
 	// Verify basic structure
 	if jsonSchema["type"] != "object" {

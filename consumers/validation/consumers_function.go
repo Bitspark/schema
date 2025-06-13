@@ -46,17 +46,37 @@ func (c *FunctionValidationConsumer) ProcessValue(ctx consumer.ProcessingContext
 		return consumer.NewResult("validation", result), nil
 	}
 
-	// Validate required inputs
+	// Validate inputs
 	inputs := functionSchema.Inputs()
 	for _, input := range inputs.Args() {
-		if !input.Optional() {
-			if _, exists := inputMap[input.Name()]; !exists {
+		inputName := input.Name()
+		inputValue, exists := inputMap[inputName]
+
+		// Check if required input is missing
+		if !input.Optional() && !exists {
+			result.Valid = false
+			result.Errors = append(result.Errors, ValidationIssue{
+				Path:    append(ctx.Path, inputName),
+				Message: fmt.Sprintf("required input '%s' is missing", inputName),
+				Code:    "missing_required_input",
+			})
+			continue
+		}
+
+		// If input exists, validate its value against the input schema
+		if exists {
+			inputSchema := input.Schema()
+			inputPath := append(ctx.Path, inputName)
+
+			// Use recursive validation for the input value
+			inputResult := ValidateWithRegistry(inputSchema, inputValue)
+			if !inputResult.Valid {
 				result.Valid = false
-				result.Errors = append(result.Errors, ValidationIssue{
-					Path:    append(ctx.Path, input.Name()),
-					Message: fmt.Sprintf("required input '%s' is missing", input.Name()),
-					Code:    "missing_required_input",
-				})
+				// Add path context to input errors
+				for _, err := range inputResult.Errors {
+					err.Path = append(inputPath, err.Path...)
+					result.Errors = append(result.Errors, err)
+				}
 			}
 		}
 	}

@@ -3,13 +3,13 @@ package portal
 import (
 	"context"
 	"defs.dev/schema/consumers/validation"
+	registry2 "defs.dev/schema/runtime/registry"
 	"fmt"
 	"sync"
 	"time"
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 // TestingPortalImpl implements api.TestingPortal
@@ -34,8 +34,8 @@ var _ api.ServiceRegistry = (*TestingPortalImpl)(nil)
 // NewTestingPortal creates a new testing portal
 func NewTestingPortal() api.TestingPortal {
 	return &TestingPortalImpl{
-		funcRegistry:    registry.NewFunctionRegistry(),
-		serviceRegistry: registry.NewServiceRegistry(),
+		funcRegistry:    registry2.NewFunctionRegistry(),
+		serviceRegistry: registry2.NewServiceRegistry(),
 		functions:       make(map[string]api.Function),
 		mocks:           make(map[string]api.Function),
 		callHistory:     make([]api.FunctionCall, 0),

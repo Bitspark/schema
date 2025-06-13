@@ -2,6 +2,7 @@ package portal
 
 import (
 	"context"
+	registry2 "defs.dev/schema/runtime/registry"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/registry"
 	"github.com/gorilla/websocket"
 )
 
@@ -72,10 +72,10 @@ func NewWebSocketPortal(config *WebSocketConfig, funcRegistry api.FunctionRegist
 		config = DefaultWebSocketConfig()
 	}
 	if funcRegistry == nil {
-		funcRegistry = registry.NewFunctionRegistry()
+		funcRegistry = registry2.NewFunctionRegistry()
 	}
 	if serviceRegistry == nil {
-		serviceRegistry = registry.NewServiceRegistry()
+		serviceRegistry = registry2.NewServiceRegistry()
 	}
 
 	portal := &WebSocketPortal{

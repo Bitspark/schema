@@ -3,12 +3,12 @@ package native
 import (
 	"defs.dev/schema/annotation"
 	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/runtime/registry"
 	"fmt"
 	"reflect"
 	"sync"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 // DefaultTypeConverter implements TypeConverter with annotation support.

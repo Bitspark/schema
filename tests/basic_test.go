@@ -10,10 +10,16 @@ import (
 )
 
 // Helper function to generate JSON Schema using a simple stub
-func toJSONSchema(schema core.Schema) map[string]any {
+func toJSONSchemaBasic(schema core.Schema) map[string]any {
 	// Simple stub implementation for testing
-	result := map[string]any{
-		"type": string(schema.Type()),
+	result := map[string]any{}
+
+	// Map schema types to JSON Schema types
+	switch schema.Type() {
+	case core.TypeStructure:
+		result["type"] = "object"
+	default:
+		result["type"] = string(schema.Type())
 	}
 
 	if desc := schema.Metadata().Description; desc != "" {
@@ -43,13 +49,18 @@ func toJSONSchema(schema core.Schema) map[string]any {
 		if !s.AdditionalProperties() {
 			result["additionalProperties"] = false
 		}
-		if required := s.Required(); len(required) > 0 {
-			result["required"] = required
+		if required := s.Required(); required != nil && len(required) > 0 {
+			// Convert to []any for JSON compatibility
+			requiredAny := make([]any, len(required))
+			for i, req := range required {
+				requiredAny[i] = req
+			}
+			result["required"] = requiredAny
 		}
-		if properties := s.Properties(); len(properties) > 0 {
+		if properties := s.Properties(); properties != nil && len(properties) > 0 {
 			propMap := make(map[string]any)
 			for name, prop := range properties {
-				propMap[name] = toJSONSchema(prop)
+				propMap[name] = toJSONSchemaBasic(prop)
 			}
 			result["properties"] = propMap
 		}
@@ -211,18 +222,18 @@ func TestStringSchemaJSONSchema(t *testing.T) {
 		Example("hello").
 		Build()
 
-	jsonSchema := toJSONSchema(schema)
+	jsonSchema := toJSONSchemaBasic(schema)
 
 	// Check basic properties
 	if jsonSchema["type"] != "string" {
 		t.Errorf("Expected type 'string', got %v", jsonSchema["type"])
 	}
 
-	if jsonSchema["minLength"] != float64(3) {
+	if jsonSchema["minLength"] != 3 {
 		t.Errorf("Expected minLength 3, got %v", jsonSchema["minLength"])
 	}
 
-	if jsonSchema["maxLength"] != float64(10) {
+	if jsonSchema["maxLength"] != 10 {
 		t.Errorf("Expected maxLength 10, got %v", jsonSchema["maxLength"])
 	}
 

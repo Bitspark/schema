@@ -3,12 +3,12 @@ package portal
 import (
 	"context"
 	"defs.dev/schema/consumers/validation"
+	registry2 "defs.dev/schema/runtime/registry"
 	"fmt"
 	"sync"
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/registry"
 )
 
 // LocalPortalImpl implements api.LocalPortal for in-process function execution
@@ -35,8 +35,8 @@ var _ api.ServiceRegistry = (*LocalPortalImpl)(nil)
 // NewLocalPortal creates a new local portal
 func NewLocalPortal() api.LocalPortal {
 	return &LocalPortalImpl{
-		funcRegistry:      registry.NewFunctionRegistry(),
-		serviceRegistry:   registry.NewServiceRegistry(),
+		funcRegistry:      registry2.NewFunctionRegistry(),
+		serviceRegistry:   registry2.NewServiceRegistry(),
 		addressToFunction: make(map[string]api.Function),
 		addressToService:  make(map[string]api.Service),
 		idCounter:         0,
