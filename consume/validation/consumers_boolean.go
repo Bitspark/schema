@@ -2,10 +2,10 @@
 package validation
 
 import (
+	"defs.dev/schema/core/consumer"
 	"fmt"
 	"strings"
 
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
 )
 

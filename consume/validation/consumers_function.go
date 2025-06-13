@@ -3,8 +3,8 @@ package validation
 import (
 	"fmt"
 
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/consumer"
 )
 
 // FunctionValidationConsumer validates function input/output values

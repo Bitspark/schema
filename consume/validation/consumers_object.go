@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/consumer"
 )
 
 // ObjectValidationConsumer validates object values

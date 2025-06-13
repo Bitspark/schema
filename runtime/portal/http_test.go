@@ -3,7 +3,7 @@ package portal
 import (
 	"bytes"
 	"context"
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -53,12 +53,12 @@ func TestHTTPPortal_FunctionRegistration(t *testing.T) {
 	// Create a test function
 	testFunc := &HTTPTestFunction{
 		name: "testFunc",
-		schema: builders2.NewFunctionSchema().
+		schema: builders.NewFunctionSchema().
 			Name("testFunc").
 			Description("Test function").
-			Input("name", builders2.NewStringSchema().Build()).
+			Input("name", builders.NewStringSchema().Build()).
 			RequiredInputs("name").
-			Output("result", builders2.NewStringSchema().Build()).
+			Output("result", builders.NewStringSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			name, _ := params.Get("name")
@@ -94,14 +94,14 @@ func TestHTTPPortal_ServiceRegistration(t *testing.T) {
 	// Create a test service
 	testService := &TestService{
 		name: "TestService",
-		schema: builders2.NewServiceSchema().
+		schema: builders.NewServiceSchema().
 			Name("TestService").
-			Method("greet", builders2.NewFunctionSchema().
+			Method("greet", builders.NewFunctionSchema().
 				Name("greet").
 				Description("Greet method").
-				Input("name", builders2.NewStringSchema().Build()).
+				Input("name", builders.NewStringSchema().Build()).
 				RequiredInputs("name").
-				Output("greeting", builders2.NewStringSchema().Build()).
+				Output("greeting", builders.NewStringSchema().Build()).
 				Build()).
 			Build(),
 		greetHandler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
@@ -132,7 +132,7 @@ func TestHTTPPortal_FunctionResolution(t *testing.T) {
 	// Register a function first
 	testFunc := &HTTPTestFunction{
 		name:   "testFunc",
-		schema: builders2.NewFunctionSchema().Name("testFunc").Build(),
+		schema: builders.NewFunctionSchema().Name("testFunc").Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			return api.NewFunctionData(map[string]any{"result": "test result"}), nil
 		},
@@ -180,7 +180,7 @@ func TestHTTPPortal_HTTPHandler(t *testing.T) {
 	// Register a test function
 	testFunc := &HTTPTestFunction{
 		name:   "echo",
-		schema: builders2.NewFunctionSchema().Name("echo").Build(),
+		schema: builders.NewFunctionSchema().Name("echo").Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			message, _ := params.Get("message")
 			return api.NewFunctionData(map[string]any{"echo": message}), nil
@@ -473,7 +473,7 @@ func (s *TestService) GetFunction(name string) (api.Function, bool) {
 	if name == "greet" {
 		return &HTTPTestFunction{
 			name:    "greet",
-			schema:  builders2.NewFunctionSchema().Name("greet").Build(),
+			schema:  builders.NewFunctionSchema().Name("greet").Build(),
 			handler: s.greetHandler,
 		}, true
 	}

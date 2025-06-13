@@ -3,7 +3,7 @@ package tests
 import (
 	"bytes"
 	"context"
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"defs.dev/schema/runtime/portal"
 	"encoding/json"
 	"fmt"
@@ -260,14 +260,14 @@ func TestE2E_PortalBridgePattern(t *testing.T) {
 	// Register functions on WebSocket server
 	calculatorFunc := &BridgeTestFunction{
 		name: "calculator",
-		schema: builders2.NewFunctionSchema().
+		schema: builders.NewFunctionSchema().
 			Name("calculator").
 			Description("Performs basic calculations").
-			Input("operation", builders2.NewStringSchema().Build()).
-			Input("a", builders2.NewNumberSchema().Build()).
-			Input("b", builders2.NewNumberSchema().Build()).
+			Input("operation", builders.NewStringSchema().Build()).
+			Input("a", builders.NewNumberSchema().Build()).
+			Input("b", builders.NewNumberSchema().Build()).
 			RequiredInputs("operation", "a", "b").
-			Output("result", builders2.NewNumberSchema().Build()).
+			Output("result", builders.NewNumberSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			operation, _ := params.Get("operation")
@@ -302,14 +302,14 @@ func TestE2E_PortalBridgePattern(t *testing.T) {
 
 	dataProcessorFunc := &BridgeTestFunction{
 		name: "data_processor",
-		schema: builders2.NewFunctionSchema().
+		schema: builders.NewFunctionSchema().
 			Name("data_processor").
 			Description("Processes and transforms data").
-			Input("data", builders2.NewArraySchema().Build()).
-			Input("transform", builders2.NewStringSchema().Build()).
+			Input("data", builders.NewArraySchema().Build()).
+			Input("transform", builders.NewStringSchema().Build()).
 			RequiredInputs("data", "transform").
-			Output("processed_data", builders2.NewArraySchema().Build()).
-			Output("summary", builders2.NewObjectSchema().Build()).
+			Output("processed_data", builders.NewArraySchema().Build()).
+			Output("summary", builders.NewObjectSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			data, _ := params.Get("data")

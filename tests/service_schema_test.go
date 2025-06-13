@@ -1,9 +1,10 @@
 package tests
 
 import (
-	builders2 "defs.dev/schema/builders"
-	"defs.dev/schema/consumers/validation"
 	"testing"
+
+	"defs.dev/schema/construct/builders"
+	"defs.dev/schema/consume/validation"
 
 	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
@@ -11,16 +12,16 @@ import (
 
 func TestServiceSchemaBuilder(t *testing.T) {
 	t.Run("Basic service schema creation", func(t *testing.T) {
-		greetFunction := builders2.NewFunctionSchema().
+		greetFunction := builders.NewFunctionSchema().
 			Name("greet").
 			Description("Greets a user").
-			Input("name", builders2.NewStringSchema().Build()).
-			Output("greeting", builders2.NewStringSchema().Build()).
+			Input("name", builders.NewStringSchema().Build()).
+			Output("greeting", builders.NewStringSchema().Build()).
 			RequiredInputs("name").
 			RequiredOutputs("greeting").
 			Build()
 
-		schema := builders2.NewServiceSchema().
+		schema := builders.NewServiceSchema().
 			Name("GreetingService").
 			Description("A service for greeting users").
 			Method("greet", greetFunction).
@@ -67,44 +68,44 @@ func TestServiceSchemaBuilder(t *testing.T) {
 
 	t.Run("Service schema with multiple methods", func(t *testing.T) {
 		// Create function schemas for different methods
-		createUserFunc := builders2.NewFunctionSchema().
+		createUserFunc := builders.NewFunctionSchema().
 			Name("createUser").
-			Input("userData", builders2.NewObject().
-				Property("name", builders2.NewStringSchema().Build()).
-				Property("email", builders2.NewStringSchema().Build()).
+			Input("userData", builders.NewObject().
+				Property("name", builders.NewStringSchema().Build()).
+				Property("email", builders.NewStringSchema().Build()).
 				Required("name", "email").
 				Build()).
-			Output("user", builders2.NewObject().
-				Property("id", builders2.NewIntegerSchema().Build()).
-				Property("name", builders2.NewStringSchema().Build()).
-				Property("email", builders2.NewStringSchema().Build()).
+			Output("user", builders.NewObject().
+				Property("id", builders.NewIntegerSchema().Build()).
+				Property("name", builders.NewStringSchema().Build()).
+				Property("email", builders.NewStringSchema().Build()).
 				Build()).
-			Output("success", builders2.NewBooleanSchema().Build()).
+			Output("success", builders.NewBooleanSchema().Build()).
 			RequiredInputs("userData").
 			RequiredOutputs("user", "success").
 			Build()
 
-		getUserFunc := builders2.NewFunctionSchema().
+		getUserFunc := builders.NewFunctionSchema().
 			Name("getUser").
-			Input("id", builders2.NewIntegerSchema().Build()).
-			Output("user", builders2.NewObject().
-				Property("id", builders2.NewIntegerSchema().Build()).
-				Property("name", builders2.NewStringSchema().Build()).
-				Property("email", builders2.NewStringSchema().Build()).
+			Input("id", builders.NewIntegerSchema().Build()).
+			Output("user", builders.NewObject().
+				Property("id", builders.NewIntegerSchema().Build()).
+				Property("name", builders.NewStringSchema().Build()).
+				Property("email", builders.NewStringSchema().Build()).
 				Build()).
 			RequiredInputs("id").
 			RequiredOutputs("user").
 			Build()
 
-		deleteUserFunc := builders2.NewFunctionSchema().
+		deleteUserFunc := builders.NewFunctionSchema().
 			Name("deleteUser").
-			Input("id", builders2.NewIntegerSchema().Build()).
-			Output("success", builders2.NewBooleanSchema().Build()).
+			Input("id", builders.NewIntegerSchema().Build()).
+			Output("success", builders.NewBooleanSchema().Build()).
 			RequiredInputs("id").
 			RequiredOutputs("success").
 			Build()
 
-		schema := builders2.NewServiceSchema().
+		schema := builders.NewServiceSchema().
 			Name("UserService").
 			Description("A service for managing users").
 			Method("createUser", createUserFunc).
@@ -139,17 +140,17 @@ func TestServiceSchemaBuilder(t *testing.T) {
 	})
 
 	t.Run("Service schema with examples", func(t *testing.T) {
-		echoFunc := builders2.NewFunctionSchema().
+		echoFunc := builders.NewFunctionSchema().
 			Name("echo").
-			Input("message", builders2.NewStringSchema().Build()).
-			Output("response", builders2.NewStringSchema().Build()).
+			Input("message", builders.NewStringSchema().Build()).
+			Output("response", builders.NewStringSchema().Build()).
 			Example(map[string]any{
 				"message":  "Hello",
 				"response": "Echo: Hello",
 			}).
 			Build()
 
-		schema := builders2.NewServiceSchema().
+		schema := builders.NewServiceSchema().
 			Name("EchoService").
 			Method("echo", echoFunc).
 			Example(map[string]any{
@@ -172,26 +173,26 @@ func TestServiceSchemaBuilder(t *testing.T) {
 
 func TestServiceSchemaIntrospection(t *testing.T) {
 	// Create a comprehensive service for testing introspection
-	calculateFunc := builders2.NewFunctionSchema().
+	calculateFunc := builders.NewFunctionSchema().
 		Name("calculate").
-		Input("a", builders2.NewNumberSchema().Build()).
-		Input("b", builders2.NewNumberSchema().Build()).
-		Input("operation", builders2.NewStringSchema().Build()).
-		Output("result", builders2.NewNumberSchema().Build()).
+		Input("a", builders.NewNumberSchema().Build()).
+		Input("b", builders.NewNumberSchema().Build()).
+		Input("operation", builders.NewStringSchema().Build()).
+		Output("result", builders.NewNumberSchema().Build()).
 		RequiredInputs("a", "b", "operation").
 		RequiredOutputs("result").
 		Build()
 
-	validateFunc := builders2.NewFunctionSchema().
+	validateFunc := builders.NewFunctionSchema().
 		Name("validate").
-		Input("expression", builders2.NewStringSchema().Build()).
-		Output("valid", builders2.NewBooleanSchema().Build()).
-		Output("errors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+		Input("expression", builders.NewStringSchema().Build()).
+		Output("valid", builders.NewBooleanSchema().Build()).
+		Output("errors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
 		RequiredInputs("expression").
 		RequiredOutputs("valid").
 		Build()
 
-	schema := builders2.NewServiceSchema().
+	schema := builders.NewServiceSchema().
 		Name("CalculatorService").
 		Description("A mathematical calculator service").
 		Method("calculate", calculateFunc).
@@ -281,13 +282,13 @@ func TestServiceSchemaIntrospection(t *testing.T) {
 }
 
 func TestServiceSchemaCloning(t *testing.T) {
-	originalFunc := builders2.NewFunctionSchema().
+	originalFunc := builders.NewFunctionSchema().
 		Name("original").
-		Input("input", builders2.NewStringSchema().Build()).
-		Output("output", builders2.NewStringSchema().Build()).
+		Input("input", builders.NewStringSchema().Build()).
+		Output("output", builders.NewStringSchema().Build()).
 		Build()
 
-	original := builders2.NewServiceSchema().
+	original := builders.NewServiceSchema().
 		Name("OriginalService").
 		Description("Original service").
 		Method("original", originalFunc).
@@ -319,13 +320,13 @@ func TestServiceSchemaCloning(t *testing.T) {
 }
 
 func TestServiceSchemaJSONSchema(t *testing.T) {
-	simpleFunc := builders2.NewFunctionSchema().
+	simpleFunc := builders.NewFunctionSchema().
 		Name("simple").
-		Input("input", builders2.NewStringSchema().Build()).
-		Output("output", builders2.NewStringSchema().Build()).
+		Input("input", builders.NewStringSchema().Build()).
+		Output("output", builders.NewStringSchema().Build()).
 		Build()
 
-	schema := builders2.NewServiceSchema().
+	schema := builders.NewServiceSchema().
 		Name("SimpleService").
 		Description("A simple service for testing").
 		Method("simple", simpleFunc).
@@ -354,17 +355,17 @@ func TestServiceSchemaJSONSchema(t *testing.T) {
 
 func TestServiceSchemaBuilderChaining(t *testing.T) {
 	// Test that all builder methods return the correct type for chaining
-	func1 := builders2.NewFunctionSchema().
+	func1 := builders.NewFunctionSchema().
 		Name("func1").
-		Input("input", builders2.NewStringSchema().Build()).
+		Input("input", builders.NewStringSchema().Build()).
 		Build()
 
-	func2 := builders2.NewFunctionSchema().
+	func2 := builders.NewFunctionSchema().
 		Name("func2").
-		Input("input", builders2.NewIntegerSchema().Build()).
+		Input("input", builders.NewIntegerSchema().Build()).
 		Build()
 
-	builder := builders2.NewServiceSchema().
+	builder := builders.NewServiceSchema().
 		Name("ChainedService").
 		Description("Testing method chaining").
 		Tag("test").
@@ -390,37 +391,37 @@ func TestServiceSchemaBuilderChaining(t *testing.T) {
 func TestServiceSchemaAdvancedFeatures(t *testing.T) {
 	t.Run("Service with complex method signatures", func(t *testing.T) {
 		// Create a complex data processing service
-		processDataFunc := builders2.NewFunctionSchema().
+		processDataFunc := builders.NewFunctionSchema().
 			Name("processData").
-			Input("data", builders2.NewArraySchema().
-				Items(builders2.NewObject().
-					Property("id", builders2.NewIntegerSchema().Build()).
-					Property("value", builders2.NewNumberSchema().Build()).
-					Property("metadata", builders2.NewObject().AdditionalProperties(true).Build()).
+			Input("data", builders.NewArraySchema().
+				Items(builders.NewObject().
+					Property("id", builders.NewIntegerSchema().Build()).
+					Property("value", builders.NewNumberSchema().Build()).
+					Property("metadata", builders.NewObject().AdditionalProperties(true).Build()).
 					Required("id", "value").
 					Build()).
 				Build()).
-			Input("options", builders2.NewObject().
-				Property("sortBy", builders2.NewStringSchema().Build()).
-				Property("filterBy", builders2.NewObject().AdditionalProperties(true).Build()).
-				Property("limit", builders2.NewIntegerSchema().Build()).
+			Input("options", builders.NewObject().
+				Property("sortBy", builders.NewStringSchema().Build()).
+				Property("filterBy", builders.NewObject().AdditionalProperties(true).Build()).
+				Property("limit", builders.NewIntegerSchema().Build()).
 				Build()).
-			Output("processedData", builders2.NewArraySchema().
-				Items(builders2.NewObject().
-					Property("id", builders2.NewIntegerSchema().Build()).
-					Property("processedValue", builders2.NewNumberSchema().Build()).
-					Property("status", builders2.NewStringSchema().Build()).
+			Output("processedData", builders.NewArraySchema().
+				Items(builders.NewObject().
+					Property("id", builders.NewIntegerSchema().Build()).
+					Property("processedValue", builders.NewNumberSchema().Build()).
+					Property("status", builders.NewStringSchema().Build()).
 					Build()).
 				Build()).
-			Output("summary", builders2.NewObject().
-				Property("totalProcessed", builders2.NewIntegerSchema().Build()).
-				Property("errors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+			Output("summary", builders.NewObject().
+				Property("totalProcessed", builders.NewIntegerSchema().Build()).
+				Property("errors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
 				Build()).
 			RequiredInputs("data").
 			RequiredOutputs("processedData", "summary").
 			Build()
 
-		schema := builders2.NewServiceSchema().
+		schema := builders.NewServiceSchema().
 			Name("DataProcessingService").
 			Description("Advanced data processing service").
 			Method("processData", processDataFunc).
@@ -465,23 +466,23 @@ func TestServiceSchemaAdvancedFeatures(t *testing.T) {
 	})
 
 	t.Run("Service with error handling methods", func(t *testing.T) {
-		errorSchema := builders2.NewObject().
-			Property("code", builders2.NewStringSchema().Build()).
-			Property("message", builders2.NewStringSchema().Build()).
-			Property("details", builders2.NewObject().AdditionalProperties(true).Build()).
+		errorSchema := builders.NewObject().
+			Property("code", builders.NewStringSchema().Build()).
+			Property("message", builders.NewStringSchema().Build()).
+			Property("details", builders.NewObject().AdditionalProperties(true).Build()).
 			Required("code", "message").
 			Build()
 
-		riskyFunc := builders2.NewFunctionSchema().
+		riskyFunc := builders.NewFunctionSchema().
 			Name("riskyOperation").
-			Input("data", builders2.NewStringSchema().Build()).
-			Output("result", builders2.NewStringSchema().Build()).
+			Input("data", builders.NewStringSchema().Build()).
+			Output("result", builders.NewStringSchema().Build()).
 			Error(errorSchema).
 			RequiredInputs("data").
 			RequiredOutputs("result").
 			Build()
 
-		schema := builders2.NewServiceSchema().
+		schema := builders.NewServiceSchema().
 			Name("RiskyService").
 			Method("riskyOperation", riskyFunc).
 			Build()

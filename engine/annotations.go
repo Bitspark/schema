@@ -1,7 +1,7 @@
 package engine
 
 import (
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"fmt"
 
 	"defs.dev/schema/core"
@@ -43,50 +43,50 @@ func (a *SimpleAnnotationSchema) ValidateAsAnnotation() error {
 
 // StringAnnotation creates a string-based annotation schema
 func StringAnnotation() AnnotationSchema {
-	schema := builders2.NewStringSchema().Build()
+	schema := builders.NewStringSchema().Build()
 	return NewAnnotationSchema(schema)
 }
 
 // StringEnumAnnotation creates an enum string annotation
 func StringEnumAnnotation(values ...string) AnnotationSchema {
-	schema := builders2.NewStringSchema().Enum(values...).Build()
+	schema := builders.NewStringSchema().Enum(values...).Build()
 	return NewAnnotationSchema(schema)
 }
 
 // BooleanAnnotation creates a boolean annotation schema
 func BooleanAnnotation() AnnotationSchema {
-	schema := builders2.NewBooleanSchema().Build()
+	schema := builders.NewBooleanSchema().Build()
 	return NewAnnotationSchema(schema)
 }
 
 // IntegerAnnotation creates an integer annotation schema
 func IntegerAnnotation() AnnotationSchema {
-	schema := builders2.NewIntegerSchema().Build()
+	schema := builders.NewIntegerSchema().Build()
 	return NewAnnotationSchema(schema)
 }
 
 // IntegerRangeAnnotation creates an integer annotation with min/max
 func IntegerRangeAnnotation(min, max int64) AnnotationSchema {
-	schema := builders2.NewIntegerSchema().Min(min).Max(max).Build()
+	schema := builders.NewIntegerSchema().Min(min).Max(max).Build()
 	return NewAnnotationSchema(schema)
 }
 
 // NumberAnnotation creates a number annotation schema
 func NumberAnnotation() AnnotationSchema {
-	schema := builders2.NewNumberSchema().Build()
+	schema := builders.NewNumberSchema().Build()
 	return NewAnnotationSchema(schema)
 }
 
 // ArrayAnnotation creates an array annotation schema
 func ArrayAnnotation(itemSchema core.Schema) AnnotationSchema {
-	schema := builders2.NewArraySchema().Items(itemSchema).Build()
+	schema := builders.NewArraySchema().Items(itemSchema).Build()
 	return NewAnnotationSchema(schema)
 }
 
 // ObjectAnnotation creates an object annotation builder
 func ObjectAnnotation() *ObjectAnnotationBuilder {
 	return &ObjectAnnotationBuilder{
-		builder: builders2.NewObjectSchema(),
+		builder: builders.NewObjectSchema(),
 	}
 }
 

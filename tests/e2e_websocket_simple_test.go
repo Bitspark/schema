@@ -2,7 +2,7 @@ package tests
 
 import (
 	"context"
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"defs.dev/schema/runtime/portal"
 	"fmt"
 	"net/url"
@@ -34,11 +34,11 @@ func TestE2E_WebSocketSimple(t *testing.T) {
 	// Register a simple function
 	simpleFunc := &SimpleTestFunction{
 		name: "echo",
-		schema: builders2.NewFunctionSchema().
+		schema: builders.NewFunctionSchema().
 			Name("echo").
-			Input("message", builders2.NewStringSchema().Build()).
+			Input("message", builders.NewStringSchema().Build()).
 			RequiredInputs("message").
-			Output("echo", builders2.NewStringSchema().Build()).
+			Output("echo", builders.NewStringSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			message, _ := params.Get("message")

@@ -1,67 +1,15 @@
 package tests
 
 import (
+	"defs.dev/schema/construct/builders"
 	"testing"
 
-	builders2 "defs.dev/schema/builders"
-	"defs.dev/schema/consumers/validation"
-	"defs.dev/schema/core"
+	"defs.dev/schema/consume/validation"
 )
-
-// Helper function to generate JSON Schema using a simple stub
-func toJSONSchema(schema core.Schema) map[string]any {
-	// Simple stub implementation for testing
-	result := map[string]any{}
-
-	// Map schema types to JSON Schema types
-	switch schema.Type() {
-	case core.TypeStructure:
-		result["type"] = "object"
-	default:
-		result["type"] = string(schema.Type())
-	}
-
-	if desc := schema.Metadata().Description; desc != "" {
-		result["description"] = desc
-	}
-
-	// Handle array schemas
-	if schema.Type() == core.TypeArray {
-		if arraySchema, ok := schema.(core.ArraySchema); ok {
-			if minItems := arraySchema.MinItems(); minItems != nil {
-				result["minItems"] = float64(*minItems)
-			}
-			if maxItems := arraySchema.MaxItems(); maxItems != nil {
-				result["maxItems"] = float64(*maxItems)
-			}
-			if arraySchema.UniqueItemsRequired() {
-				result["uniqueItems"] = true
-			}
-			if itemSchema := arraySchema.ItemSchema(); itemSchema != nil {
-				result["items"] = toJSONSchema(itemSchema)
-			}
-		}
-	}
-
-	// Handle string schemas
-	if stringSchema, ok := schema.(core.StringSchema); ok {
-		if minLen := stringSchema.MinLength(); minLen != nil {
-			result["minLength"] = *minLen
-		}
-		if maxLen := stringSchema.MaxLength(); maxLen != nil {
-			result["maxLength"] = *maxLen
-		}
-		if pattern := stringSchema.Pattern(); pattern != "" {
-			result["pattern"] = pattern
-		}
-	}
-
-	return result
-}
 
 func TestArraySchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		s := builders2.NewArraySchema().Build()
+		s := builders.NewArraySchema().Build()
 
 		// Valid arrays
 		validArrays := []any{
@@ -97,7 +45,7 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max items constraints", func(t *testing.T) {
-		schema := builders2.NewArraySchema().Range(2, 4).Build()
+		schema := builders.NewArraySchema().Range(2, 4).Build()
 
 		// Valid lengths
 		validArrays := []any{
@@ -127,8 +75,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Item schema validation", func(t *testing.T) {
 		// Array of strings
-		stringSchema := builders2.NewStringSchema().MinLength(2).Build()
-		arraySchema := builders2.NewArraySchema().Items(stringSchema).Build()
+		stringSchema := builders.NewStringSchema().MinLength(2).Build()
+		arraySchema := builders.NewArraySchema().Items(stringSchema).Build()
 
 		// Valid array - all strings meet criteria
 		result := validation.ValidateValue(arraySchema, []any{"hello", "world", "test"})
@@ -155,7 +103,7 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("Unique items constraint", func(t *testing.T) {
-		schema := builders2.NewArraySchema().UniqueItems().Build()
+		schema := builders.NewArraySchema().UniqueItems().Build()
 
 		// Valid - all unique
 		result := validation.ValidateValue(schema, []any{"a", "b", "c"})
@@ -184,8 +132,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Contains schema validation", func(t *testing.T) {
 		// Array must contain at least one string starting with "test"
-		containsSchema := builders2.NewStringSchema().Pattern("^test").Build()
-		arraySchema := builders2.NewArraySchema().Contains(containsSchema).Build()
+		containsSchema := builders.NewStringSchema().Pattern("^test").Build()
+		arraySchema := builders.NewArraySchema().Contains(containsSchema).Build()
 
 		// Valid - contains matching string
 		result := validation.ValidateValue(arraySchema, []any{"hello", "testing", "world"})
@@ -208,8 +156,8 @@ func TestArraySchema(t *testing.T) {
 
 	t.Run("Complex nested validation", func(t *testing.T) {
 		// Array of objects (using string schemas as proxy for complexity)
-		itemSchema := builders2.NewStringSchema().MinLength(3).Build()
-		arraySchema := builders2.NewArraySchema().
+		itemSchema := builders.NewStringSchema().MinLength(3).Build()
+		arraySchema := builders.NewArraySchema().
 			Items(itemSchema).
 			Range(1, 3).
 			UniqueItems().
@@ -234,8 +182,8 @@ func TestArraySchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		itemSchema := builders2.NewStringSchema().Build()
-		schema := builders2.NewArraySchema().
+		itemSchema := builders.NewStringSchema().Build()
+		schema := builders.NewArraySchema().
 			Items(itemSchema).
 			Range(1, 10).
 			UniqueItems().
@@ -275,7 +223,7 @@ func TestArraySchema(t *testing.T) {
 
 func TestArrayBuilder(t *testing.T) {
 	t.Run("Fluent API", func(t *testing.T) {
-		schema := builders2.NewArraySchema().
+		schema := builders.NewArraySchema().
 			MinItems(2).
 			MaxItems(5).
 			UniqueItems().
@@ -308,7 +256,7 @@ func TestArrayBuilder(t *testing.T) {
 	})
 
 	t.Run("Immutability", func(t *testing.T) {
-		builder1 := builders2.NewArraySchema().MinItems(2)
+		builder1 := builders.NewArraySchema().MinItems(2)
 		builder2 := builder1.MaxItems(5)
 
 		schema1 := builder1.Build()
@@ -335,7 +283,7 @@ func TestArrayBuilder(t *testing.T) {
 
 	t.Run("Helper methods", func(t *testing.T) {
 		// Test NonEmpty helper
-		schema := builders2.NewArraySchema().NonEmpty().Build()
+		schema := builders.NewArraySchema().NonEmpty().Build()
 		result := validation.ValidateValue(schema, []any{})
 		if result.Valid {
 			t.Error("Expected empty array to be invalid for NonEmpty() schema")
@@ -347,7 +295,7 @@ func TestArrayBuilder(t *testing.T) {
 		}
 
 		// Test StringArray helper
-		stringArraySchema := builders2.NewArraySchema().StringArray().Build()
+		stringArraySchema := builders.NewArraySchema().StringArray().Build()
 		result = validation.ValidateValue(stringArraySchema, []any{"a", "b", "c"})
 		if !result.Valid {
 			t.Errorf("Expected string array to be valid, got errors: %v", result.Errors)
@@ -363,14 +311,14 @@ func TestArrayBuilder(t *testing.T) {
 func TestArraySchemaEdgeCases(t *testing.T) {
 	t.Run("Empty array validation", func(t *testing.T) {
 		// No constraints - empty array should be valid
-		schema := builders2.NewArraySchema().Build()
+		schema := builders.NewArraySchema().Build()
 		result := validation.ValidateValue(schema, []any{})
 		if !result.Valid {
 			t.Errorf("Expected empty array to be valid with no constraints, got errors: %v", result.Errors)
 		}
 
 		// With minItems constraint - empty array should be invalid
-		schema = builders2.NewArraySchema().MinItems(1).Build()
+		schema = builders.NewArraySchema().MinItems(1).Build()
 		result = validation.ValidateValue(schema, []any{})
 		if result.Valid {
 			t.Error("Expected empty array to be invalid with minItems constraint")
@@ -378,7 +326,7 @@ func TestArraySchemaEdgeCases(t *testing.T) {
 	})
 
 	t.Run("Nil vs empty array", func(t *testing.T) {
-		schema := builders2.NewArraySchema().Build()
+		schema := builders.NewArraySchema().Build()
 
 		// nil should be invalid
 		result := validation.ValidateValue(schema, nil)
@@ -394,7 +342,7 @@ func TestArraySchemaEdgeCases(t *testing.T) {
 	})
 
 	t.Run("Type coercion limits", func(t *testing.T) {
-		schema := builders2.NewArraySchema().Build()
+		schema := builders.NewArraySchema().Build()
 
 		// Various slice types should work
 		sliceTypes := []any{

@@ -4,8 +4,8 @@ package validation
 import (
 	"fmt"
 
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/consumer"
 )
 
 // NumberValidationConsumer validates numeric values

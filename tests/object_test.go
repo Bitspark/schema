@@ -4,11 +4,70 @@ import (
 	"strings"
 	"testing"
 
-	builders2 "defs.dev/schema/builders"
-	"defs.dev/schema/consumers/validation"
+	builders2 "defs.dev/schema/construct/builders"
+	"defs.dev/schema/consume/validation"
 
 	"defs.dev/schema/core"
 )
+
+// Helper function to generate JSON Schema for object schemas
+func toJSONSchemaObject(schema core.Schema) map[string]any {
+	result := map[string]any{}
+
+	// Map schema types to JSON Schema types
+	switch schema.Type() {
+	case core.TypeStructure:
+		result["type"] = "structure"
+	default:
+		result["type"] = string(schema.Type())
+	}
+
+	if desc := schema.Metadata().Description; desc != "" {
+		result["description"] = desc
+	}
+
+	// Handle object schemas
+	if objectSchema, ok := schema.(core.ObjectSchema); ok {
+		if properties := objectSchema.Properties(); properties != nil && len(properties) > 0 {
+			propMap := make(map[string]any)
+			for name, prop := range properties {
+				propMap[name] = toJSONSchemaObject(prop)
+			}
+			result["properties"] = propMap
+		}
+		if required := objectSchema.Required(); required != nil && len(required) > 0 {
+			result["required"] = required
+		}
+		if !objectSchema.AdditionalProperties() {
+			result["additionalProperties"] = false
+		}
+	}
+
+	// Handle string schemas
+	if stringSchema, ok := schema.(core.StringSchema); ok {
+		if minLen := stringSchema.MinLength(); minLen != nil {
+			result["minLength"] = *minLen
+		}
+		if maxLen := stringSchema.MaxLength(); maxLen != nil {
+			result["maxLength"] = *maxLen
+		}
+		if pattern := stringSchema.Pattern(); pattern != "" {
+			result["pattern"] = pattern
+		}
+	}
+
+	// Handle number schemas
+	if numberSchema, ok := schema.(core.NumberSchema); ok {
+		if min := numberSchema.Minimum(); min != nil {
+			result["minimum"] = *min
+		}
+		if max := numberSchema.Maximum(); max != nil {
+			result["maximum"] = *max
+		}
+	}
+
+	return result
+}
 
 func TestObjectSchemaBasicValidation(t *testing.T) {
 	schema := builders2.NewObjectSchema().Build()
@@ -421,7 +480,7 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 		AdditionalProperties(false).
 		Build()
 
-	jsonSchema := toJSONSchema(schema)
+	jsonSchema := toJSONSchemaObject(schema)
 
 	// Check basic properties
 	if jsonSchema["type"] != "structure" {

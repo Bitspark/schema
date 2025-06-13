@@ -1,77 +1,17 @@
 package tests
 
 import (
+	builders2 "defs.dev/schema/construct/builders"
 	"testing"
 
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 
-	"defs.dev/schema/builders"
 	"defs.dev/schema/core"
 )
 
-// Helper function to generate JSON Schema using a simple stub
-func toJSONSchemaBasic(schema core.Schema) map[string]any {
-	// Simple stub implementation for testing
-	result := map[string]any{}
-
-	// Map schema types to JSON Schema types
-	switch schema.Type() {
-	case core.TypeStructure:
-		result["type"] = "object"
-	default:
-		result["type"] = string(schema.Type())
-	}
-
-	if desc := schema.Metadata().Description; desc != "" {
-		result["description"] = desc
-	}
-
-	// Add type-specific properties
-	switch s := schema.(type) {
-	case core.StringSchema:
-		if minLen := s.MinLength(); minLen != nil {
-			result["minLength"] = *minLen
-		}
-		if maxLen := s.MaxLength(); maxLen != nil {
-			result["maxLength"] = *maxLen
-		}
-		if pattern := s.Pattern(); pattern != "" {
-			result["pattern"] = pattern
-		}
-	case core.IntegerSchema:
-		if min := s.Minimum(); min != nil {
-			result["minimum"] = *min
-		}
-		if max := s.Maximum(); max != nil {
-			result["maximum"] = *max
-		}
-	case core.ObjectSchema:
-		if !s.AdditionalProperties() {
-			result["additionalProperties"] = false
-		}
-		if required := s.Required(); required != nil && len(required) > 0 {
-			// Convert to []any for JSON compatibility
-			requiredAny := make([]any, len(required))
-			for i, req := range required {
-				requiredAny[i] = req
-			}
-			result["required"] = requiredAny
-		}
-		if properties := s.Properties(); properties != nil && len(properties) > 0 {
-			propMap := make(map[string]any)
-			for name, prop := range properties {
-				propMap[name] = toJSONSchemaBasic(prop)
-			}
-			result["properties"] = propMap
-		}
-	}
-
-	return result
-}
-
 func TestStringSchemaBasic(t *testing.T) {
 	// Create a string schema
-	schema := builders.NewStringSchema().
+	schema := builders2.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Description("Test string").
@@ -102,7 +42,7 @@ func TestStringSchemaBasic(t *testing.T) {
 }
 
 func TestStringSchemaValidation(t *testing.T) {
-	schema := builders.NewStringSchema().
+	schema := builders2.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Build()
@@ -136,7 +76,7 @@ func TestStringSchemaValidation(t *testing.T) {
 }
 
 func TestStringSchemaPattern(t *testing.T) {
-	schema := builders.NewStringSchema().
+	schema := builders2.NewStringSchema().
 		Pattern(`^[a-z]+$`).
 		Build()
 
@@ -154,7 +94,7 @@ func TestStringSchemaPattern(t *testing.T) {
 }
 
 func TestStringSchemaEmail(t *testing.T) {
-	schema := builders.NewStringSchema().Email().Build()
+	schema := builders2.NewStringSchema().Email().Build()
 
 	// Test valid email
 	result := validation.ValidateValue(schema, "user@example.com")
@@ -170,7 +110,7 @@ func TestStringSchemaEmail(t *testing.T) {
 }
 
 func TestStringSchemaEnum(t *testing.T) {
-	schema := builders.NewStringSchema().
+	schema := builders2.NewStringSchema().
 		Enum("red", "green", "blue").
 		Build()
 
@@ -188,7 +128,7 @@ func TestStringSchemaEnum(t *testing.T) {
 }
 
 func TestStringSchemaImmutability(t *testing.T) {
-	builder1 := builders.NewStringSchema().MinLength(3)
+	builder1 := builders2.NewStringSchema().MinLength(3)
 	builder2 := builder1.MaxLength(10)
 
 	schema1 := builder1.Build()
@@ -214,7 +154,7 @@ func TestStringSchemaImmutability(t *testing.T) {
 }
 
 func TestStringSchemaJSONSchema(t *testing.T) {
-	schema := builders.NewStringSchema().
+	schema := builders2.NewStringSchema().
 		MinLength(3).
 		MaxLength(10).
 		Pattern("^[a-z]+$").
@@ -248,13 +188,13 @@ func TestStringSchemaJSONSchema(t *testing.T) {
 
 func TestGoModSchema(t *testing.T) {
 	// Structural validation - syntax and basic constraints
-	goModSchema := builders.NewObject().
-		Property("module", builders.NewStringSchema().Pattern(`^[a-zA-Z0-9\-\.\/]+$`).Build()).
-		Property("go", builders.NewStringSchema().Pattern(`^\d+\.\d+$`).Build()).
-		Property("require", builders.NewArraySchema().Items(
-			builders.NewObjectSchema().
-				Property("module", builders.NewStringSchema().Build()).
-				Property("version", builders.NewStringSchema().Build()).
+	goModSchema := builders2.NewObject().
+		Property("module", builders2.NewStringSchema().Pattern(`^[a-zA-Z0-9\-\.\/]+$`).Build()).
+		Property("go", builders2.NewStringSchema().Pattern(`^\d+\.\d+$`).Build()).
+		Property("require", builders2.NewArraySchema().Items(
+			builders2.NewObjectSchema().
+				Property("module", builders2.NewStringSchema().Build()).
+				Property("version", builders2.NewStringSchema().Build()).
 				Build(),
 		).Build()).
 		Required("module", "go").
@@ -301,13 +241,4 @@ func TestGoModSchema(t *testing.T) {
 	if len(require) != 2 || !contains(require, "module") || !contains(require, "go") {
 		t.Errorf("Expected require properties 'module' and 'go', got %v", require)
 	}
-}
-
-func contains(slice []string, item string) bool {
-	for _, i := range slice {
-		if i == item {
-			return true
-		}
-	}
-	return false
 }

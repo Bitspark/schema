@@ -2,8 +2,8 @@
 package validation
 
 import (
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/consumer"
 )
 
 // ValidateWithRegistry validates a value against a schema using validation consumers.

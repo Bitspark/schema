@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"defs.dev/schema/consumer"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/consumer"
 )
 
 // StringValidationConsumer validates string values against string schema constraints

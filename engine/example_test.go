@@ -1,7 +1,7 @@
 package engine
 
 import (
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"fmt"
 	"testing"
 )
@@ -25,12 +25,12 @@ func TestSchemaEngine_ComprehensiveExample(t *testing.T) {
 	fmt.Println("\n1. Registering Schemas:")
 
 	// User schema
-	userSchema := builders2.NewObjectSchema().
+	userSchema := builders.NewObjectSchema().
 		Name("User").
-		Property("id", builders2.NewIntegerSchema().Build()).
-		Property("name", builders2.NewStringSchema().Build()).
-		Property("email", builders2.NewStringSchema().Build()).
-		Property("active", builders2.NewBooleanSchema().Build()).
+		Property("id", builders.NewIntegerSchema().Build()).
+		Property("name", builders.NewStringSchema().Build()).
+		Property("email", builders.NewStringSchema().Build()).
+		Property("active", builders.NewBooleanSchema().Build()).
 		Required("id", "name", "email").
 		Build()
 
@@ -41,13 +41,13 @@ func TestSchemaEngine_ComprehensiveExample(t *testing.T) {
 	fmt.Printf("✓ Registered schema: User\n")
 
 	// Order schema
-	orderSchema := builders2.NewObjectSchema().
+	orderSchema := builders.NewObjectSchema().
 		Name("Order").
-		Property("id", builders2.NewIntegerSchema().Build()).
-		Property("userId", builders2.NewIntegerSchema().Build()).
-		Property("total", builders2.NewNumberSchema().Build()).
-		Property("items", builders2.NewArraySchema().
-			Items(builders2.NewStringSchema().Build()).
+		Property("id", builders.NewIntegerSchema().Build()).
+		Property("userId", builders.NewIntegerSchema().Build()).
+		Property("total", builders.NewNumberSchema().Build()).
+		Property("items", builders.NewArraySchema().
+			Items(builders.NewStringSchema().Build()).
 			Build()).
 		Required("id", "userId", "total").
 		Build()
@@ -131,7 +131,7 @@ func TestSchemaEngine_ComprehensiveExample(t *testing.T) {
 	fmt.Printf("✓ Cloned engine with %d schemas\n", len(clone.ListSchemas()))
 
 	// Verify independence
-	err = engine.RegisterSchema("Product", builders2.NewStringSchema().Build())
+	err = engine.RegisterSchema("Product", builders.NewStringSchema().Build())
 	if err != nil {
 		t.Fatalf("Failed to register Product schema: %v", err)
 	}
@@ -276,7 +276,7 @@ func TestSchemaEngine_ReferenceSystem(t *testing.T) {
 // Benchmark tests for performance
 func BenchmarkSchemaEngine_RegisterSchema(b *testing.B) {
 	engine := NewSchemaEngine()
-	schema := builders2.NewStringSchema().Build()
+	schema := builders.NewStringSchema().Build()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -287,7 +287,7 @@ func BenchmarkSchemaEngine_RegisterSchema(b *testing.B) {
 
 func BenchmarkSchemaEngine_ResolveSchema(b *testing.B) {
 	engine := NewSchemaEngine()
-	schema := builders2.NewStringSchema().Build()
+	schema := builders.NewStringSchema().Build()
 
 	// Pre-register schemas
 	for i := 0; i < 100; i++ {

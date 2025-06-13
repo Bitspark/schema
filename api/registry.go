@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 
 	"defs.dev/schema/core"
 )

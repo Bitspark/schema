@@ -1,11 +1,10 @@
 package tests
 
 import (
+	"defs.dev/schema/construct/builders"
 	"testing"
 
-	builders2 "defs.dev/schema/builders"
-
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 
 	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
@@ -93,12 +92,12 @@ func toJSONSchemaFunction(schema core.Schema) map[string]any {
 
 func TestFunctionSchemaBuilder(t *testing.T) {
 	t.Run("Basic function schema creation", func(t *testing.T) {
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("testFunction").
 			Description("A test function").
-			Input("name", builders2.NewStringSchema().Build()).
-			Input("age", builders2.NewIntegerSchema().Build()).
-			Output("greeting", builders2.NewStringSchema().Build()).
+			Input("name", builders.NewStringSchema().Build()).
+			Input("age", builders.NewIntegerSchema().Build()).
+			Output("greeting", builders.NewStringSchema().Build()).
 			RequiredInputs("name").
 			RequiredOutputs("greeting").
 			Build()
@@ -170,11 +169,11 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 	})
 
 	t.Run("Function schema with error handling", func(t *testing.T) {
-		errorSchema := builders2.NewStringSchema().Build()
-		schema := builders2.NewFunctionSchema().
+		errorSchema := builders.NewStringSchema().Build()
+		schema := builders.NewFunctionSchema().
 			Name("errorFunction").
-			Input("data", builders2.NewStringSchema().Build()).
-			Output("result", builders2.NewStringSchema().Build()).
+			Input("data", builders.NewStringSchema().Build()).
+			Output("result", builders.NewStringSchema().Build()).
 			Error(errorSchema).
 			Build()
 
@@ -193,10 +192,10 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 			"output": "processed test",
 		}
 
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("exampleFunction").
-			Input("input", builders2.NewStringSchema().Build()).
-			Output("output", builders2.NewStringSchema().Build()).
+			Input("input", builders.NewStringSchema().Build()).
+			Output("output", builders.NewStringSchema().Build()).
 			Example(example).
 			Build()
 
@@ -216,11 +215,11 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 	})
 
 	t.Run("Function schema with tags", func(t *testing.T) {
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("taggedFunction").
 			Tag("api").
 			Tag("public").
-			Input("data", builders2.NewStringSchema().Build()).
+			Input("data", builders.NewStringSchema().Build()).
 			Build()
 
 		tags := schema.Metadata().Tags
@@ -237,20 +236,20 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 	})
 
 	t.Run("Complex function schema", func(t *testing.T) {
-		userSchema := builders2.NewObject().
-			Property("id", builders2.NewIntegerSchema().Build()).
-			Property("name", builders2.NewStringSchema().Build()).
-			Property("email", builders2.NewStringSchema().Build()).
+		userSchema := builders.NewObject().
+			Property("id", builders.NewIntegerSchema().Build()).
+			Property("name", builders.NewStringSchema().Build()).
+			Property("email", builders.NewStringSchema().Build()).
 			Required("id", "name").
 			Build()
 
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("createUser").
 			Description("Creates a new user in the system").
 			Input("userData", userSchema).
-			Input("options", builders2.NewObject().AdditionalProperties(true).Build()).
+			Input("options", builders.NewObject().AdditionalProperties(true).Build()).
 			Output("user", userSchema).
-			Output("success", builders2.NewBooleanSchema().Build()).
+			Output("success", builders.NewBooleanSchema().Build()).
 			RequiredInputs("userData").
 			RequiredOutputs("user", "success").
 			Tag("user").
@@ -287,11 +286,11 @@ func TestFunctionSchemaBuilder(t *testing.T) {
 }
 
 func TestFunctionSchemaValidation(t *testing.T) {
-	schema := builders2.NewFunctionSchema().
+	schema := builders.NewFunctionSchema().
 		Name("validateFunction").
-		Input("name", builders2.NewStringSchema().Build()).
-		Input("age", builders2.NewIntegerSchema().Build()).
-		Output("valid", builders2.NewBooleanSchema().Build()).
+		Input("name", builders.NewStringSchema().Build()).
+		Input("age", builders.NewIntegerSchema().Build()).
+		Output("valid", builders.NewBooleanSchema().Build()).
 		RequiredInputs("name").
 		Build()
 
@@ -348,11 +347,11 @@ func TestFunctionSchemaValidation(t *testing.T) {
 }
 
 func TestFunctionSchemaCloning(t *testing.T) {
-	original := builders2.NewFunctionSchema().
+	original := builders.NewFunctionSchema().
 		Name("originalFunction").
 		Description("Original description").
-		Input("input", builders2.NewStringSchema().Build()).
-		Output("output", builders2.NewStringSchema().Build()).
+		Input("input", builders.NewStringSchema().Build()).
+		Output("output", builders.NewStringSchema().Build()).
 		Tag("original").
 		Build()
 
@@ -376,12 +375,12 @@ func TestFunctionSchemaCloning(t *testing.T) {
 }
 
 func TestFunctionSchemaJSONSchema(t *testing.T) {
-	schema := builders2.NewFunctionSchema().
+	schema := builders.NewFunctionSchema().
 		Name("jsonFunction").
 		Description("Function for JSON schema testing").
-		Input("name", builders2.NewStringSchema().Build()).
-		Input("age", builders2.NewIntegerSchema().Build()).
-		Output("greeting", builders2.NewStringSchema().Build()).
+		Input("name", builders.NewStringSchema().Build()).
+		Input("age", builders.NewIntegerSchema().Build()).
+		Output("greeting", builders.NewStringSchema().Build()).
 		Build()
 
 	jsonSchema := toJSONSchemaFunction(schema)
@@ -407,13 +406,13 @@ func TestFunctionSchemaJSONSchema(t *testing.T) {
 
 func TestFunctionSchemaBuilderChaining(t *testing.T) {
 	// Test that all builder methods return the correct type for chaining
-	builder := builders2.NewFunctionSchema().
+	builder := builders.NewFunctionSchema().
 		Name("chainedFunction").
 		Description("Testing method chaining").
 		Tag("test").
-		Input("a", builders2.NewStringSchema().Build()).
-		Input("b", builders2.NewIntegerSchema().Build()).
-		Output("result", builders2.NewStringSchema().Build()).
+		Input("a", builders.NewStringSchema().Build()).
+		Input("b", builders.NewIntegerSchema().Build()).
+		Output("result", builders.NewStringSchema().Build()).
 		RequiredInputs("a").
 		RequiredOutputs("result").
 		Example(map[string]any{"a": "test", "b": 42})
@@ -439,26 +438,26 @@ func TestFunctionSchemaBuilderChaining(t *testing.T) {
 
 func TestFunctionSchemaAdvancedFeatures(t *testing.T) {
 	t.Run("Function with complex nested schemas", func(t *testing.T) {
-		addressSchema := builders2.NewObject().
-			Property("street", builders2.NewStringSchema().Build()).
-			Property("city", builders2.NewStringSchema().Build()).
-			Property("zipCode", builders2.NewStringSchema().Build()).
+		addressSchema := builders.NewObject().
+			Property("street", builders.NewStringSchema().Build()).
+			Property("city", builders.NewStringSchema().Build()).
+			Property("zipCode", builders.NewStringSchema().Build()).
 			Required("street", "city").
 			Build()
 
-		personSchema := builders2.NewObject().
-			Property("name", builders2.NewStringSchema().Build()).
-			Property("age", builders2.NewIntegerSchema().Build()).
+		personSchema := builders.NewObject().
+			Property("name", builders.NewStringSchema().Build()).
+			Property("age", builders.NewIntegerSchema().Build()).
 			Property("address", addressSchema).
-			Property("hobbies", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+			Property("hobbies", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
 			Required("name").
 			Build()
 
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("processPersonData").
 			Input("person", personSchema).
-			Output("processed", builders2.NewBooleanSchema().Build()).
-			Output("errors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+			Output("processed", builders.NewBooleanSchema().Build()).
+			Output("errors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
 			RequiredInputs("person").
 			RequiredOutputs("processed").
 			Build()
@@ -484,14 +483,14 @@ func TestFunctionSchemaAdvancedFeatures(t *testing.T) {
 	})
 
 	t.Run("Function with array inputs and outputs", func(t *testing.T) {
-		schema := builders2.NewFunctionSchema().
+		schema := builders.NewFunctionSchema().
 			Name("processArray").
-			Input("numbers", builders2.NewArraySchema().Items(builders2.NewNumberSchema().Build()).Build()).
-			Input("operation", builders2.NewStringSchema().Build()).
-			Output("results", builders2.NewArraySchema().Items(builders2.NewNumberSchema().Build()).Build()).
-			Output("summary", builders2.NewObject().
-				Property("count", builders2.NewIntegerSchema().Build()).
-				Property("sum", builders2.NewNumberSchema().Build()).
+			Input("numbers", builders.NewArraySchema().Items(builders.NewNumberSchema().Build()).Build()).
+			Input("operation", builders.NewStringSchema().Build()).
+			Output("results", builders.NewArraySchema().Items(builders.NewNumberSchema().Build()).Build()).
+			Output("summary", builders.NewObject().
+				Property("count", builders.NewIntegerSchema().Build()).
+				Property("sum", builders.NewNumberSchema().Build()).
 				Build()).
 			RequiredInputs("numbers", "operation").
 			RequiredOutputs("results").

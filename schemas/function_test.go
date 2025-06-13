@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 	"testing"
 
 	"defs.dev/schema/core"

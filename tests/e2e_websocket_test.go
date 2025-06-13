@@ -2,7 +2,7 @@ package tests
 
 import (
 	"context"
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	portal2 "defs.dev/schema/runtime/portal"
 	"fmt"
 	"net/http"
@@ -38,15 +38,15 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 	streamingFunctions := []*E2ETestFunction{
 		{
 			name: "counter_stream",
-			schema: builders2.NewFunctionSchema().
+			schema: builders.NewFunctionSchema().
 				Name("counter_stream").
 				Description("Streams counting numbers").
-				Input("start", builders2.NewIntegerSchema().Build()).
-				Input("end", builders2.NewIntegerSchema().Build()).
-				Input("interval_ms", builders2.NewIntegerSchema().Build()).
+				Input("start", builders.NewIntegerSchema().Build()).
+				Input("end", builders.NewIntegerSchema().Build()).
+				Input("interval_ms", builders.NewIntegerSchema().Build()).
 				RequiredInputs("start", "end").
-				Output("count", builders2.NewIntegerSchema().Build()).
-				Output("timestamp", builders2.NewStringSchema().Build()).
+				Output("count", builders.NewIntegerSchema().Build()).
+				Output("timestamp", builders.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				start, _ := params.Get("start")
@@ -73,15 +73,15 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 		},
 		{
 			name: "chat_processor",
-			schema: builders2.NewFunctionSchema().
+			schema: builders.NewFunctionSchema().
 				Name("chat_processor").
 				Description("Processes chat messages").
-				Input("message", builders2.NewStringSchema().Build()).
-				Input("user_id", builders2.NewStringSchema().Build()).
+				Input("message", builders.NewStringSchema().Build()).
+				Input("user_id", builders.NewStringSchema().Build()).
 				RequiredInputs("message", "user_id").
-				Output("processed_message", builders2.NewStringSchema().Build()).
-				Output("word_count", builders2.NewIntegerSchema().Build()).
-				Output("timestamp", builders2.NewStringSchema().Build()).
+				Output("processed_message", builders.NewStringSchema().Build()).
+				Output("word_count", builders.NewIntegerSchema().Build()).
+				Output("timestamp", builders.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				message, _ := params.Get("message")
@@ -263,13 +263,13 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 	httpFunctions := []*E2ETestFunction{
 		{
 			name: "user_validator",
-			schema: builders2.NewFunctionSchema().
+			schema: builders.NewFunctionSchema().
 				Name("user_validator").
-				Input("username", builders2.NewStringSchema().Build()).
-				Input("email", builders2.NewStringSchema().Build()).
+				Input("username", builders.NewStringSchema().Build()).
+				Input("email", builders.NewStringSchema().Build()).
 				RequiredInputs("username", "email").
-				Output("valid", builders2.NewBooleanSchema().Build()).
-				Output("errors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+				Output("valid", builders.NewBooleanSchema().Build()).
+				Output("errors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				username, _ := params.Get("username")
@@ -294,12 +294,12 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 		},
 		{
 			name: "data_transformer",
-			schema: builders2.NewFunctionSchema().
+			schema: builders.NewFunctionSchema().
 				Name("data_transformer").
-				Input("data", builders2.NewObjectSchema().Build()).
-				Input("transform_type", builders2.NewStringSchema().Build()).
+				Input("data", builders.NewObjectSchema().Build()).
+				Input("transform_type", builders.NewStringSchema().Build()).
 				RequiredInputs("data", "transform_type").
-				Output("transformed", builders2.NewObjectSchema().Build()).
+				Output("transformed", builders.NewObjectSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				data, _ := params.Get("data")
@@ -336,14 +336,14 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 	wsFunctions := []*E2ETestFunction{
 		{
 			name: "notification_sender",
-			schema: builders2.NewFunctionSchema().
+			schema: builders.NewFunctionSchema().
 				Name("notification_sender").
-				Input("user_id", builders2.NewStringSchema().Build()).
-				Input("message", builders2.NewStringSchema().Build()).
-				Input("priority", builders2.NewStringSchema().Build()).
+				Input("user_id", builders.NewStringSchema().Build()).
+				Input("message", builders.NewStringSchema().Build()).
+				Input("priority", builders.NewStringSchema().Build()).
 				RequiredInputs("user_id", "message").
-				Output("notification_id", builders2.NewStringSchema().Build()).
-				Output("sent_at", builders2.NewStringSchema().Build()).
+				Output("notification_id", builders.NewStringSchema().Build()).
+				Output("sent_at", builders.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				userID, _ := params.Get("user_id")
@@ -531,12 +531,4 @@ func testWebSocketFunction(conn *websocket.Conn, request map[string]any) E2EWebS
 		result.Response = response.Data
 	}
 	return result
-}
-
-func getKeys(m map[string]any) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
 }

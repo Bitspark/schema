@@ -2,7 +2,7 @@ package portal
 
 import (
 	"context"
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 	registry2 "defs.dev/schema/runtime/registry"
 	"fmt"
 	"sync"

@@ -1,7 +1,7 @@
 package native
 
 import (
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"defs.dev/schema/core/annotation"
 	"defs.dev/schema/runtime/registry"
 	"fmt"
@@ -201,7 +201,7 @@ func (c *DefaultTypeConverter) convertType(t reflect.Type, annotations []annotat
 }
 
 func (c *DefaultTypeConverter) convertString(t reflect.Type, annotations []annotation.Annotation) (core.Schema, error) {
-	builder := builders2.NewStringSchema()
+	builder := builders.NewStringSchema()
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -214,7 +214,7 @@ func (c *DefaultTypeConverter) convertString(t reflect.Type, annotations []annot
 }
 
 func (c *DefaultTypeConverter) convertInteger(t reflect.Type, annotations []annotation.Annotation) (core.Schema, error) {
-	builder := builders2.NewIntegerSchema()
+	builder := builders.NewIntegerSchema()
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -227,7 +227,7 @@ func (c *DefaultTypeConverter) convertInteger(t reflect.Type, annotations []anno
 }
 
 func (c *DefaultTypeConverter) convertNumber(t reflect.Type, annotations []annotation.Annotation) (core.Schema, error) {
-	builder := builders2.NewNumberSchema()
+	builder := builders.NewNumberSchema()
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -240,7 +240,7 @@ func (c *DefaultTypeConverter) convertNumber(t reflect.Type, annotations []annot
 }
 
 func (c *DefaultTypeConverter) convertBoolean(t reflect.Type, annotations []annotation.Annotation) (core.Schema, error) {
-	builder := builders2.NewBooleanSchema()
+	builder := builders.NewBooleanSchema()
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -259,7 +259,7 @@ func (c *DefaultTypeConverter) convertArray(t reflect.Type, annotations []annota
 		return nil, fmt.Errorf("failed to convert array element type: %v", err)
 	}
 
-	builder := builders2.NewArraySchema().Items(elementSchema)
+	builder := builders.NewArraySchema().Items(elementSchema)
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -279,7 +279,7 @@ func (c *DefaultTypeConverter) convertMap(t reflect.Type, annotations []annotati
 		return nil, fmt.Errorf("failed to convert map value type: %v", err)
 	}
 
-	builder := builders2.NewObjectSchema().Dict(valueSchema)
+	builder := builders.NewObjectSchema().Dict(valueSchema)
 
 	// Apply annotations
 	for _, ann := range annotations {
@@ -292,7 +292,7 @@ func (c *DefaultTypeConverter) convertMap(t reflect.Type, annotations []annotati
 }
 
 func (c *DefaultTypeConverter) convertStruct(t reflect.Type, annotations []annotation.Annotation, depth int) (core.Schema, error) {
-	builder := builders2.NewObjectSchema()
+	builder := builders.NewObjectSchema()
 
 	// Process struct fields
 	for i := 0; i < t.NumField(); i++ {
@@ -338,13 +338,13 @@ func (c *DefaultTypeConverter) convertStruct(t reflect.Type, annotations []annot
 		}
 
 		// Add field to object
-		builder = builder.Property(fieldName, fieldSchema).(*builders2.ObjectBuilder)
+		builder = builder.Property(fieldName, fieldSchema).(*builders.ObjectBuilder)
 
 		// Check if field is required
 		for _, ann := range fieldAnnotations {
 			if ann.Name() == "required" {
 				if required, ok := ann.Value().(bool); ok && required {
-					builder = builder.Required(fieldName).(*builders2.ObjectBuilder)
+					builder = builder.Required(fieldName).(*builders.ObjectBuilder)
 				}
 			}
 		}
@@ -368,7 +368,7 @@ func (c *DefaultTypeConverter) convertPointer(t reflect.Type, annotations []anno
 
 func (c *DefaultTypeConverter) convertInterface(t reflect.Type, annotations []annotation.Annotation) (core.Schema, error) {
 	// For interfaces, we create a flexible schema
-	builder := builders2.NewObjectSchema().Flexible()
+	builder := builders.NewObjectSchema().Flexible()
 
 	// Apply annotations
 	for _, ann := range annotations {

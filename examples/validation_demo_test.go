@@ -1,15 +1,15 @@
 package examples
 
 import (
-	builders2 "defs.dev/schema/builders"
-	validation2 "defs.dev/schema/consumers/validation"
+	"defs.dev/schema/construct/builders"
+	validation2 "defs.dev/schema/consume/validation"
 	"testing"
 )
 
 func TestConsumerDrivenValidationDemo(t *testing.T) {
 	t.Run("String validation", func(t *testing.T) {
 		// Create a string schema
-		stringSchema := builders2.NewStringSchema().Build()
+		stringSchema := builders.NewStringSchema().Build()
 
 		// Valid string
 		result := validation2.ValidateValue(stringSchema, "hello")
@@ -32,7 +32,7 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 
 	t.Run("Boolean validation", func(t *testing.T) {
 		// Create a boolean schema
-		boolSchema := builders2.NewBooleanSchema().Build()
+		boolSchema := builders.NewBooleanSchema().Build()
 
 		// Valid boolean
 		result := validation2.ValidateValue(boolSchema, true)
@@ -55,10 +55,10 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 
 	t.Run("Function validation with required inputs", func(t *testing.T) {
 		// Create a function schema with required inputs
-		functionSchema := builders2.NewFunctionSchema().
-			RequiredInput("name", builders2.NewStringSchema().Build()).
-			RequiredInput("age", builders2.NewIntegerSchema().Build()).
-			OptionalInput("email", builders2.NewStringSchema().Build()).
+		functionSchema := builders.NewFunctionSchema().
+			RequiredInput("name", builders.NewStringSchema().Build()).
+			RequiredInput("age", builders.NewIntegerSchema().Build()).
+			OptionalInput("email", builders.NewStringSchema().Build()).
 			Build()
 
 		// Valid input with all required fields

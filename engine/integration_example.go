@@ -1,7 +1,7 @@
 package engine
 
 import (
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"fmt"
 )
 
@@ -27,84 +27,84 @@ func IntegrationExample() {
 	fmt.Println("\n2. Defining schemas with builders...")
 
 	// User entity schema
-	userSchema := builders2.NewObjectSchema().
+	userSchema := builders.NewObjectSchema().
 		Name("User").
 		Description("User entity with authentication and profile information").
-		Property("id", builders2.NewIntegerSchema().
+		Property("id", builders.NewIntegerSchema().
 			Description("Unique user identifier").
 			Min(1).
 			Build()).
-		Property("username", builders2.NewStringSchema().
+		Property("username", builders.NewStringSchema().
 			Description("Unique username for authentication").
 			MinLength(3).
 			MaxLength(50).
 			Pattern("^[a-zA-Z0-9_]+$").
 			Build()).
-		Property("email", builders2.NewStringSchema().
+		Property("email", builders.NewStringSchema().
 			Description("User email address").
 			Format("email").
 			Build()).
-		Property("profile", builders2.NewObjectSchema().
-			Property("firstName", builders2.NewStringSchema().Build()).
-			Property("lastName", builders2.NewStringSchema().Build()).
-			Property("bio", builders2.NewStringSchema().MaxLength(500).Build()).
+		Property("profile", builders.NewObjectSchema().
+			Property("firstName", builders.NewStringSchema().Build()).
+			Property("lastName", builders.NewStringSchema().Build()).
+			Property("bio", builders.NewStringSchema().MaxLength(500).Build()).
 			Required("firstName", "lastName").
 			Build()).
-		Property("roles", builders2.NewArraySchema().
-			Items(builders2.NewStringSchema().
+		Property("roles", builders.NewArraySchema().
+			Items(builders.NewStringSchema().
 				Enum("user", "admin", "moderator").
 				Build()).
 			Build()).
-		Property("active", builders2.NewBooleanSchema().
+		Property("active", builders.NewBooleanSchema().
 			Default(true).
 			Build()).
-		Property("createdAt", builders2.NewStringSchema().
+		Property("createdAt", builders.NewStringSchema().
 			Format("date-time").
 			Build()).
 		Required("id", "username", "email", "profile", "active", "createdAt").
 		Build()
 
 	// Order management schema
-	orderSchema := builders2.NewObjectSchema().
+	orderSchema := builders.NewObjectSchema().
 		Name("Order").
 		Description("E-commerce order with items and billing information").
-		Property("id", builders2.NewIntegerSchema().
+		Property("id", builders.NewIntegerSchema().
 			Description("Unique order identifier").
 			Min(1).
 			Build()).
-		Property("userId", builders2.NewIntegerSchema().
+		Property("userId", builders.NewIntegerSchema().
 			Description("Reference to the user who placed the order").
 			Min(1).
 			Build()).
-		Property("items", builders2.NewArraySchema().
+		Property("items", builders.NewArraySchema().
 			Description("List of ordered items").
-			Items(builders2.NewObjectSchema().
-				Property("productId", builders2.NewIntegerSchema().Min(1).Build()).
-				Property("name", builders2.NewStringSchema().Build()).
-				Property("quantity", builders2.NewIntegerSchema().Min(1).Build()).
-				Property("price", builders2.NewNumberSchema().Min(0).Build()).
+			Items(builders.NewObjectSchema().
+				Property("productId", builders.NewIntegerSchema().Min(1).Build()).
+				Property("name", builders.NewStringSchema().Build()).
+				Property("quantity", builders.NewIntegerSchema().Min(1).Build()).
+				Property("price", builders.NewNumberSchema().Min(0).Build()).
 				Required("productId", "name", "quantity", "price").
 				Build()).
 			MinItems(1).
 			Build()).
-		Property("total", builders2.NewNumberSchema().
+		Property("total", builders.NewNumberSchema().
 			Description("Total order amount").
 			Min(0).
 			Build()).
-		Property("status", builders2.NewStringSchema().
+		Property("status", builders.NewStringSchema().
 			Description("Order processing status").
 			Enum("pending", "processing", "shipped", "delivered", "cancelled").
 			Default("pending").
 			Build()).
-		Property("shippingAddress", builders2.NewObjectSchema().
-			Property("street", builders2.NewStringSchema().Build()).
-			Property("city", builders2.NewStringSchema().Build()).
-			Property("state", builders2.NewStringSchema().Build()).
-			Property("zipCode", builders2.NewStringSchema().Build()).
-			Property("country", builders2.NewStringSchema().Build()).
+		Property("shippingAddress", builders.NewObjectSchema().
+			Property("street", builders.NewStringSchema().Build()).
+			Property("city", builders.NewStringSchema().Build()).
+			Property("state", builders.NewStringSchema().Build()).
+			Property("zipCode", builders.NewStringSchema().Build()).
+			Property("country", builders.NewStringSchema().Build()).
 			Required("street", "city", "state", "zipCode", "country").
 			Build()).
-		Property("orderDate", builders2.NewStringSchema().
+		Property("orderDate", builders.NewStringSchema().
 			Format("date-time").
 			Build()).
 		Required("id", "userId", "items", "total", "status", "orderDate").
@@ -132,22 +132,22 @@ func IntegrationExample() {
 	fmt.Println("\n4. Creating function definitions...")
 
 	// User service functions
-	getUserFunction := builders2.NewFunctionSchema().
+	getUserFunction := builders.NewFunctionSchema().
 		Name("getUser").
 		Description("Retrieve user by ID").
-		Input("userId", builders2.NewIntegerSchema().Min(1).Build()).
+		Input("userId", builders.NewIntegerSchema().Min(1).Build()).
 		Output("user", userSchema). // Reference to registered schema
 		Build()
 
-	createUserFunction := builders2.NewFunctionSchema().
+	createUserFunction := builders.NewFunctionSchema().
 		Name("createUser").
 		Description("Create a new user").
-		Input("userData", builders2.NewObjectSchema().
-			Property("username", builders2.NewStringSchema().Build()).
-			Property("email", builders2.NewStringSchema().Build()).
-			Property("profile", builders2.NewObjectSchema().
-				Property("firstName", builders2.NewStringSchema().Build()).
-				Property("lastName", builders2.NewStringSchema().Build()).
+		Input("userData", builders.NewObjectSchema().
+			Property("username", builders.NewStringSchema().Build()).
+			Property("email", builders.NewStringSchema().Build()).
+			Property("profile", builders.NewObjectSchema().
+				Property("firstName", builders.NewStringSchema().Build()).
+				Property("lastName", builders.NewStringSchema().Build()).
 				Build()).
 			Required("username", "email", "profile").
 			Build()).

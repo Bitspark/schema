@@ -1,7 +1,7 @@
 package engine
 
 import (
-	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/construct/builders"
 	"testing"
 )
 
@@ -17,11 +17,11 @@ func TestSchemaEngine_BasicFunctionality(t *testing.T) {
 	}
 
 	// Create a simple schema
-	userSchema := builders2.NewObjectSchema().
+	userSchema := builders.NewObjectSchema().
 		Name("User").
-		Property("id", builders2.NewIntegerSchema().Build()).
-		Property("name", builders2.NewStringSchema().Build()).
-		Property("email", builders2.NewStringSchema().Build()).
+		Property("id", builders.NewIntegerSchema().Build()).
+		Property("name", builders.NewStringSchema().Build()).
+		Property("email", builders.NewStringSchema().Build()).
 		Required("id", "name", "email").
 		Build()
 
@@ -188,7 +188,7 @@ func TestSchemaEngine_ErrorHandling(t *testing.T) {
 	engine := NewSchemaEngine()
 
 	// Test registering with empty name
-	userSchema := builders2.NewStringSchema().Build()
+	userSchema := builders.NewStringSchema().Build()
 	err := engine.RegisterSchema("", userSchema)
 	if err == nil {
 		t.Error("Expected error for empty schema name")
@@ -219,7 +219,7 @@ func TestSchemaEngine_Clone(t *testing.T) {
 	engine := NewSchemaEngineWithConfig(config)
 
 	// Register a schema
-	userSchema := builders2.NewStringSchema().Build()
+	userSchema := builders.NewStringSchema().Build()
 	err := engine.RegisterSchema("User", userSchema)
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
@@ -234,7 +234,7 @@ func TestSchemaEngine_Clone(t *testing.T) {
 	}
 
 	// Verify independence - register new schema in original
-	err = engine.RegisterSchema("Order", builders2.NewStringSchema().Build())
+	err = engine.RegisterSchema("Order", builders.NewStringSchema().Build())
 	if err != nil {
 		t.Fatalf("Failed to register schema in original: %v", err)
 	}
@@ -251,12 +251,12 @@ func TestSchemaEngine_Reset(t *testing.T) {
 	engine := NewSchemaEngineWithConfig(config)
 
 	// Register some schemas
-	err := engine.RegisterSchema("User", builders2.NewStringSchema().Build())
+	err := engine.RegisterSchema("User", builders.NewStringSchema().Build())
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}
 
-	err = engine.RegisterSchema("Order", builders2.NewStringSchema().Build())
+	err = engine.RegisterSchema("Order", builders.NewStringSchema().Build())
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}

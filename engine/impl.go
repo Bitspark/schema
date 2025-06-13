@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"defs.dev/schema/consumers/validation"
+	"defs.dev/schema/consume/validation"
 	"fmt"
 	"sync"
 
