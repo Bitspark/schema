@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	portal2 "defs.dev/schema/runtime/portal"
 	registry2 "defs.dev/schema/runtime/registry"
 	"fmt"
 	"testing"
@@ -12,7 +13,6 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/portal"
 )
 
 // Helper function to generate JSON Schema using a simple stub
@@ -247,12 +247,12 @@ func TestIntegration_MultiPortalServiceRegistration(t *testing.T) {
 	ctx := context.Background()
 
 	// Create portal registry
-	registry := portal.NewPortalRegistry()
+	registry := portal2.NewPortalRegistry()
 
 	// Create different types of portals
-	localPortal := portal.NewLocalPortal()
-	testingPortal := portal.NewTestingPortal()
-	httpPortal := portal.NewHTTPPortal(nil)
+	localPortal := portal2.NewLocalPortal()
+	testingPortal := portal2.NewTestingPortal()
+	httpPortal := portal2.NewHTTPPortal(nil)
 
 	// Register portals
 	err := registry.RegisterPortal([]string{"local"}, localPortal)
@@ -357,7 +357,7 @@ func TestIntegration_MultiPortalServiceRegistration(t *testing.T) {
 	}
 
 	// Test health checks across all portals
-	healthResults := registry.(*portal.PortalRegistryImpl).Health(ctx)
+	healthResults := registry.(*portal2.PortalRegistryImpl).Health(ctx)
 	for scheme, healthErr := range healthResults {
 		if healthErr != nil {
 			// HTTP portal is expected to be unhealthy since we're not starting a server
@@ -523,7 +523,7 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 	}
 
 	// Register functions with local portal
-	localPortal := portal.NewLocalPortal()
+	localPortal := portal2.NewLocalPortal()
 
 	validateAddr, err := localPortal.Apply(ctx, validateDataFunc)
 	if err != nil {

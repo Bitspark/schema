@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export/base"
 )
 
 // RegistryImpl implements the GeneratorRegistry interface.

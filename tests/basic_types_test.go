@@ -8,7 +8,7 @@ import (
 
 	json2 "encoding/json"
 
-	"defs.dev/schema/visitors/export/json"
+	"defs.dev/schema/visit/export/json"
 )
 
 func TestNumberSchema(t *testing.T) {

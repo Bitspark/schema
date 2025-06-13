@@ -1,8 +1,8 @@
 package native
 
 import (
-	"defs.dev/schema/annotation"
 	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/core/annotation"
 	"defs.dev/schema/runtime/registry"
 	"fmt"
 	"reflect"

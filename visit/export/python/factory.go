@@ -1,7 +1,7 @@
 package python
 
 import (
-	"defs.dev/schema/visitors/export"
+	"defs.dev/schema/visit/export"
 )
 
 // Option represents a functional option for configuring the Python generator.

@@ -1,6 +1,6 @@
 package json
 
-import "defs.dev/schema/visitors/export"
+import "defs.dev/schema/visit/export"
 
 // Option represents a functional option for JSON Schema generation.
 type Option struct {

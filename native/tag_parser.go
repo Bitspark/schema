@@ -1,7 +1,7 @@
 package native
 
 import (
-	"defs.dev/schema/annotation"
+	"defs.dev/schema/core/annotation"
 	"fmt"
 	"reflect"
 	"strconv"

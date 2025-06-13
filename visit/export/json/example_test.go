@@ -6,7 +6,7 @@ import (
 
 	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
-	"defs.dev/schema/visitors/export/json"
+	"defs.dev/schema/visit/export/json"
 )
 
 // Example demonstrates basic JSON Schema generation

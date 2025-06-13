@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export/base"
 )
 
 func TestTypeMapper_MapSchemaType(t *testing.T) {

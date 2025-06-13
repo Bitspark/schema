@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export/base"
 )
 
 // TypeMapper handles Go type mapping and naming conventions.

@@ -3,7 +3,7 @@ package export
 import (
 	"fmt"
 
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export/base"
 )
 
 // GeneratorFactoryFunc is a function that creates a generator with the given options.

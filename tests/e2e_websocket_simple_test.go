@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/runtime/portal"
 	"fmt"
 	"net/url"
 	"testing"
@@ -12,7 +13,6 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/portal"
 )
 
 // Simple WebSocket test to debug connection issues

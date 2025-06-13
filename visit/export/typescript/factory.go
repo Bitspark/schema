@@ -1,7 +1,7 @@
 package typescript
 
 import (
-	"defs.dev/schema/visitors/export"
+	"defs.dev/schema/visit/export"
 )
 
 // optionFunc implements the export.Option interface

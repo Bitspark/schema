@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export/base"
 )
 
 // TypeMapper handles mapping from schema types to Python types.

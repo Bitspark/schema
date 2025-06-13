@@ -4,8 +4,8 @@
 package registry
 
 import (
-	"defs.dev/schema/annotation"
 	"defs.dev/schema/core"
+	"defs.dev/schema/core/annotation"
 )
 
 // Validator validates values against specific criteria with annotation support.

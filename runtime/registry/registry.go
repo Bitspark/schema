@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"defs.dev/schema/annotation"
+	"defs.dev/schema/core/annotation"
 	"fmt"
 	"sync"
 )

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"defs.dev/schema/core"
-	"defs.dev/schema/visitors/export"
-	"defs.dev/schema/visitors/export/base"
+	"defs.dev/schema/visit/export"
+	"defs.dev/schema/visit/export/base"
 )
 
 // Generator generates TypeScript code from schema types using the visitor pattern.

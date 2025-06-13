@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	builders2 "defs.dev/schema/builders"
+	portal2 "defs.dev/schema/runtime/portal"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/portal"
 )
 
 // E2E Test 1: WebSocket Portal with Real-time Communication
@@ -22,7 +22,7 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 	ctx := context.Background()
 
 	// Create WebSocket portal
-	wsConfig := &portal.WebSocketConfig{
+	wsConfig := &portal2.WebSocketConfig{
 		Host:           "localhost",
 		Port:           8086,
 		Path:           "/ws",
@@ -32,7 +32,7 @@ func TestE2E_WebSocketPortalRealTimeCommunication(t *testing.T) {
 		PongWait:       60 * time.Second,
 		MaxMessageSize: 1024 * 1024,
 	}
-	wsPortal := portal.NewWebSocketPortal(wsConfig, nil, nil)
+	wsPortal := portal2.NewWebSocketPortal(wsConfig, nil, nil)
 
 	// Register streaming functions
 	streamingFunctions := []*E2ETestFunction{
@@ -237,17 +237,17 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 	ctx := context.Background()
 
 	// Create HTTP portal for API services
-	httpConfig := &portal.HTTPConfig{
+	httpConfig := &portal2.HTTPConfig{
 		Host:          "localhost",
 		Port:          8087,
 		ReadTimeout:   10 * time.Second,
 		WriteTimeout:  10 * time.Second,
 		ClientTimeout: 5 * time.Second,
 	}
-	httpPortal := portal.NewHTTPPortal(httpConfig)
+	httpPortal := portal2.NewHTTPPortal(httpConfig)
 
 	// Create WebSocket portal for real-time services
-	wsConfig := &portal.WebSocketConfig{
+	wsConfig := &portal2.WebSocketConfig{
 		Host:           "localhost",
 		Port:           8088,
 		Path:           "/ws",
@@ -257,7 +257,7 @@ func TestE2E_MixedPortalCommunication(t *testing.T) {
 		PongWait:       60 * time.Second,
 		MaxMessageSize: 1024 * 1024,
 	}
-	wsPortal := portal.NewWebSocketPortal(wsConfig, nil, nil)
+	wsPortal := portal2.NewWebSocketPortal(wsConfig, nil, nil)
 
 	// Register HTTP functions (stateless operations)
 	httpFunctions := []*E2ETestFunction{

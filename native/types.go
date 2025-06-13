@@ -4,7 +4,7 @@
 package native
 
 import (
-	"defs.dev/schema/annotation"
+	"defs.dev/schema/core/annotation"
 	"defs.dev/schema/runtime/registry"
 	"reflect"
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/runtime/portal"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 
 	"defs.dev/schema/api"
 	"defs.dev/schema/core"
-	"defs.dev/schema/portal"
 )
 
 // PortalBridge implements the WebSocket-to-HTTP bridge pattern
