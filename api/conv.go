@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // FunctionDataMap implements api.FunctionData as a unified map-based data structure

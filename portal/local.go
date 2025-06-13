@@ -2,13 +2,13 @@ package portal
 
 import (
 	"context"
+	"defs.dev/schema/consumers/validation"
 	"fmt"
 	"sync"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/registry"
-	"defs.dev/schema/validation"
 )
 
 // LocalPortalImpl implements api.LocalPortal for in-process function execution

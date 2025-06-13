@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // IntegerSchemaConfig holds the configuration for building an IntegerSchema.

@@ -1,10 +1,9 @@
 package registry
 
 import (
+	"defs.dev/schema/annotation"
 	"fmt"
 	"sync"
-
-	"defs.dev/schema/annotation"
 )
 
 // DefaultValidatorRegistry is a thread-safe implementation of ValidatorRegistry.

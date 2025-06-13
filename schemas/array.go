@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // ArraySchemaConfig holds the configuration for building an ArraySchema.

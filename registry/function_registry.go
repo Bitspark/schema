@@ -2,12 +2,12 @@ package registry
 
 import (
 	"context"
+	"defs.dev/schema/consumers/validation"
 	"fmt"
 	"sync"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
 // FunctionRegistry implements api.Registry for managing callable functions.

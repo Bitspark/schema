@@ -3,7 +3,7 @@ package schemas
 import (
 	"regexp"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // StringSchemaConfig holds the configuration for building a StringSchema.

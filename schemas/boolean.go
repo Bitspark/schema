@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // BooleanSchemaConfig holds the configuration for building a BooleanSchema.

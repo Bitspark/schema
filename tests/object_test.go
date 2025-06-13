@@ -1,16 +1,16 @@
 package tests
 
 import (
+	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/consumers/validation"
 	"strings"
 	"testing"
 
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/builders"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
 func TestObjectSchemaBasicValidation(t *testing.T) {
-	schema := builders.NewObjectSchema().Build()
+	schema := builders2.NewObjectSchema().Build()
 
 	tests := []struct {
 		name      string
@@ -50,7 +50,7 @@ func TestObjectSchemaBasicValidation(t *testing.T) {
 }
 
 func TestObjectSchemaStructValidation(t *testing.T) {
-	schema := builders.NewObjectSchema().Build()
+	schema := builders2.NewObjectSchema().Build()
 
 	// Test struct validation
 	type TestStruct struct {
@@ -72,10 +72,10 @@ func TestObjectSchemaStructValidation(t *testing.T) {
 }
 
 func TestObjectSchemaProperties(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Build()
-	numberSchema := builders.NewNumberSchema().Build()
+	stringSchema := builders2.NewStringSchema().Build()
+	numberSchema := builders2.NewNumberSchema().Build()
 
-	schema := builders.NewObjectSchema().
+	schema := builders2.NewObjectSchema().
 		Property("name", stringSchema).
 		Property("age", numberSchema).
 		Build()
@@ -135,10 +135,10 @@ func TestObjectSchemaProperties(t *testing.T) {
 }
 
 func TestObjectSchemaRequired(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Build()
-	numberSchema := builders.NewNumberSchema().Build()
+	stringSchema := builders2.NewStringSchema().Build()
+	numberSchema := builders2.NewNumberSchema().Build()
 
-	schema := builders.NewObjectSchema().
+	schema := builders2.NewObjectSchema().
 		Property("name", stringSchema).
 		Property("age", numberSchema).
 		Required("name").
@@ -193,9 +193,9 @@ func TestObjectSchemaRequired(t *testing.T) {
 }
 
 func TestObjectSchemaAdditionalProperties(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Build()
+	stringSchema := builders2.NewStringSchema().Build()
 
-	schema := builders.NewObjectSchema().
+	schema := builders2.NewObjectSchema().
 		Property("name", stringSchema).
 		AdditionalProperties(false).
 		Build()
@@ -250,13 +250,13 @@ func TestObjectSchemaAdditionalProperties(t *testing.T) {
 
 func TestObjectSchemaConstraints(t *testing.T) {
 	t.Run("MinProperties", func(t *testing.T) {
-		schema := builders.NewObjectSchema().
-			Property("name", builders.NewStringSchema().Build()).
-			Property("age", builders.NewNumberSchema().Build()).
+		schema := builders2.NewObjectSchema().
+			Property("name", builders2.NewStringSchema().Build()).
+			Property("age", builders2.NewNumberSchema().Build()).
 			Build()
 
-			// Note: MinProperties/MaxProperties might not be implemented yet
-			// This test would need to be adjusted based on actual implementation
+		// Note: MinProperties/MaxProperties might not be implemented yet
+		// This test would need to be adjusted based on actual implementation
 
 		tests := []struct {
 			name      string
@@ -280,15 +280,15 @@ func TestObjectSchemaConstraints(t *testing.T) {
 }
 
 func TestObjectSchemaNestedObjects(t *testing.T) {
-	addressSchema := builders.NewObjectSchema().
-		Property("street", builders.NewStringSchema().Build()).
-		Property("city", builders.NewStringSchema().Build()).
+	addressSchema := builders2.NewObjectSchema().
+		Property("street", builders2.NewStringSchema().Build()).
+		Property("city", builders2.NewStringSchema().Build()).
 		Required("street", "city").
 		Build()
 
-	personSchema := builders.NewObjectSchema().
-		Property("name", builders.NewStringSchema().Build()).
-		Property("age", builders.NewNumberSchema().Build()).
+	personSchema := builders2.NewObjectSchema().
+		Property("name", builders2.NewStringSchema().Build()).
+		Property("age", builders2.NewNumberSchema().Build()).
 		Property("address", addressSchema).
 		Required("name", "address").
 		Build()
@@ -366,10 +366,10 @@ func TestObjectSchemaNestedObjects(t *testing.T) {
 }
 
 func TestObjectSchemaIntrospection(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Build()
-	numberSchema := builders.NewNumberSchema().Build()
+	stringSchema := builders2.NewStringSchema().Build()
+	numberSchema := builders2.NewNumberSchema().Build()
 
-	schema := builders.NewObjectSchema().
+	schema := builders2.NewObjectSchema().
 		Property("name", stringSchema).
 		Property("age", numberSchema).
 		Required("name").
@@ -409,10 +409,10 @@ func TestObjectSchemaIntrospection(t *testing.T) {
 }
 
 func TestObjectSchemaJSONSchema(t *testing.T) {
-	stringSchema := builders.NewStringSchema().Build()
-	numberSchema := builders.NewNumberSchema().Build()
+	stringSchema := builders2.NewStringSchema().Build()
+	numberSchema := builders2.NewNumberSchema().Build()
 
-	schema := builders.NewObjectSchema().
+	schema := builders2.NewObjectSchema().
 		Property("name", stringSchema).
 		Property("age", numberSchema).
 		Required("name").
@@ -464,8 +464,8 @@ func TestObjectSchemaJSONSchema(t *testing.T) {
 
 func TestObjectSchemaBuilder(t *testing.T) {
 	t.Run("Immutability", func(t *testing.T) {
-		builder1 := builders.NewObjectSchema().Property("name", builders.NewStringSchema().Build())
-		builder2 := builder1.Property("age", builders.NewNumberSchema().Build())
+		builder1 := builders2.NewObjectSchema().Property("name", builders2.NewStringSchema().Build())
+		builder2 := builder1.Property("age", builders2.NewNumberSchema().Build())
 
 		schema1 := builder1.Build()
 		schema2 := builder2.Build()
@@ -490,9 +490,9 @@ func TestObjectSchemaBuilder(t *testing.T) {
 }
 
 func TestObjectSchemaClone(t *testing.T) {
-	original := builders.NewObjectSchema().
-		Property("name", builders.NewStringSchema().Build()).
-		Property("age", builders.NewNumberSchema().Build()).
+	original := builders2.NewObjectSchema().
+		Property("name", builders2.NewStringSchema().Build()).
+		Property("age", builders2.NewNumberSchema().Build()).
 		Required("name").
 		Description("Original object").
 		Build()
@@ -520,8 +520,8 @@ func TestObjectSchemaClone(t *testing.T) {
 }
 
 func TestObjectSchemaVisitor(t *testing.T) {
-	schema := builders.NewObjectSchema().
-		Property("name", builders.NewStringSchema().Build()).
+	schema := builders2.NewObjectSchema().
+		Property("name", builders2.NewStringSchema().Build()).
 		Build()
 
 	visitor := &testObjectVisitor{
@@ -567,10 +567,10 @@ func TestObjectBuilderAdditionalMethods(t *testing.T) {
 		}
 
 		// Test basic object building
-		schema := builders.NewObjectSchema().
-			Property("name", builders.NewStringSchema().MinLength(1).Build()).
-			Property("age", builders.NewIntegerSchema().Range(0, 150).Build()).
-			Property("email", builders.NewStringSchema().Email().Build()).
+		schema := builders2.NewObjectSchema().
+			Property("name", builders2.NewStringSchema().MinLength(1).Build()).
+			Property("age", builders2.NewIntegerSchema().Range(0, 150).Build()).
+			Property("email", builders2.NewStringSchema().Email().Build()).
 			Required("name").
 			Description("Test person object").
 			Build()
@@ -609,11 +609,11 @@ func TestObjectBuilderAdditionalMethods(t *testing.T) {
 func TestObjectBuilderHelperMethods(t *testing.T) {
 	t.Run("Common object patterns", func(t *testing.T) {
 		// Test chaining multiple properties
-		schema := builders.NewObjectSchema().
-			Property("id", builders.NewStringSchema().UUID().Build()).
-			Property("name", builders.NewStringSchema().MinLength(1).Build()).
-			Property("email", builders.NewStringSchema().Email().Build()).
-			Property("age", builders.NewIntegerSchema().Range(0, 150).Build()).
+		schema := builders2.NewObjectSchema().
+			Property("id", builders2.NewStringSchema().UUID().Build()).
+			Property("name", builders2.NewStringSchema().MinLength(1).Build()).
+			Property("email", builders2.NewStringSchema().Email().Build()).
+			Property("age", builders2.NewIntegerSchema().Range(0, 150).Build()).
 			Required("id", "name", "email").
 			AdditionalProperties(false).
 			Description("User object").

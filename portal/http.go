@@ -2,6 +2,7 @@ package portal
 
 import (
 	"context"
+	"defs.dev/schema/consumers/validation"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,9 +11,8 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/registry"
-	"defs.dev/schema/validation"
 )
 
 // HTTPPortal implements the api.HTTPPortal interface for HTTP-based function execution.
@@ -529,34 +529,72 @@ func (h *HTTPPortal) extractServiceName(path string) string {
 }
 
 func (h *HTTPPortal) validateInput(input api.FunctionData, schema core.FunctionSchema) error {
-	// Use consumer-driven validation
-	result := validation.ValidateValue(schema, input.Value())
-	if !result.Valid {
-		var errorMessages []string
-		for _, issue := range result.Errors {
-			pathStr := strings.Join(issue.Path, ".")
-			if pathStr == "" {
-				pathStr = "root"
+	// Validate each input parameter against its schema
+	inputMap := input.ToMap()
+	inputs := schema.Inputs()
+
+	var errorMessages []string
+
+	// Check required inputs
+	for _, inputArg := range inputs.Args() {
+		inputName := inputArg.Name()
+		inputSchema := inputArg.Schema()
+
+		if value, exists := inputMap[inputName]; exists {
+			// Validate the input value against its schema
+			result := validation.ValidateValue(inputSchema, value)
+			if !result.Valid {
+				for _, issue := range result.Errors {
+					pathStr := inputName
+					if len(issue.Path) > 0 {
+						pathStr = inputName + "." + strings.Join(issue.Path, ".")
+					}
+					errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
+				}
 			}
-			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
+		} else if !inputArg.Optional() {
+			// Required input is missing
+			errorMessages = append(errorMessages, fmt.Sprintf("%s: required input is missing", inputName))
 		}
+	}
+
+	if len(errorMessages) > 0 {
 		return fmt.Errorf("input validation failed: %s", strings.Join(errorMessages, "; "))
 	}
 	return nil
 }
 
 func (h *HTTPPortal) validateOutput(output api.FunctionData, schema core.FunctionSchema) error {
-	// Use consumer-driven validation for output
-	result := validation.ValidateValue(schema, output.Value())
-	if !result.Valid {
-		var errorMessages []string
-		for _, issue := range result.Errors {
-			pathStr := strings.Join(issue.Path, ".")
-			if pathStr == "" {
-				pathStr = "root"
+	// Validate each output parameter against its schema
+	outputMap := output.ToMap()
+	outputs := schema.Outputs()
+
+	var errorMessages []string
+
+	// Check required outputs
+	for _, outputArg := range outputs.Args() {
+		outputName := outputArg.Name()
+		outputSchema := outputArg.Schema()
+
+		if value, exists := outputMap[outputName]; exists {
+			// Validate the output value against its schema
+			result := validation.ValidateValue(outputSchema, value)
+			if !result.Valid {
+				for _, issue := range result.Errors {
+					pathStr := outputName
+					if len(issue.Path) > 0 {
+						pathStr = outputName + "." + strings.Join(issue.Path, ".")
+					}
+					errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
+				}
 			}
-			errorMessages = append(errorMessages, fmt.Sprintf("%s: %s", pathStr, issue.Message))
+		} else if !outputArg.Optional() {
+			// Required output is missing
+			errorMessages = append(errorMessages, fmt.Sprintf("%s: required output is missing", outputName))
 		}
+	}
+
+	if len(errorMessages) > 0 {
 		return fmt.Errorf("output validation failed: %s", strings.Join(errorMessages, "; "))
 	}
 	return nil

@@ -1,6 +1,6 @@
 package utils
 
-import "defs.dev/schema/api/core"
+import "defs.dev/schema/core"
 
 // GetAnnotation returns the first annotation with the given name.
 func GetAnnotation(s core.Schema, name string) (core.Annotation, bool) {

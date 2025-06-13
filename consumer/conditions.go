@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // ----------------------------------------------------------------------------

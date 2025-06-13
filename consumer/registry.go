@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // Registry manages both AnnotationConsumers and ValueConsumers with purpose-based selection.

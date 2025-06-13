@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // FunctionData represents unified data for function inputs and outputs.

@@ -3,7 +3,7 @@
 package engine
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // SchemaEngine is the central coordination layer that manages all cross-cutting

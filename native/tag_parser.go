@@ -1,12 +1,11 @@
 package native
 
 import (
+	"defs.dev/schema/annotation"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"defs.dev/schema/annotation"
 )
 
 // DefaultTagParser implements TagParser for common struct tags.

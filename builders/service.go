@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
 )
 

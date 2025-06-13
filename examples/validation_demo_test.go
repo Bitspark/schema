@@ -1,25 +1,24 @@
 package examples
 
 import (
+	builders2 "defs.dev/schema/builders"
+	validation2 "defs.dev/schema/consumers/validation"
 	"testing"
-
-	"defs.dev/schema/builders"
-	"defs.dev/schema/validation"
 )
 
 func TestConsumerDrivenValidationDemo(t *testing.T) {
 	t.Run("String validation", func(t *testing.T) {
 		// Create a string schema
-		stringSchema := builders.NewStringSchema().Build()
+		stringSchema := builders2.NewStringSchema().Build()
 
 		// Valid string
-		result := validation.ValidateValue(stringSchema, "hello")
+		result := validation2.ValidateValue(stringSchema, "hello")
 		if !result.Valid {
 			t.Errorf("Expected valid string to pass validation, got: %v", result.Errors)
 		}
 
 		// Invalid type
-		result = validation.ValidateValue(stringSchema, 123)
+		result = validation2.ValidateValue(stringSchema, 123)
 		if result.Valid {
 			t.Error("Expected integer to fail string validation")
 		}
@@ -33,16 +32,16 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 
 	t.Run("Boolean validation", func(t *testing.T) {
 		// Create a boolean schema
-		boolSchema := builders.NewBooleanSchema().Build()
+		boolSchema := builders2.NewBooleanSchema().Build()
 
 		// Valid boolean
-		result := validation.ValidateValue(boolSchema, true)
+		result := validation2.ValidateValue(boolSchema, true)
 		if !result.Valid {
 			t.Errorf("Expected valid boolean to pass validation, got: %v", result.Errors)
 		}
 
 		// Invalid type
-		result = validation.ValidateValue(boolSchema, "not a boolean")
+		result = validation2.ValidateValue(boolSchema, "not a boolean")
 		if result.Valid {
 			t.Error("Expected string to fail boolean validation")
 		}
@@ -56,10 +55,10 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 
 	t.Run("Function validation with required inputs", func(t *testing.T) {
 		// Create a function schema with required inputs
-		functionSchema := builders.NewFunctionSchema().
-			RequiredInput("name", builders.NewStringSchema().Build()).
-			RequiredInput("age", builders.NewIntegerSchema().Build()).
-			OptionalInput("email", builders.NewStringSchema().Build()).
+		functionSchema := builders2.NewFunctionSchema().
+			RequiredInput("name", builders2.NewStringSchema().Build()).
+			RequiredInput("age", builders2.NewIntegerSchema().Build()).
+			OptionalInput("email", builders2.NewStringSchema().Build()).
 			Build()
 
 		// Valid input with all required fields
@@ -68,7 +67,7 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 			"age":   30,
 			"email": "john@example.com",
 		}
-		result := validation.ValidateValue(functionSchema, validInput)
+		result := validation2.ValidateValue(functionSchema, validInput)
 		if !result.Valid {
 			t.Errorf("Expected valid input to pass validation, got: %v", result.Errors)
 		}
@@ -78,7 +77,7 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 			"name": "John",
 			"age":  30,
 		}
-		result = validation.ValidateValue(functionSchema, validInputNoEmail)
+		result = validation2.ValidateValue(functionSchema, validInputNoEmail)
 		if !result.Valid {
 			t.Errorf("Expected valid input without optional field to pass validation, got: %v", result.Errors)
 		}
@@ -88,7 +87,7 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 			"age": 30,
 			// "name" is missing
 		}
-		result = validation.ValidateValue(functionSchema, invalidInput)
+		result = validation2.ValidateValue(functionSchema, invalidInput)
 		if result.Valid {
 			t.Error("Expected input missing required field to fail validation")
 		}
@@ -108,7 +107,7 @@ func TestConsumerDrivenValidationDemo(t *testing.T) {
 
 	t.Run("Consumer registry functionality", func(t *testing.T) {
 		// Create a registry and register validators
-		registry := validation.NewValidationRegistry()
+		registry := validation2.NewValidationRegistry()
 
 		// Check that validators are registered
 		_, valueConsumers := registry.ListByPurpose("validation")

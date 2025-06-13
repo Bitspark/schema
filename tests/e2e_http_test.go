@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"context"
+	builders2 "defs.dev/schema/builders"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,8 +12,7 @@ import (
 	"time"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/builders"
+	"defs.dev/schema/core"
 	"defs.dev/schema/portal"
 )
 
@@ -35,13 +35,13 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 	functions := []*E2ETestFunction{
 		{
 			name: "calculator_add",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("calculator_add").
 				Description("Adds two numbers").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				a, _ := params.Get("a")
@@ -52,14 +52,14 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 		},
 		{
 			name: "string_processor",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("string_processor").
 				Description("Processes strings with various operations").
-				Input("text", builders.NewStringSchema().Build()).
-				Input("operation", builders.NewStringSchema().Build()).
+				Input("text", builders2.NewStringSchema().Build()).
+				Input("operation", builders2.NewStringSchema().Build()).
 				RequiredInputs("text", "operation").
-				Output("processed", builders.NewStringSchema().Build()).
-				Output("length", builders.NewIntegerSchema().Build()).
+				Output("processed", builders2.NewStringSchema().Build()).
+				Output("length", builders2.NewIntegerSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				text, _ := params.Get("text")
@@ -91,14 +91,14 @@ func TestE2E_HTTPPortalSingleServerMultipleClients(t *testing.T) {
 		},
 		{
 			name: "data_aggregator",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("data_aggregator").
 				Description("Aggregates array data").
-				Input("numbers", builders.NewArraySchema().Items(builders.NewNumberSchema().Build()).Build()).
+				Input("numbers", builders2.NewArraySchema().Items(builders2.NewNumberSchema().Build()).Build()).
 				RequiredInputs("numbers").
-				Output("sum", builders.NewNumberSchema().Build()).
-				Output("average", builders.NewNumberSchema().Build()).
-				Output("count", builders.NewIntegerSchema().Build()).
+				Output("sum", builders2.NewNumberSchema().Build()).
+				Output("average", builders2.NewNumberSchema().Build()).
+				Output("count", builders2.NewIntegerSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				numbers, _ := params.Get("numbers")
@@ -282,12 +282,12 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 	mathFunctions := []*E2ETestFunction{
 		{
 			name: "multiply",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("multiply").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				a, _ := params.Get("a")
@@ -298,12 +298,12 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 		},
 		{
 			name: "power",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("power").
-				Input("base", builders.NewNumberSchema().Build()).
-				Input("exponent", builders.NewNumberSchema().Build()).
+				Input("base", builders2.NewNumberSchema().Build()).
+				Input("exponent", builders2.NewNumberSchema().Build()).
 				RequiredInputs("base", "exponent").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				base, _ := params.Get("base")
@@ -327,12 +327,12 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 	stringFunctions := []*E2ETestFunction{
 		{
 			name: "format_number",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("format_number").
-				Input("number", builders.NewNumberSchema().Build()).
-				Input("format", builders.NewStringSchema().Build()).
+				Input("number", builders2.NewNumberSchema().Build()).
+				Input("format", builders2.NewStringSchema().Build()).
 				RequiredInputs("number").
-				Output("formatted", builders.NewStringSchema().Build()).
+				Output("formatted", builders2.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				number, _ := params.Get("number")
@@ -349,12 +349,12 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 		},
 		{
 			name: "create_report",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("create_report").
-				Input("title", builders.NewStringSchema().Build()).
-				Input("data", builders.NewArraySchema().Build()).
+				Input("title", builders2.NewStringSchema().Build()).
+				Input("data", builders2.NewArraySchema().Build()).
 				RequiredInputs("title", "data").
-				Output("report", builders.NewStringSchema().Build()).
+				Output("report", builders2.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				title, _ := params.Get("title")
@@ -376,12 +376,12 @@ func TestE2E_HTTPPortalMultipleServersWithCommunication(t *testing.T) {
 	orchestratorFunctions := []*E2ETestFunction{
 		{
 			name: "complex_calculation",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("complex_calculation").
-				Input("numbers", builders.NewArraySchema().Items(builders.NewNumberSchema().Build()).Build()).
+				Input("numbers", builders2.NewArraySchema().Items(builders2.NewNumberSchema().Build()).Build()).
 				RequiredInputs("numbers").
-				Output("calculation_report", builders.NewStringSchema().Build()).
-				Output("total_operations", builders.NewIntegerSchema().Build()).
+				Output("calculation_report", builders2.NewStringSchema().Build()).
+				Output("total_operations", builders2.NewIntegerSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				numbers, _ := params.Get("numbers")
@@ -576,12 +576,12 @@ func TestE2E_HTTPPortalLoadTesting(t *testing.T) {
 	// Register a CPU-intensive function
 	cpuFunction := &E2ETestFunction{
 		name: "fibonacci",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("fibonacci").
-			Input("n", builders.NewIntegerSchema().Build()).
+			Input("n", builders2.NewIntegerSchema().Build()).
 			RequiredInputs("n").
-			Output("result", builders.NewIntegerSchema().Build()).
-			Output("computed_in_ms", builders.NewIntegerSchema().Build()).
+			Output("result", builders2.NewIntegerSchema().Build()).
+			Output("computed_in_ms", builders2.NewIntegerSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			start := time.Now()

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
 )
 

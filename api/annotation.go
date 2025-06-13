@@ -3,7 +3,7 @@
 package api
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // AnnotationRegistry manages annotation type definitions and provides

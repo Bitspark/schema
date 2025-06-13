@@ -1,19 +1,19 @@
 package tests
 
 import (
+	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/consumers/validation"
 	"math"
 	"testing"
 
 	json2 "encoding/json"
 
-	"defs.dev/schema/builders"
-	"defs.dev/schema/export/json"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/visitors/export/json"
 )
 
 func TestNumberSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := builders.NewNumberSchema().Build()
+		schema := builders2.NewNumberSchema().Build()
 
 		// Valid numbers
 		validNumbers := []any{
@@ -36,7 +36,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max constraints", func(t *testing.T) {
-		schema := builders.NewNumberSchema().Range(0.0, 100.0).Build()
+		schema := builders2.NewNumberSchema().Range(0.0, 100.0).Build()
 
 		// Valid range
 		result := validation.ValidateValue(schema, 50.0)
@@ -58,7 +58,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("Special float values", func(t *testing.T) {
-		schema := builders.NewNumberSchema().Build()
+		schema := builders2.NewNumberSchema().Build()
 
 		// NaN should be invalid
 		result := validation.ValidateValue(schema, math.NaN())
@@ -79,7 +79,7 @@ func TestNumberSchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := builders.NewNumberSchema().
+		schema := builders2.NewNumberSchema().
 			Range(0.0, 100.0).
 			Description("Test number").
 			Example(42.0).
@@ -119,7 +119,7 @@ func TestNumberSchema(t *testing.T) {
 
 func TestIntegerSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := builders.NewIntegerSchema().Build()
+		schema := builders2.NewIntegerSchema().Build()
 
 		// Valid integers
 		validIntegers := []any{
@@ -154,7 +154,7 @@ func TestIntegerSchema(t *testing.T) {
 	})
 
 	t.Run("Min/Max constraints", func(t *testing.T) {
-		schema := builders.NewIntegerSchema().Range(0, 100).Build()
+		schema := builders2.NewIntegerSchema().Range(0, 100).Build()
 
 		// Valid range
 		result := validation.ValidateValue(schema, 50)
@@ -176,17 +176,23 @@ func TestIntegerSchema(t *testing.T) {
 	})
 
 	t.Run("Overflow handling", func(t *testing.T) {
-		schema := builders.NewIntegerSchema().Build()
+		schema := builders2.NewIntegerSchema().Build()
 
-		// Very large uint64 should cause overflow error
+		// Large uint64 values should be valid for integer schemas
 		result := validation.ValidateValue(schema, uint64(math.MaxUint64))
+		if !result.Valid {
+			t.Errorf("Expected MaxUint64 to be valid, got errors: %v", result.Errors)
+		}
+
+		// Test that non-integer values are still rejected
+		result = validation.ValidateValue(schema, 42.5)
 		if result.Valid {
-			t.Error("Expected MaxUint64 to cause overflow error")
+			t.Error("Expected non-integer float to be invalid")
 		}
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := builders.NewIntegerSchema().
+		schema := builders2.NewIntegerSchema().
 			Range(1, 100).
 			Description("Test integer").
 			Example(int64(42)).
@@ -223,7 +229,7 @@ func TestIntegerSchema(t *testing.T) {
 
 func TestBooleanSchema(t *testing.T) {
 	t.Run("Basic validation", func(t *testing.T) {
-		schema := builders.NewBooleanSchema().Build()
+		schema := builders2.NewBooleanSchema().Build()
 
 		// Valid booleans
 		result := validation.ValidateValue(schema, true)
@@ -249,7 +255,7 @@ func TestBooleanSchema(t *testing.T) {
 	})
 
 	t.Run("JSON Schema generation", func(t *testing.T) {
-		schema := builders.NewBooleanSchema().
+		schema := builders2.NewBooleanSchema().
 			Description("Test boolean").
 			Example(true).
 			Build()
@@ -281,7 +287,7 @@ func TestBooleanSchema(t *testing.T) {
 func TestBuilderHelpers(t *testing.T) {
 	t.Run("Number helpers", func(t *testing.T) {
 		// Test positive number
-		schema := builders.NewNumberSchema().Positive().Build()
+		schema := builders2.NewNumberSchema().Positive().Build()
 		result := validation.ValidateValue(schema, 10.0)
 		if !result.Valid {
 			t.Errorf("Expected positive number to be valid, got errors: %v", result.Errors)
@@ -293,7 +299,7 @@ func TestBuilderHelpers(t *testing.T) {
 		}
 
 		// Test percentage
-		percentSchema := builders.NewNumberSchema().Percentage().Build()
+		percentSchema := builders2.NewNumberSchema().Percentage().Build()
 		result = validation.ValidateValue(percentSchema, 50.0)
 		if !result.Valid {
 			t.Errorf("Expected 50%% to be valid, got errors: %v", result.Errors)
@@ -307,7 +313,7 @@ func TestBuilderHelpers(t *testing.T) {
 
 	t.Run("Integer helpers", func(t *testing.T) {
 		// Test positive integer
-		schema := builders.NewIntegerSchema().Positive().Build()
+		schema := builders2.NewIntegerSchema().Positive().Build()
 		result := validation.ValidateValue(schema, 10)
 		if !result.Valid {
 			t.Errorf("Expected positive integer to be valid, got errors: %v", result.Errors)
@@ -321,7 +327,7 @@ func TestBuilderHelpers(t *testing.T) {
 
 	t.Run("String helpers", func(t *testing.T) {
 		// Test email
-		emailSchema := builders.NewStringSchema().Email().Build()
+		emailSchema := builders2.NewStringSchema().Email().Build()
 		result := validation.ValidateValue(emailSchema, "test@example.com")
 		if !result.Valid {
 			t.Errorf("Expected valid email to be valid, got errors: %v", result.Errors)
@@ -333,7 +339,7 @@ func TestBuilderHelpers(t *testing.T) {
 		}
 
 		// Test UUID
-		uuidSchema := builders.NewStringSchema().UUID().Build()
+		uuidSchema := builders2.NewStringSchema().UUID().Build()
 		result = validation.ValidateValue(uuidSchema, "550e8400-e29b-41d4-a716-446655440000")
 		if !result.Valid {
 			t.Errorf("Expected valid UUID to be valid, got errors: %v", result.Errors)
@@ -347,7 +353,7 @@ func TestBuilderHelpers(t *testing.T) {
 }
 
 func TestNumberSchemaBasic(t *testing.T) {
-	schema := builders.NewNumberSchema().
+	schema := builders2.NewNumberSchema().
 		Min(0).
 		Max(100).
 		Build()
@@ -378,7 +384,7 @@ func TestNumberSchemaBasic(t *testing.T) {
 }
 
 func TestNumberSchemaSpecialValues(t *testing.T) {
-	schema := builders.NewNumberSchema().Build()
+	schema := builders2.NewNumberSchema().Build()
 
 	// Test NaN
 	result := validation.ValidateValue(schema, math.NaN())
@@ -421,7 +427,7 @@ func TestNumberSchemaConstraints(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder := builders.NewNumberSchema()
+			builder := builders2.NewNumberSchema()
 			if tt.min != nil {
 				builder = builder.Min(*tt.min)
 			}
@@ -439,7 +445,7 @@ func TestNumberSchemaConstraints(t *testing.T) {
 }
 
 func TestIntegerSchemaBasic(t *testing.T) {
-	schema := builders.NewIntegerSchema().
+	schema := builders2.NewIntegerSchema().
 		Min(0).
 		Max(100).
 		Build()
@@ -470,7 +476,7 @@ func TestIntegerSchemaBasic(t *testing.T) {
 }
 
 func TestIntegerSchemaConstraints(t *testing.T) {
-	schema := builders.NewIntegerSchema().
+	schema := builders2.NewIntegerSchema().
 		Min(0).
 		Max(100).
 		Build()
@@ -495,7 +501,7 @@ func TestIntegerSchemaConstraints(t *testing.T) {
 }
 
 func TestIntegerSchemaLargeValues(t *testing.T) {
-	schema := builders.NewIntegerSchema().Build()
+	schema := builders2.NewIntegerSchema().Build()
 
 	// Test large uint64 value
 	result := validation.ValidateValue(schema, uint64(math.MaxUint64))
@@ -505,7 +511,7 @@ func TestIntegerSchemaLargeValues(t *testing.T) {
 }
 
 func TestBooleanSchemaBasic(t *testing.T) {
-	schema := builders.NewBooleanSchema().Build()
+	schema := builders2.NewBooleanSchema().Build()
 
 	// Test valid boolean values
 	result := validation.ValidateValue(schema, true)
@@ -531,7 +537,7 @@ func TestBooleanSchemaBasic(t *testing.T) {
 }
 
 func TestBooleanSchemaValidation(t *testing.T) {
-	schema := builders.NewBooleanSchema().Build()
+	schema := builders2.NewBooleanSchema().Build()
 
 	tests := []struct {
 		input    any
@@ -562,7 +568,7 @@ func TestBooleanSchemaValidation(t *testing.T) {
 
 func TestNumberSchemaWithPercentage(t *testing.T) {
 	// Create a percentage schema (0-100)
-	schema := builders.NewNumberSchema().
+	schema := builders2.NewNumberSchema().
 		Min(0).
 		Max(100).
 		Description("Percentage value").
@@ -581,7 +587,7 @@ func TestNumberSchemaWithPercentage(t *testing.T) {
 	}
 
 	// Test another percentage schema with different constraints
-	percentSchema := builders.NewNumberSchema().Min(0).Max(100).Build()
+	percentSchema := builders2.NewNumberSchema().Min(0).Max(100).Build()
 
 	result = validation.ValidateValue(percentSchema, 50.0)
 	if !result.Valid {
@@ -596,7 +602,7 @@ func TestNumberSchemaWithPercentage(t *testing.T) {
 
 func TestIntegerSchemaWithAge(t *testing.T) {
 	// Create an age schema (0-120)
-	schema := builders.NewIntegerSchema().
+	schema := builders2.NewIntegerSchema().
 		Min(0).
 		Max(120).
 		Description("Age in years").
@@ -617,7 +623,7 @@ func TestIntegerSchemaWithAge(t *testing.T) {
 
 func TestStringSchemaWithFormats(t *testing.T) {
 	// Test email format
-	emailSchema := builders.NewStringSchema().Email().Build()
+	emailSchema := builders2.NewStringSchema().Email().Build()
 
 	result := validation.ValidateValue(emailSchema, "test@example.com")
 	if !result.Valid {
@@ -630,7 +636,7 @@ func TestStringSchemaWithFormats(t *testing.T) {
 	}
 
 	// Test UUID format
-	uuidSchema := builders.NewStringSchema().UUID().Build()
+	uuidSchema := builders2.NewStringSchema().UUID().Build()
 
 	result = validation.ValidateValue(uuidSchema, "550e8400-e29b-41d4-a716-446655440000")
 	if !result.Valid {

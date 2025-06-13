@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // NumberSchemaConfig holds the configuration for building a NumberSchema.

@@ -2,11 +2,11 @@ package portal
 
 import (
 	"context"
+	builders2 "defs.dev/schema/builders"
 	"testing"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/builders"
+	"defs.dev/schema/core"
 )
 
 func TestAddressSystem(t *testing.T) {
@@ -86,13 +86,13 @@ func TestLocalPortal(t *testing.T) {
 	// Create a test function
 	testFunc := &TestFunction{
 		name: "add",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("add").
 			Description("Add two numbers").
-			Input("a", builders.NewNumberSchema().Build()).
-			Input("b", builders.NewNumberSchema().Build()).
+			Input("a", builders2.NewNumberSchema().Build()).
+			Input("b", builders2.NewNumberSchema().Build()).
 			RequiredInputs("a", "b").
-			Output("result", builders.NewNumberSchema().Build()).
+			Output("result", builders2.NewNumberSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			a, _ := params.Get("a")
@@ -172,12 +172,12 @@ func TestTestingPortal(t *testing.T) {
 	// Create a mock function
 	mockFunc := &TestFunction{
 		name: "mock",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("mock").
 			Description("Mock function").
-			Input("input", builders.NewStringSchema().Build()).
+			Input("input", builders2.NewStringSchema().Build()).
 			RequiredInputs("input").
-			Output("output", builders.NewStringSchema().Build()).
+			Output("output", builders2.NewStringSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			input, _ := params.Get("input")

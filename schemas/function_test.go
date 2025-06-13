@@ -1,10 +1,10 @@
 package schemas
 
 import (
+	"defs.dev/schema/consumers/validation"
 	"testing"
 
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
 func TestFunctionSchema_RequiredInputValidation(t *testing.T) {

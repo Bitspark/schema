@@ -1,6 +1,6 @@
 package api
 
-import "defs.dev/schema/api/core"
+import "defs.dev/schema/core"
 
 // Generic schema interfaces for type-safe schema construction
 

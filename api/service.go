@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // ServiceStatus represents the current status of a service entity.

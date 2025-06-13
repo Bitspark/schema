@@ -3,7 +3,7 @@ package consumer
 import (
 	"reflect"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // ConsumerPurpose classifies what a consumer does. Purposes are *not* hard-coded – users can define their own.

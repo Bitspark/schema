@@ -4,7 +4,7 @@ package annotation
 
 import (
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // Re-export the interfaces from api for convenience

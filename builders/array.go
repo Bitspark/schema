@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/schemas"
 )
 

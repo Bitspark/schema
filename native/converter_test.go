@@ -1,11 +1,11 @@
 package native
 
 import (
+	"defs.dev/schema/annotation"
 	"reflect"
 	"testing"
 
-	"defs.dev/schema/annotation"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/registry"
 )
 

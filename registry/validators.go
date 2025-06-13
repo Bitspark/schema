@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"defs.dev/schema/annotation"
 	"fmt"
 	"net/mail"
 	"net/url"
@@ -9,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"defs.dev/schema/annotation"
 )
 
 // BaseValidator provides common functionality for all validators.

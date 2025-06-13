@@ -2,39 +2,39 @@ package tests
 
 import (
 	"context"
+	builders2 "defs.dev/schema/builders"
+	"defs.dev/schema/consumers/validation"
 	"fmt"
 	"testing"
 	"time"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/builders"
+	"defs.dev/schema/core"
 	"defs.dev/schema/portal"
 	"defs.dev/schema/registry"
-	"defs.dev/schema/validation"
 )
 
 // Integration Test 1: End-to-End Service with Complex Generics
 func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 	// Create a complex service schema with generics
-	userSchema := builders.NewObjectSchema().
-		Property("id", builders.NewIntegerSchema().Build()).
-		Property("name", builders.NewStringSchema().Build()).
-		Property("email", builders.NewStringSchema().Build()).
-		Property("tags", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+	userSchema := builders2.NewObjectSchema().
+		Property("id", builders2.NewIntegerSchema().Build()).
+		Property("name", builders2.NewStringSchema().Build()).
+		Property("email", builders2.NewStringSchema().Build()).
+		Property("tags", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 		Required("id", "name", "email").
 		Build()
 
 	// Create a generic Result[User, Error] schema
-	resultSchema := builders.NewObjectSchema().
-		Property("success", builders.NewBooleanSchema().Build()).
+	resultSchema := builders2.NewObjectSchema().
+		Property("success", builders2.NewBooleanSchema().Build()).
 		Property("data", userSchema).
-		Property("error", builders.NewStringSchema().Build()).
+		Property("error", builders2.NewStringSchema().Build()).
 		Required("success").
 		Build()
 
 	// Create a service with multiple methods using complex schemas
-	userService := builders.NewServiceSchema().
+	userService := builders2.NewServiceSchema().
 		Name("UserService").
 		Description("A comprehensive user management service").
 		Tag("users").
@@ -43,7 +43,7 @@ func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 			"name":        "UserService",
 			"description": "Manages user operations",
 		}).
-		Method("createUser", builders.NewFunctionSchema().
+		Method("createUser", builders2.NewFunctionSchema().
 			Name("createUser").
 			Description("Creates a new user").
 			Input("userData", userSchema).
@@ -71,19 +71,19 @@ func TestIntegration_ComplexServiceWithGenerics(t *testing.T) {
 				},
 			}).
 			Build()).
-		Method("getUserById", builders.NewFunctionSchema().
+		Method("getUserById", builders2.NewFunctionSchema().
 			Name("getUserById").
 			Description("Retrieves a user by ID").
-			Input("id", builders.NewIntegerSchema().Build()).
+			Input("id", builders2.NewIntegerSchema().Build()).
 			RequiredInputs("id").
 			Output("result", resultSchema).
 			Build()).
-		Method("updateUserTags", builders.NewFunctionSchema().
+		Method("updateUserTags", builders2.NewFunctionSchema().
 			Name("updateUserTags").
 			Description("Updates user tags with array operations").
-			Input("userId", builders.NewIntegerSchema().Build()).
-			Input("tagsToAdd", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
-			Input("tagsToRemove", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+			Input("userId", builders2.NewIntegerSchema().Build()).
+			Input("tagsToAdd", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
+			Input("tagsToRemove", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 			RequiredInputs("userId").
 			Output("result", resultSchema).
 			Build()).
@@ -177,31 +177,31 @@ func TestIntegration_MultiPortalServiceRegistration(t *testing.T) {
 			State:   api.ServiceStateStopped,
 			Healthy: false,
 		},
-		schema: builders.NewServiceSchema().
+		schema: builders2.NewServiceSchema().
 			Name("CalculatorService").
 			Description("Advanced mathematical operations service").
-			Method("add", builders.NewFunctionSchema().
+			Method("add", builders2.NewFunctionSchema().
 				Name("add").
 				Description("Adds two numbers").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build()).
-			Method("multiply", builders.NewFunctionSchema().
+			Method("multiply", builders2.NewFunctionSchema().
 				Name("multiply").
 				Description("Multiplies two numbers").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build()).
-			Method("factorial", builders.NewFunctionSchema().
+			Method("factorial", builders2.NewFunctionSchema().
 				Name("factorial").
 				Description("Calculates factorial of a number").
-				Input("n", builders.NewIntegerSchema().Build()).
+				Input("n", builders2.NewIntegerSchema().Build()).
 				RequiredInputs("n").
-				Output("result", builders.NewIntegerSchema().Build()).
+				Output("result", builders2.NewIntegerSchema().Build()).
 				Build()).
 			Build(),
 	}
@@ -280,30 +280,30 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 	// Step 1: Data validation function
 	validateDataFunc := &TestFunction{
 		name: "validateData",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("validateData").
 			Description("Validates input data structure").
-			Input("data", builders.NewObjectSchema().
-				Property("items", builders.NewArraySchema().
-					Items(builders.NewObjectSchema().
-						Property("id", builders.NewIntegerSchema().Build()).
-						Property("value", builders.NewNumberSchema().Build()).
-						Property("metadata", builders.NewObjectSchema().
-							Property("category", builders.NewStringSchema().Build()).
-							Property("tags", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+			Input("data", builders2.NewObjectSchema().
+				Property("items", builders2.NewArraySchema().
+					Items(builders2.NewObjectSchema().
+						Property("id", builders2.NewIntegerSchema().Build()).
+						Property("value", builders2.NewNumberSchema().Build()).
+						Property("metadata", builders2.NewObjectSchema().
+							Property("category", builders2.NewStringSchema().Build()).
+							Property("tags", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 							Build()).
 						Required("id", "value").
 						Build()).
 					Build()).
-				Property("config", builders.NewObjectSchema().
-					Property("threshold", builders.NewNumberSchema().Build()).
-					Property("includeMetadata", builders.NewBooleanSchema().Build()).
+				Property("config", builders2.NewObjectSchema().
+					Property("threshold", builders2.NewNumberSchema().Build()).
+					Property("includeMetadata", builders2.NewBooleanSchema().Build()).
 					Build()).
 				Required("items").
 				Build()).
 			RequiredInputs("data").
-			Output("isValid", builders.NewBooleanSchema().Build()).
-			Output("errors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+			Output("isValid", builders2.NewBooleanSchema().Build()).
+			Output("errors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			data, _ := params.Get("data")
@@ -336,20 +336,20 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 	// Step 2: Data transformation function
 	transformDataFunc := &TestFunction{
 		name: "transformData",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("transformData").
 			Description("Transforms and enriches data").
-			Input("data", builders.NewObjectSchema().
-				Property("items", builders.NewArraySchema().Build()).
-				Property("config", builders.NewObjectSchema().Build()).
+			Input("data", builders2.NewObjectSchema().
+				Property("items", builders2.NewArraySchema().Build()).
+				Property("config", builders2.NewObjectSchema().Build()).
 				Required("items").
 				Build()).
 			RequiredInputs("data").
-			Output("transformedData", builders.NewObjectSchema().
-				Property("processedItems", builders.NewArraySchema().Build()).
-				Property("summary", builders.NewObjectSchema().
-					Property("totalItems", builders.NewIntegerSchema().Build()).
-					Property("averageValue", builders.NewNumberSchema().Build()).
+			Output("transformedData", builders2.NewObjectSchema().
+				Property("processedItems", builders2.NewArraySchema().Build()).
+				Property("summary", builders2.NewObjectSchema().
+					Property("totalItems", builders2.NewIntegerSchema().Build()).
+					Property("averageValue", builders2.NewNumberSchema().Build()).
 					Build()).
 				Build()).
 			Build(),
@@ -389,15 +389,15 @@ func TestIntegration_ComplexFunctionComposition(t *testing.T) {
 	// Step 3: Aggregation function
 	aggregateFunc := &TestFunction{
 		name: "aggregateResults",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("aggregateResults").
 			Description("Aggregates processed data").
-			Input("transformedData", builders.NewObjectSchema().Build()).
+			Input("transformedData", builders2.NewObjectSchema().Build()).
 			RequiredInputs("transformedData").
-			Output("aggregation", builders.NewObjectSchema().
-				Property("totalProcessedValue", builders.NewNumberSchema().Build()).
-				Property("itemCount", builders.NewIntegerSchema().Build()).
-				Property("processingTimestamp", builders.NewIntegerSchema().Build()).
+			Output("aggregation", builders2.NewObjectSchema().
+				Property("totalProcessedValue", builders2.NewNumberSchema().Build()).
+				Property("itemCount", builders2.NewIntegerSchema().Build()).
+				Property("processingTimestamp", builders2.NewIntegerSchema().Build()).
 				Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
@@ -540,59 +540,59 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	serviceRegistry := registry.NewServiceRegistry()
 
 	// Create a comprehensive analytics service
-	analyticsService := builders.NewServiceSchema().
+	analyticsService := builders2.NewServiceSchema().
 		Name("AnalyticsService").
 		Description("Advanced analytics and reporting service").
 		Tag("analytics").
 		Tag("reporting").
-		Method("calculateMetrics", builders.NewFunctionSchema().
+		Method("calculateMetrics", builders2.NewFunctionSchema().
 			Name("calculateMetrics").
 			Description("Calculates various metrics from data").
-			Input("dataset", builders.NewArraySchema().
-				Items(builders.NewObjectSchema().
-					Property("timestamp", builders.NewIntegerSchema().Build()).
-					Property("value", builders.NewNumberSchema().Build()).
-					Property("category", builders.NewStringSchema().Build()).
+			Input("dataset", builders2.NewArraySchema().
+				Items(builders2.NewObjectSchema().
+					Property("timestamp", builders2.NewIntegerSchema().Build()).
+					Property("value", builders2.NewNumberSchema().Build()).
+					Property("category", builders2.NewStringSchema().Build()).
 					Required("timestamp", "value").
 					Build()).
 				Build()).
-			Input("metricTypes", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+			Input("metricTypes", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 			RequiredInputs("dataset", "metricTypes").
-			Output("metrics", builders.NewObjectSchema().
-				Property("mean", builders.NewNumberSchema().Build()).
-				Property("median", builders.NewNumberSchema().Build()).
-				Property("standardDeviation", builders.NewNumberSchema().Build()).
-				Property("categoryBreakdown", builders.NewObjectSchema().Build()).
+			Output("metrics", builders2.NewObjectSchema().
+				Property("mean", builders2.NewNumberSchema().Build()).
+				Property("median", builders2.NewNumberSchema().Build()).
+				Property("standardDeviation", builders2.NewNumberSchema().Build()).
+				Property("categoryBreakdown", builders2.NewObjectSchema().Build()).
 				Build()).
 			Build()).
-		Method("generateReport", builders.NewFunctionSchema().
+		Method("generateReport", builders2.NewFunctionSchema().
 			Name("generateReport").
 			Description("Generates a formatted report").
-			Input("metrics", builders.NewObjectSchema().Build()).
-			Input("format", builders.NewStringSchema().Build()).
+			Input("metrics", builders2.NewObjectSchema().Build()).
+			Input("format", builders2.NewStringSchema().Build()).
 			RequiredInputs("metrics", "format").
-			Output("report", builders.NewStringSchema().Build()).
-			Output("metadata", builders.NewObjectSchema().
-				Property("generatedAt", builders.NewIntegerSchema().Build()).
-				Property("format", builders.NewStringSchema().Build()).
-				Property("size", builders.NewIntegerSchema().Build()).
+			Output("report", builders2.NewStringSchema().Build()).
+			Output("metadata", builders2.NewObjectSchema().
+				Property("generatedAt", builders2.NewIntegerSchema().Build()).
+				Property("format", builders2.NewStringSchema().Build()).
+				Property("size", builders2.NewIntegerSchema().Build()).
 				Build()).
 			Build()).
-		Method("exportData", builders.NewFunctionSchema().
+		Method("exportData", builders2.NewFunctionSchema().
 			Name("exportData").
 			Description("Exports data in various formats").
-			Input("data", builders.NewObjectSchema().Build()).
-			Input("exportFormat", builders.NewStringSchema().Build()).
-			Input("options", builders.NewObjectSchema().
-				Property("includeHeaders", builders.NewBooleanSchema().Build()).
-				Property("compression", builders.NewStringSchema().Build()).
+			Input("data", builders2.NewObjectSchema().Build()).
+			Input("exportFormat", builders2.NewStringSchema().Build()).
+			Input("options", builders2.NewObjectSchema().
+				Property("includeHeaders", builders2.NewBooleanSchema().Build()).
+				Property("compression", builders2.NewStringSchema().Build()).
 				Build()).
 			RequiredInputs("data", "exportFormat").
-			Output("exportedData", builders.NewStringSchema().Build()).
-			Output("exportInfo", builders.NewObjectSchema().
-				Property("format", builders.NewStringSchema().Build()).
-				Property("size", builders.NewIntegerSchema().Build()).
-				Property("checksum", builders.NewStringSchema().Build()).
+			Output("exportedData", builders2.NewStringSchema().Build()).
+			Output("exportInfo", builders2.NewObjectSchema().
+				Property("format", builders2.NewStringSchema().Build()).
+				Property("size", builders2.NewIntegerSchema().Build()).
+				Property("checksum", builders2.NewStringSchema().Build()).
 				Build()).
 			Build()).
 		Build()
@@ -618,13 +618,13 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 	utilityFunctions := []*TestFunction{
 		{
 			name: "validateDataset",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("validateDataset").
 				Description("Validates dataset structure and content").
-				Input("dataset", builders.NewArraySchema().Build()).
+				Input("dataset", builders2.NewArraySchema().Build()).
 				RequiredInputs("dataset").
-				Output("isValid", builders.NewBooleanSchema().Build()).
-				Output("validationErrors", builders.NewArraySchema().Items(builders.NewStringSchema().Build()).Build()).
+				Output("isValid", builders2.NewBooleanSchema().Build()).
+				Output("validationErrors", builders2.NewArraySchema().Items(builders2.NewStringSchema().Build()).Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				dataset, _ := params.Get("dataset")
@@ -649,13 +649,13 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 		},
 		{
 			name: "formatTimestamp",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("formatTimestamp").
 				Description("Formats Unix timestamp to human-readable format").
-				Input("timestamp", builders.NewIntegerSchema().Build()).
-				Input("format", builders.NewStringSchema().Build()).
+				Input("timestamp", builders2.NewIntegerSchema().Build()).
+				Input("format", builders2.NewStringSchema().Build()).
 				RequiredInputs("timestamp").
-				Output("formatted", builders.NewStringSchema().Build()).
+				Output("formatted", builders2.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				timestamp, _ := params.Get("timestamp")
@@ -677,14 +677,14 @@ func TestIntegration_ServiceAndFunctionRegistryIntegration(t *testing.T) {
 		},
 		{
 			name: "calculateHash",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("calculateHash").
 				Description("Calculates hash of input data").
-				Input("data", builders.NewStringSchema().Build()).
-				Input("algorithm", builders.NewStringSchema().Build()).
+				Input("data", builders2.NewStringSchema().Build()).
+				Input("algorithm", builders2.NewStringSchema().Build()).
 				RequiredInputs("data").
-				Output("hash", builders.NewStringSchema().Build()).
-				Output("algorithm", builders.NewStringSchema().Build()).
+				Output("hash", builders2.NewStringSchema().Build()).
+				Output("algorithm", builders2.NewStringSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				data, _ := params.Get("data")
@@ -822,49 +822,49 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 
 	// Define a generic Result[T, E] pattern
 	createResultSchema := func(successSchema, errorSchema core.Schema) core.Schema {
-		return builders.NewObjectSchema().
-			Property("success", builders.NewBooleanSchema().Build()).
+		return builders2.NewObjectSchema().
+			Property("success", builders2.NewBooleanSchema().Build()).
 			Property("data", successSchema).
 			Property("error", errorSchema).
-			Property("timestamp", builders.NewIntegerSchema().Build()).
+			Property("timestamp", builders2.NewIntegerSchema().Build()).
 			Required("success", "timestamp").
 			Build()
 	}
 
 	// Define a generic List[T] pattern
 	createListSchema := func(itemSchema core.Schema) core.Schema {
-		return builders.NewObjectSchema().
-			Property("items", builders.NewArraySchema().Items(itemSchema).Build()).
-			Property("totalCount", builders.NewIntegerSchema().Build()).
-			Property("hasMore", builders.NewBooleanSchema().Build()).
+		return builders2.NewObjectSchema().
+			Property("items", builders2.NewArraySchema().Items(itemSchema).Build()).
+			Property("totalCount", builders2.NewIntegerSchema().Build()).
+			Property("hasMore", builders2.NewBooleanSchema().Build()).
 			Required("items", "totalCount", "hasMore").
 			Build()
 	}
 
 	// Define a generic Map[K, V] pattern
 	createMapSchema := func(keySchema, valueSchema core.Schema) core.Schema {
-		return builders.NewObjectSchema().
-			Property("entries", builders.NewArraySchema().
-				Items(builders.NewObjectSchema().
+		return builders2.NewObjectSchema().
+			Property("entries", builders2.NewArraySchema().
+				Items(builders2.NewObjectSchema().
 					Property("key", keySchema).
 					Property("value", valueSchema).
 					Required("key", "value").
 					Build()).
 				Build()).
-			Property("size", builders.NewIntegerSchema().Build()).
+			Property("size", builders2.NewIntegerSchema().Build()).
 			Required("entries", "size").
 			Build()
 	}
 
 	// Create base entity schema
-	entitySchema := builders.NewObjectSchema().
-		Property("id", builders.NewStringSchema().Build()).
-		Property("type", builders.NewStringSchema().Build()).
-		Property("attributes", builders.NewObjectSchema().Build()).
-		Property("relationships", builders.NewArraySchema().
-			Items(builders.NewObjectSchema().
-				Property("type", builders.NewStringSchema().Build()).
-				Property("id", builders.NewStringSchema().Build()).
+	entitySchema := builders2.NewObjectSchema().
+		Property("id", builders2.NewStringSchema().Build()).
+		Property("type", builders2.NewStringSchema().Build()).
+		Property("attributes", builders2.NewObjectSchema().Build()).
+		Property("relationships", builders2.NewArraySchema().
+			Items(builders2.NewObjectSchema().
+				Property("type", builders2.NewStringSchema().Build()).
+				Property("id", builders2.NewStringSchema().Build()).
 				Required("type", "id").
 				Build()).
 			Build()).
@@ -872,10 +872,10 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 		Build()
 
 	// Create error schema
-	errorSchema := builders.NewObjectSchema().
-		Property("code", builders.NewStringSchema().Build()).
-		Property("message", builders.NewStringSchema().Build()).
-		Property("details", builders.NewObjectSchema().Build()).
+	errorSchema := builders2.NewObjectSchema().
+		Property("code", builders2.NewStringSchema().Build()).
+		Property("message", builders2.NewStringSchema().Build()).
+		Property("details", builders2.NewObjectSchema().Build()).
 		Required("code", "message").
 		Build()
 
@@ -889,14 +889,14 @@ func TestIntegration_AdvancedGenericSchemaComposition(t *testing.T) {
 
 	// Map[String, Result[Entity, Error]]
 	entityMapSchema := createMapSchema(
-		builders.NewStringSchema().Build(),
+		builders2.NewStringSchema().Build(),
 		createResultSchema(entitySchema, errorSchema),
 	)
 
 	// Result[Map[String, List[Entity]], Error]
 	complexNestedSchema := createResultSchema(
 		createMapSchema(
-			builders.NewStringSchema().Build(),
+			builders2.NewStringSchema().Build(),
 			createListSchema(entitySchema),
 		),
 		errorSchema,
@@ -1195,12 +1195,12 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 	case "add":
 		return &TestFunction{
 			name: "add",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("add").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				a, _ := params.Get("a")
@@ -1212,12 +1212,12 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 	case "multiply":
 		return &TestFunction{
 			name: "multiply",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("multiply").
-				Input("a", builders.NewNumberSchema().Build()).
-				Input("b", builders.NewNumberSchema().Build()).
+				Input("a", builders2.NewNumberSchema().Build()).
+				Input("b", builders2.NewNumberSchema().Build()).
 				RequiredInputs("a", "b").
-				Output("result", builders.NewNumberSchema().Build()).
+				Output("result", builders2.NewNumberSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				a, _ := params.Get("a")
@@ -1229,11 +1229,11 @@ func (s *TestCalculatorService) GetFunction(name string) (api.Function, bool) {
 	case "factorial":
 		return &TestFunction{
 			name: "factorial",
-			schema: builders.NewFunctionSchema().
+			schema: builders2.NewFunctionSchema().
 				Name("factorial").
-				Input("n", builders.NewIntegerSchema().Build()).
+				Input("n", builders2.NewIntegerSchema().Build()).
 				RequiredInputs("n").
-				Output("result", builders.NewIntegerSchema().Build()).
+				Output("result", builders2.NewIntegerSchema().Build()).
 				Build(),
 			handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 				n, _ := params.Get("n")

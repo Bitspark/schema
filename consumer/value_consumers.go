@@ -3,7 +3,7 @@
 package consumer
 
 import (
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // Common consumer purposes - these are just examples, users can define their own

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // ServiceMethodSchema represents a single method in a service schema.

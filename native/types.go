@@ -4,10 +4,10 @@
 package native
 
 import (
+	"defs.dev/schema/annotation"
 	"reflect"
 
-	"defs.dev/schema/annotation"
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 	"defs.dev/schema/registry"
 )
 

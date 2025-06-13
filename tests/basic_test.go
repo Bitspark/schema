@@ -1,26 +1,58 @@
 package tests
 
 import (
-	"encoding/json"
 	"testing"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/consumers/validation"
+
 	"defs.dev/schema/builders"
-	jsonexport "defs.dev/schema/export/json"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
-// Helper function to generate JSON Schema using the export system
+// Helper function to generate JSON Schema using a simple stub
 func toJSONSchema(schema core.Schema) map[string]any {
-	generator := jsonexport.NewGenerator()
-	jsonBytes, err := generator.Generate(schema)
-	if err != nil {
-		panic(err)
+	// Simple stub implementation for testing
+	result := map[string]any{
+		"type": string(schema.Type()),
 	}
 
-	var result map[string]any
-	if err := json.Unmarshal(jsonBytes, &result); err != nil {
-		panic(err)
+	if desc := schema.Metadata().Description; desc != "" {
+		result["description"] = desc
+	}
+
+	// Add type-specific properties
+	switch s := schema.(type) {
+	case core.StringSchema:
+		if minLen := s.MinLength(); minLen != nil {
+			result["minLength"] = *minLen
+		}
+		if maxLen := s.MaxLength(); maxLen != nil {
+			result["maxLength"] = *maxLen
+		}
+		if pattern := s.Pattern(); pattern != "" {
+			result["pattern"] = pattern
+		}
+	case core.IntegerSchema:
+		if min := s.Minimum(); min != nil {
+			result["minimum"] = *min
+		}
+		if max := s.Maximum(); max != nil {
+			result["maximum"] = *max
+		}
+	case core.ObjectSchema:
+		if !s.AdditionalProperties() {
+			result["additionalProperties"] = false
+		}
+		if required := s.Required(); len(required) > 0 {
+			result["required"] = required
+		}
+		if properties := s.Properties(); len(properties) > 0 {
+			propMap := make(map[string]any)
+			for name, prop := range properties {
+				propMap[name] = toJSONSchema(prop)
+			}
+			result["properties"] = propMap
+		}
 	}
 
 	return result

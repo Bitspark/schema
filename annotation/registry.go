@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"defs.dev/schema/api/core"
+	"defs.dev/schema/core"
 )
 
 // registryImpl implements AnnotationRegistry with thread-safe type management

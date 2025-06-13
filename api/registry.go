@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
+	"defs.dev/schema/consumers/validation"
 
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
 // Registry defines the base interface for all registry types with common operations.

@@ -1,11 +1,11 @@
 package engine
 
 import (
+	"defs.dev/schema/consumers/validation"
 	"fmt"
 	"sync"
 
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/validation"
+	"defs.dev/schema/core"
 )
 
 // schemaEngineImpl is the concrete implementation of SchemaEngine

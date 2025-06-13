@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	builders2 "defs.dev/schema/builders"
 	"fmt"
 	"net/url"
 	"testing"
@@ -10,8 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"defs.dev/schema/api"
-	"defs.dev/schema/api/core"
-	"defs.dev/schema/builders"
+	"defs.dev/schema/core"
 	"defs.dev/schema/portal"
 )
 
@@ -34,11 +34,11 @@ func TestE2E_WebSocketSimple(t *testing.T) {
 	// Register a simple function
 	simpleFunc := &SimpleTestFunction{
 		name: "echo",
-		schema: builders.NewFunctionSchema().
+		schema: builders2.NewFunctionSchema().
 			Name("echo").
-			Input("message", builders.NewStringSchema().Build()).
+			Input("message", builders2.NewStringSchema().Build()).
 			RequiredInputs("message").
-			Output("echo", builders.NewStringSchema().Build()).
+			Output("echo", builders2.NewStringSchema().Build()).
 			Build(),
 		handler: func(ctx context.Context, params api.FunctionData) (api.FunctionData, error) {
 			message, _ := params.Get("message")
